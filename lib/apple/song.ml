@@ -1,5 +1,3 @@
-[@@@ocaml.warning "-69"]
-
 type song_attributes = {
   name : string;
   album_name : string option;
@@ -22,22 +20,10 @@ type t = {
 }
 
 let get_id t = t.id
-let get_name t = match t.attributes with Some a -> Some a.name | None -> None
-
-let get_album_name t =
-  match t.attributes with Some a -> a.album_name | None -> None
-
-let get_artist_name t =
-  match t.attributes with Some a -> Some a.artist_name | None -> None
-
-let get_duration_ms t =
-  match t.attributes with Some a -> Some a.duration_ms | None -> None
-
-let get_genre_names t =
-  match t.attributes with Some a -> Some a.genre_names | None -> None
-
-let get_track_number t =
-  match t.attributes with Some a -> a.track_number | None -> None
-
-let get_release_date t =
-  match t.attributes with Some a -> a.release_date | None -> None
+let get_name t = Option.map (fun a -> a.name) t.attributes
+let get_album_name t = Option.map (fun a -> a.album_name) t.attributes
+let get_artist_name t = Option.map (fun a -> a.artist_name) t.attributes
+let get_duration_ms t = Option.map (fun a -> a.duration_ms) t.attributes
+let get_genre_names t = Option.map (fun a -> a.genre_names) t.attributes
+let get_track_number t = Option.map (fun a -> a.track_number) t.attributes
+let get_release_date t = Option.map (fun a -> a.release_date) t.attributes

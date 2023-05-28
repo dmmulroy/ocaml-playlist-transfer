@@ -1,4 +1,0 @@
-(lang dune 3.7)
-(name ocaml_playlist_transfer)
-(sections (lib .) (bin ../../bin))
-(files (lib (META dune-package opam)) (bin (ocaml_playlist_transfer)))

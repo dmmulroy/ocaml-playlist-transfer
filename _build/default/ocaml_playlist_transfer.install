@@ -1,8 +1,0 @@
-lib: [
-  "_build/install/default/lib/ocaml_playlist_transfer/META"
-  "_build/install/default/lib/ocaml_playlist_transfer/dune-package"
-  "_build/install/default/lib/ocaml_playlist_transfer/opam"
-]
-bin: [
-  "_build/install/default/bin/ocaml_playlist_transfer"
-]
