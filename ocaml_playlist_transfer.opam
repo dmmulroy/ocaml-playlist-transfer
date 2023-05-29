@@ -13,6 +13,7 @@ depends: [
   "ocaml"
   "dune" {>= "3.7"}
   "cohttp-lwt-unix"
+  "lwt_ssl"
   "lwt_ppx"
   "yojson"
   "odoc" {with-doc}

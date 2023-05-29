@@ -19,7 +19,7 @@
  (name ocaml_playlist_transfer)
  (synopsis "Seamlessly transfer playlists between music streaming services")
  (description "Seamlessly transfer playlists between music streaming services")
- (depends ocaml dune cohttp-lwt-unix lwt_ppx yojson)
+ (depends ocaml dune cohttp-lwt-unix lwt_ssl lwt_ppx yojson)
  (tags
   (music, ocaml, cli, learning, spotify, apple-music)))
 
