@@ -1,4 +1,5 @@
 (executable
  (public_name ocaml_playlist_transfer)
  (name main)
- (libraries ocaml_playlist_transfer))
+ (libraries ocaml_playlist_transfer services)
+ (preprocess (pps lwt_ppx)))

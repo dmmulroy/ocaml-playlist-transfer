@@ -5,22 +5,22 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github dmmulroy/ocaml-playlist-transfer))
 
-(authors "Author Name")
+(authors "Dillon Mulroy")
 
-(maintainers "Maintainer Name")
+(maintainers "Dillon Mulroy")
 
-(license LICENSE)
+(license MIT)
 
-(documentation https://url/to/documentation)
+(documentation https://github.com/dmmulroy/ocaml-playlist-transfer)
 
 (package
  (name ocaml_playlist_transfer)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends ocaml dune)
+ (synopsis "Seamlessly transfer playlists between music streaming services")
+ (description "Seamlessly transfer playlists between music streaming services")
+ (depends ocaml dune cohttp-lwt-unix lwt_ppx yojson)
  (tags
-  (topics "to describe" your project)))
+  (music, ocaml, cli, learning, spotify, apple-music)))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
