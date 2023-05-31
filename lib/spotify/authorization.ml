@@ -14,7 +14,7 @@ let authorization_code_grant (t : t) : authorization_code =
   let stop_server_promise, _ = Lwt.task () in
   let state = Int.to_string @@ Random.bits () in
   let callback _conn req _body =
-    let path = Http.Request.uri req |> Uri.path in
+    let path = Uri.path @@ Http.Request.uri req in
     match path with
     | "/spotify" -> (
         let uri = Http.Request.uri req in
@@ -38,7 +38,7 @@ let authorization_code_grant (t : t) : authorization_code =
     | _ -> Http.Server.respond_string ~status:`Not_found ~body:"Not found" ()
   in
   let server = Http.Server.make ~callback () in
-  let port = Config.get_redirect_uri t.config |> Uri.port in
+  let port = Uri.port @@ Config.get_redirect_uri t.config in
   let run_sever =
     match port with
     | Some port ->
