@@ -50,7 +50,7 @@ let authorization_code_grant (t : t) : authorization_code =
   in
   match run_sever with
   | Ok run ->
-      let%lwt () = run in
+      let _ = run in
       let uri =
         Uri.with_query' base_uri
           [
@@ -59,6 +59,7 @@ let authorization_code_grant (t : t) : authorization_code =
             ("redirect_uri", Uri.to_string @@ Config.get_redirect_uri t.config);
             ("scope", "playlist-read-private");
             ("state", state);
+            ("show_dialog", "true");
           ]
       in
       let cmd = Filename.quote_command "open" [ Uri.to_string uri ] in
