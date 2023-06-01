@@ -32,16 +32,17 @@ let handler ~state ~mailbox _conn req _body =
         | None, _ -> Error (`Msg "No code received")
       in
       match code with
-      | Ok code ->
-          if Lwt_mvar.is_empty mailbox then
-            (* only put the code in the mailbox if it is empty *)
-            let%lwt () = Lwt_mvar.put mailbox code in
-            Http.Server.respond_string ~status:`OK
-              ~body:"Authentication Successful" ()
-          else
-            (* if the mailbox is not empty, it means that the code has already been received *)
-            Http.Server.respond_string ~status:`OK
-              ~body:"Authentication Successful - 1" ()
+      | Ok code -> (
+          match Lwt_mvar.is_empty mailbox with
+          | true ->
+              (* only put the code in the mailbox if it is empty *)
+              let%lwt () = Lwt_mvar.put mailbox code in
+              Http.Server.respond_string ~status:`OK
+                ~body:"Authentication Successful" ()
+          | false ->
+              (* if the mailbox is not empty, it means that the code has already been received *)
+              Http.Server.respond_string ~status:`OK
+                ~body:"Authentication Successfu" ())
       | Error (`Msg msg) ->
           Http.Server.respond_error ~status:`Bad_request ~body:msg ())
   | _ -> Http.Server.respond_string ~status:`Not_found ~body:"Not found" ()
