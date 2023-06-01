@@ -1,5 +1,3 @@
-[@@@warning "-32"]
-
 type t = { config : Config.t }
 type authorization_code = (string, [ `Msg of string ]) result Lwt.t
 
