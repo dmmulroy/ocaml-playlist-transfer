@@ -1,13 +1,3 @@
-type authorization_grant = {
-  client_id : string;
-  redirect_uri : string;
-  state : string;
-  scope : string;
-  show_dialog : bool;
-}
-
-type error = string
-
 module Access_token : sig
   type t
 
@@ -22,6 +12,16 @@ module Access_token : sig
 
   val show : t -> string
 end
+
+type authorization_grant = {
+  client_id : string;
+  redirect_uri : string;
+  state : string;
+  scope : string;
+  show_dialog : bool;
+}
+
+type error = [ `Request_error of int * string | `Json_parse_error ]
 
 val fetch_access_token :
   client_id:string ->
