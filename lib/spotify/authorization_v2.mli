@@ -17,7 +17,15 @@ type flow =
 module Access_token : sig
   type t
 
-  val make : string -> t
+  val is_expired : t -> bool
+
+  val make :
+    token:string ->
+    expiration_time:float ->
+    ?refresh_token:string option ->
+    unit ->
+    t
 end
 
-val get_access_token : flow -> (Access_token.t, error) result Lwt.t
+val fetch_access_token : flow -> (Access_token.t, error) result Lwt.t
+val make_authorization_url : authorization_grant -> Uri.t
