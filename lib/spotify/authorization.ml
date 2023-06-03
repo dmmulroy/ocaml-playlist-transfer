@@ -1,31 +1,77 @@
-type t = { config : Config.t }
-type error = [ `Msg of string ]
+[@@@warning "-69"]
 
-let base_authorization_uri =
-  Uri.of_string "https://accounts.spotify.com/authorize"
+module Access_token = struct
+  type t = {
+    token : string; [@key "access_token"]
+    expiration_time : float;
+    refresh_token : string option;
+  }
+  [@@deriving show]
 
-let open_authorization_uri (uri : Uri.t) =
-  let cmd = Filename.quote_command "open" [ Uri.to_string uri ] in
-  let _ = Unix.system cmd in
-  ()
+  let is_expired t = Unix.time () > t.expiration_time
 
-let make (config : Config.t) = { config }
+  let make ~token ~expiration_time ?(refresh_token = None) () =
+    { token; expiration_time; refresh_token }
+end
 
-let authorization_code_grant t : (string, error) result Lwt.t =
-  let redirect_uri = Config.get_redirect_uri t.config in
-  let state = Int.to_string @@ Random.bits () in
-  let authorization_uri =
-    Uri.with_query' base_authorization_uri
+type authorization_grant = {
+  client_id : string;
+  redirect_uri : string;
+  state : string;
+  scope : string;
+  show_dialog : bool;
+}
+
+type authorization_response = { access_token : string; expires_in : float }
+[@@deriving yojson { strict = false }]
+
+type error = string
+
+let token_endpoint = Uri.of_string "https://accounts.spotify.com/api/token"
+
+let fetch_access_token ~client_id ~client_secret :
+    (Access_token.t, error) result Lwt.t =
+  let body =
+    Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+      [ ("grant_type", [ "client_credentials" ]) ]
+  in
+  let headers =
+    Http.Header.of_list
       [
-        ("client_id", Config.get_client_id t.config);
-        ("response_type", "code");
-        ("redirect_uri", Uri.to_string redirect_uri);
-        ("scope", "playlist-read-private");
-        ("state", state);
+        ( "Authorization",
+          "Basic " ^ Base64.encode_string (client_id ^ ":" ^ client_secret) );
+        ("Content-Type", "application/x-www-form-urlencoded");
       ]
   in
-  let server = Redirect_server.make ~redirect_uri ~state in
-  let _ = Redirect_server.run server () in
-  let () = open_authorization_uri authorization_uri in
-  let%lwt code = Redirect_server.get_code server in
-  Lwt.return_ok code
+  match%lwt Http.Client.post ~headers ~body token_endpoint with
+  | res, body
+    when Http.Code.is_success @@ Http.Code.code_of_status
+         @@ Http.Response.status res -> (
+      let%lwt json = Http.Body.to_string body in
+      match
+        authorization_response_of_yojson @@ Yojson.Safe.from_string json
+      with
+      | Ok res ->
+          let at =
+            Access_token.make ~token:res.access_token
+              ~expiration_time:(Unix.time () +. res.expires_in)
+              ()
+          in
+          Lwt.return_ok at
+      | Error err -> Lwt.return_error err)
+  | _, body ->
+      let%lwt json = Http.Body.to_string body in
+      Lwt.return_error json
+
+let authorize_endpoint = Uri.of_string "https://accounts.spotify.com/authorize"
+
+let make_authorization_url (authorization_grant : authorization_grant) =
+  Uri.with_query' authorize_endpoint
+    [
+      ("client_id", authorization_grant.client_id);
+      ("response_type", "code");
+      ("redirect_uri", authorization_grant.redirect_uri);
+      ("state", authorization_grant.state);
+      ("scope", authorization_grant.scope);
+      ("show_dialog", string_of_bool authorization_grant.show_dialog);
+    ]

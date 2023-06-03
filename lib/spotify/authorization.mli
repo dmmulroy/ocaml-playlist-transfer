@@ -1,11 +1,31 @@
-type t
-type error = [ `Msg of string ]
+type authorization_grant = {
+  client_id : string;
+  redirect_uri : string;
+  state : string;
+  scope : string;
+  show_dialog : bool;
+}
 
-(* type grant_type = *)
-(*   [ `Authorization of Config.t | `Implicit | `Client_Credentials ] *)
+type error = string
 
-val make : Config.t -> t
-val authorization_code_grant : t -> (string, error) result Lwt.t
+module Access_token : sig
+  type t
 
-(* val get_access_token : *)
-(*   grant_type:grant_type -> (Access_token.t, error) result Lwt.t *)
+  val is_expired : t -> bool
+
+  val make :
+    token:string ->
+    expiration_time:float ->
+    ?refresh_token:string option ->
+    unit ->
+    t
+
+  val show : t -> string
+end
+
+val fetch_access_token :
+  client_id:string ->
+  client_secret:string ->
+  (Access_token.t, error) result Lwt.t
+
+val make_authorization_url : authorization_grant -> Uri.t
