@@ -1,1 +1,3 @@
-type t
+type t = unit
+
+let make () = ()

@@ -1,7 +1,3 @@
-module Access_token = struct
-  type t
-end
-
 type t = { config : Config.t }
 type error = [ `Msg of string ]
 

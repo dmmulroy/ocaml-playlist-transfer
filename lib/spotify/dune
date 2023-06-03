@@ -1,5 +1,5 @@
 (library
  (name spotify)
- (libraries cohttp-lwt-unix ppx_deriving_yojson.runtime)
- (preprocess (pps lwt_ppx ppx_deriving.show ppx_deriving_yojson )))
-
+ (libraries http cohttp-lwt-unix ppx_deriving_yojson.runtime)
+ (preprocess
+  (pps lwt_ppx ppx_deriving.show ppx_deriving_yojson)))

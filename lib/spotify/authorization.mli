@@ -1,11 +1,7 @@
-module Access_token : sig
-  type t
-end
-
 type t
 type error = [ `Msg of string ]
 
-(* type _grant_type = *)
+(* type grant_type = *)
 (*   [ `Authorization of Config.t | `Implicit | `Client_Credentials ] *)
 
 val make : Config.t -> t
