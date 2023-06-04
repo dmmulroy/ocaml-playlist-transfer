@@ -2,7 +2,7 @@
 
 module Access_token = struct
   type t = {
-    token : string; [@key "access_token"]
+    token : string;
     expiration_time : float;
     refresh_token : string option;
   }
@@ -29,8 +29,7 @@ type error = [ `Request_error of int * string | `Json_parse_error ]
 
 let token_endpoint = Uri.of_string "https://accounts.spotify.com/api/token"
 
-let fetch_access_token ~client_id ~client_secret :
-    (Access_token.t, error) result Lwt.t =
+let fetch_access_token ~client_id ~client_secret =
   let body =
     Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
       [ ("grant_type", [ "client_credentials" ]) ]
