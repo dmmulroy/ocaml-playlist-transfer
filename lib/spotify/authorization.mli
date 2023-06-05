@@ -21,7 +21,8 @@ type authorization_grant = {
   show_dialog : bool;
 }
 
-type error = [ `Request_error of int * string | `Json_parse_error ]
+type error =
+  [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
 
 val fetch_access_token :
   client_id:string ->

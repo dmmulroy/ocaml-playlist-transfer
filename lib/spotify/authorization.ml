@@ -25,7 +25,8 @@ type authorization_grant = {
 type authorization_response = { access_token : string; expires_in : float }
 [@@deriving yojson { strict = false }]
 
-type error = [ `Request_error of int * string | `Json_parse_error ]
+type error =
+  [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
 
 let token_endpoint = Uri.of_string "https://accounts.spotify.com/api/token"
 
@@ -60,7 +61,7 @@ let fetch_access_token ~client_id ~client_secret =
       | Error _ -> Lwt.return_error `Json_parse_error)
   | res, body ->
       let%lwt json = Http.Body.to_string body in
-      let status_code = Http.Code.code_of_status @@ Http.Response.status res in
+      let status_code = Http.Response.status res in
       Lwt.return_error (`Request_error (status_code, json))
 
 let authorize_uri = Uri.of_string "https://accounts.spotify.com/authorize"

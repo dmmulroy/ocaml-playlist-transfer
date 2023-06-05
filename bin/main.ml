@@ -7,8 +7,9 @@ let () =
       Spotify.Authorization.fetch_access_token ~client_id ~client_secret
     with
     | Ok access_token ->
-        Lwt.return @@ print_endline @@ "success: "
+        Lwt.return @@ print_endline @@ "access token: "
         ^ Spotify.Authorization.Access_token.show access_token
-    | Error err -> Lwt.return @@ print_endline ("error: " ^ err)
+    | Error err ->
+        Lwt.return @@ print_endline @@ Spotify.Error.to_human_string err
   in
   Lwt_main.run access_token_promise
