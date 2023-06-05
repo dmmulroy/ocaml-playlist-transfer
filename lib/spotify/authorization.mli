@@ -17,7 +17,7 @@ type authorization_grant = {
   client_id : string;
   redirect_uri : string;
   state : string;
-  scope : string;
+  scopes : Scope.t list option;
   show_dialog : bool;
 }
 

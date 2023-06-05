@@ -18,7 +18,7 @@ type authorization_grant = {
   client_id : string;
   redirect_uri : string;
   state : string;
-  scope : string;
+  scopes : Scope.t list option;
   show_dialog : bool;
 }
 
@@ -67,12 +67,26 @@ let fetch_access_token ~client_id ~client_secret =
 let authorize_uri = Uri.of_string "https://accounts.spotify.com/authorize"
 
 let make_authorization_url authorization_grant =
-  Uri.with_query' authorize_uri
+  let query_params =
     [
       ("client_id", authorization_grant.client_id);
       ("response_type", "code");
       ("redirect_uri", authorization_grant.redirect_uri);
       ("state", authorization_grant.state);
-      ("scope", authorization_grant.scope);
       ("show_dialog", string_of_bool authorization_grant.show_dialog);
     ]
+  in
+  let scope =
+    Option.map
+      (fun scope_list ->
+        List.fold_left
+          (fun acc scope ->
+            match acc with
+            | "" -> Scope.to_string scope
+            | _ -> acc ^ " " ^ Scope.to_string scope)
+          "" scope_list)
+      authorization_grant.scopes
+  in
+  Uri.with_query' authorize_uri
+    (query_params
+    @ match scope with Some scope -> [ ("scope", scope) ] | None -> [])
