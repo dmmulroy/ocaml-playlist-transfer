@@ -79,12 +79,7 @@ let make_authorization_url authorization_grant =
   let scope =
     Option.map
       (fun scope_list ->
-        List.fold_left
-          (fun acc scope ->
-            match acc with
-            | "" -> Scope.to_string scope
-            | _ -> acc ^ " " ^ Scope.to_string scope)
-          "" scope_list)
+        String.concat " " @@ List.map Scope.to_string scope_list)
       authorization_grant.scopes
   in
   Uri.with_query' authorize_uri
