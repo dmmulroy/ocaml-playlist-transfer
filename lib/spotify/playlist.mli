@@ -11,8 +11,5 @@ type get_featured_playlists_request = {
   offset : int;
 }
 
-val get_featured_playlists :
-  Client.t ->
-  get_featured_playlists_request ->
-  (unit, [ `Msg of string ]) result Lwt.t
+val get_featured_playlists : Client.t -> (unit, [ `Msg of string ]) result Lwt.t
 (* Spotify.Playlist.get_featured_playlists *)
