@@ -11,6 +11,7 @@ module Access_token : sig
     t
 
   val show : t -> string
+  val to_bearer_token : t -> string
 end
 
 type authorization_grant = {

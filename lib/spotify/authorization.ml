@@ -12,6 +12,8 @@ module Access_token = struct
 
   let make ~token ~expiration_time ?(refresh_token = None) () =
     { token; expiration_time; refresh_token }
+
+  let to_bearer_token t = "Bearer " ^ t.token
 end
 
 type authorization_grant = {

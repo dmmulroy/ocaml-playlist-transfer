@@ -1,3 +1,3 @@
 type t
 
-val make : unit -> t
+val make : Authorization.Access_token.t -> t

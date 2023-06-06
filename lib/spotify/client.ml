@@ -1,3 +1,3 @@
-type t = unit
+type t = Authorization.Access_token.t
 
-let make () = ()
+let make access_token = access_token
