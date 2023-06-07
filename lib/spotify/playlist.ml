@@ -55,7 +55,7 @@ type get_featured_playlists_options = {
   offset : int option;
 }
 
-let query_params_of_reuest_options = function
+let query_params_of_request_options = function
   | `Get_featured_playlists -> (
       function
       | None -> []
@@ -78,7 +78,7 @@ let get_featured_playlists (client : Client.t) ?(options = None) () =
     Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
   in
   let query_params =
-    query_params_of_reuest_options `Get_featured_playlists options
+    query_params_of_request_options `Get_featured_playlists options
   in
   let endpoint = Uri.add_query_params' base_endpoint query_params in
   match%lwt Http.Client.get ~headers endpoint with
