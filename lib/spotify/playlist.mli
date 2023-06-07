@@ -61,4 +61,4 @@ val get_featured_playlists :
   Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
-  (t paginated, [ `Msg of string ]) result Lwt.t
+  (unit, [ `Msg of string ]) result Lwt.t (* TODO: return t paginated *)

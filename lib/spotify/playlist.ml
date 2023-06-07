@@ -15,6 +15,7 @@ type owner = {
 
 type tracks_reference = { href : Uri.t; total : int }
 
+(* TODO: Move this out and make it resusable *)
 type 'a paginated = {
   href : Uri.t;
   items : 'a list;
@@ -24,7 +25,6 @@ type 'a paginated = {
   previous : Uri.t option;
   total : int;
 }
-(* TODO: Move this out and make it resusable *)
 
 type t = {
   collaborative : bool;
