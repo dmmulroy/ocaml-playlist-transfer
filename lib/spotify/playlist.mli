@@ -2,6 +2,7 @@ type external_urls = { spotify : string }
 type followers = { total : int }
 type image = { height : int; url : Uri.t; width : int }
 
+(* TODO: Move to User module *)
 type owner = {
   external_urls : external_urls;
   followers : followers;
@@ -11,7 +12,6 @@ type owner = {
   uri : string; (* TODO: consider making spotify_uri type/module  *)
   display_name : string option; (* nullable *)
 }
-(* TODO: Move to User module *)
 
 type tracks_reference = { href : Uri.t; total : int }
 
@@ -44,8 +44,8 @@ type t = {
 }
 
 module Me : sig
-  val get_playlists : Client.t -> (unit, [ `Msg of string ]) result Lwt.t
   (* Spotify.Playlist.Me.get_playlists *)
+  val get_playlists : Client.t -> (unit, [ `Msg of string ]) result Lwt.t
 end
 
 type get_featured_playlists_options = {
@@ -56,9 +56,9 @@ type get_featured_playlists_options = {
   offset : int option;
 }
 
+(* Spotify.Playlist.get_featured_playlists *)
 val get_featured_playlists :
   Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
-  (unit, [ `Msg of string ]) result Lwt.t
-(* Spotify.Playlist.get_featured_playlists *)
+  (t paginated, [ `Msg of string ]) result Lwt.t

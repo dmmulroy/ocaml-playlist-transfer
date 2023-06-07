@@ -2,6 +2,7 @@ type external_urls = { spotify : string }
 type followers = { total : int }
 type image = { height : int; url : Uri.t; width : int }
 
+(* TODO: Move to User module *)
 type owner = {
   external_urls : external_urls;
   followers : followers;
@@ -11,7 +12,6 @@ type owner = {
   uri : string; (* TODO: consider making spotify_uri type/module  *)
   display_name : string option; (* nullable *)
 }
-(* TODO: Move to User module *)
 
 type tracks_reference = { href : Uri.t; total : int }
 
