@@ -1,12 +1,10 @@
+module Me = struct
+  let get_playlists _client = Lwt.return_ok ()
+end
+
 type external_urls = { spotify : string } [@@deriving yojson]
 type followers = { total : int } [@@deriving yojson]
-
-type image = {
-  height : int;
-  url : Uri.t; [@to_yojson Http.uri_to_yojson] [@of_yojson Http.uri_of_yojson]
-  width : int;
-}
-[@@deriving yojson]
+type image = { height : int; url : Http.Uri.t; width : int } [@@deriving yojson]
 
 (* TODO: Move to User module *)
 type owner = {
@@ -20,27 +18,7 @@ type owner = {
 }
 [@@deriving yojson]
 
-type tracks_reference = {
-  href : Uri.t; [@to_yojson Http.uri_to_yojson] [@of_yojson Http.uri_of_yojson]
-  total : int;
-}
-[@@deriving yojson]
-
-(* TODO: Move this out and make it resusable *)
-type 'a paginated = {
-  href : Uri.t; [@to_yojson Http.uri_to_yojson] [@of_yojson Http.uri_of_yojson]
-  items : 'a list;
-  limit : int;
-  next : Uri.t option;
-      [@to_yojson Http.uri_option_to_yojson]
-      [@of_yojson Http.uri_option_of_yojson]
-  offset : int;
-  previous : Uri.t option;
-      [@to_yojson Http.uri_option_to_yojson]
-      [@of_yojson Http.uri_option_of_yojson]
-  total : int;
-}
-[@@deriving yojson]
+type tracks_reference = { href : Http.Uri.t; total : int } [@@deriving yojson]
 
 type t = {
   collaborative : bool;
@@ -60,9 +38,23 @@ type t = {
 }
 [@@deriving yojson]
 
-module Me = struct
-  let get_playlists _client = Lwt.return_ok ()
-end
+(* TODO: Move this out and make it resusable *)
+type 'a paginated = {
+  href : Http.Uri.t;
+  items : 'a list;
+  limit : int;
+  next : Http.Uri.t option;
+  offset : int;
+  previous : Http.Uri.t option;
+  total : int;
+}
+[@@deriving yojson]
+
+type get_featured_playlists_response = {
+  message : string;
+  playlists : t paginated;
+}
+[@@deriving yojson]
 
 type get_featured_playlists_options = {
   country : string option;
@@ -101,12 +93,13 @@ let get_featured_playlists (client : Client.t) ?(options = None) () =
   match%lwt Http.Client.get ~headers endpoint with
   | res, body
     when Http.Code.is_success @@ Http.Code.code_of_status
-         @@ Http.Response.status res ->
-      let%lwt json = Cohttp_lwt.Body.to_string body in
-      print_endline ("Success: " ^ json);
-      Lwt.return_ok ()
+         @@ Http.Response.status res -> (
+      let%lwt json = Http.Body.to_yojson body in
+      match get_featured_playlists_response_of_yojson json with
+      | Ok paginated -> Lwt.return_ok paginated
+      | Error err -> Lwt.return_error (`Msg err)
+      (* TODO: Figure out what's wrong here  *))
   | res, body ->
       let%lwt json = Http.Body.to_string body in
       let status_code = Http.Response.status res in
-      print_endline ("Error: " ^ Http.Code.string_of_status status_code ^ json);
       Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))

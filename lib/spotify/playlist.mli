@@ -48,6 +48,12 @@ module Me : sig
   val get_playlists : Client.t -> (unit, [ `Msg of string ]) result Lwt.t
 end
 
+type get_featured_playlists_response = {
+  message : string;
+  playlists : t paginated;
+}
+[@@deriving yojson]
+
 type get_featured_playlists_options = {
   country : string option;
   locale : string option;
@@ -61,4 +67,5 @@ val get_featured_playlists :
   Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
-  (unit, [ `Msg of string ]) result Lwt.t (* TODO: return t paginated *)
+  (get_featured_playlists_response, [ `Msg of string ]) result Lwt.t
+(* TODO: return t paginated *)

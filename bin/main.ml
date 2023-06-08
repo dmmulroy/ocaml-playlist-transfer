@@ -10,7 +10,13 @@ let () =
       | Error err -> Lwt.fail_with @@ Spotify.Error.to_human_string err
     in
     let spotify = Spotify.Client.make access_token in
-    let%lwt _ = Spotify.Playlist.get_featured_playlists spotify () in
-    Lwt.return_unit
+    let%lwt result = Spotify.Playlist.get_featured_playlists spotify () in
+    match result with
+    | Ok paginated_playlists ->
+        List.iter
+          (fun playlist -> Printf.printf "%s\n" playlist.Spotify.Playlist.name)
+          paginated_playlists.playlists.items;
+        Lwt.return_unit
+    | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in
   Lwt_main.run main

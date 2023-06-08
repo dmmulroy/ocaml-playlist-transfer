@@ -2,19 +2,21 @@ include Cohttp
 include Cohttp_lwt
 include Cohttp_lwt_unix
 
-let uri_to_yojson uri = `String (Uri.to_string uri)
+module Body = struct
+  include Body
 
-let uri_of_yojson = function
-  | `String s -> Ok (Uri.of_string s)
-  | _ -> Error "Error parsing Uri.t with yojson"
+  let to_yojson body =
+    let%lwt body = Body.to_string body in
+    let json = Yojson.Safe.from_string body in
+    Lwt.return json
+end
 
-let uri_option_to_yojson = function
-  | None -> `Null
-  | Some uri -> uri_to_yojson uri
+module Uri = struct
+  include Uri
 
-let uri_option_of_yojson = function
-  | `Null -> Ok None
-  | json -> (
-      match uri_of_yojson json with
-      | Ok uri -> Ok (Some uri)
-      | Error _ -> Error "Error parsing Uri.t option with yojson")
+  let to_yojson uri = `String (Uri.to_string uri)
+
+  let of_yojson = function
+    | `String s -> Ok (Uri.of_string s)
+    | _ -> Error "Error parsing Uri.t with yojson"
+end
