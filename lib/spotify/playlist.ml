@@ -1,6 +1,12 @@
-type external_urls = { spotify : string }
-type followers = { total : int }
-type image = { height : int; url : Uri.t; width : int }
+type external_urls = { spotify : string } [@@deriving yojson]
+type followers = { total : int } [@@deriving yojson]
+
+type image = {
+  height : int;
+  url : Uri.t; [@to_yojson Http.uri_to_yojson] [@of_yojson Http.uri_of_yojson]
+  width : int;
+}
+[@@deriving yojson]
 
 (* TODO: Move to User module *)
 type owner = {
@@ -9,22 +15,32 @@ type owner = {
   href : string;
   id : string;
   spotify_type : [ `User ];
-  uri : string; (* TODO: consider making spotify_uri type/module  *)
+  uri : string;
   display_name : string option; (* nullable *)
 }
+[@@deriving yojson]
 
-type tracks_reference = { href : Uri.t; total : int }
+type tracks_reference = {
+  href : Uri.t; [@to_yojson Http.uri_to_yojson] [@of_yojson Http.uri_of_yojson]
+  total : int;
+}
+[@@deriving yojson]
 
 (* TODO: Move this out and make it resusable *)
 type 'a paginated = {
-  href : Uri.t;
+  href : Uri.t; [@to_yojson Http.uri_to_yojson] [@of_yojson Http.uri_of_yojson]
   items : 'a list;
   limit : int;
   next : Uri.t option;
+      [@to_yojson Http.uri_option_to_yojson]
+      [@of_yojson Http.uri_option_of_yojson]
   offset : int;
   previous : Uri.t option;
+      [@to_yojson Http.uri_option_to_yojson]
+      [@of_yojson Http.uri_option_of_yojson]
   total : int;
 }
+[@@deriving yojson]
 
 type t = {
   collaborative : bool;
@@ -42,6 +58,7 @@ type t = {
   uri : string;
   spotify_type : [ `Playlist ];
 }
+[@@deriving yojson]
 
 module Me = struct
   let get_playlists _client = Lwt.return_ok ()
