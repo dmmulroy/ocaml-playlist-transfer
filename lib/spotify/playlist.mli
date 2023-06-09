@@ -1,11 +1,16 @@
 type external_urls = { spotify : string }
-type followers = { total : int }
-type image = { height : int; url : Uri.t; width : int }
+type followers = { href : Uri.t option; (* nullable *) total : int }
+
+type image = {
+  height : int option; (* nullable *)
+  url : Uri.t;
+  width : int option (* nullable *);
+}
 
 (* TODO: Move to User module *)
 type owner = {
   external_urls : external_urls;
-  followers : followers;
+  followers : followers option; (* nullable *)
   href : string;
   id : string;
   spotify_type : [ `User ];
@@ -30,13 +35,12 @@ type t = {
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : external_urls;
-  followers : followers;
   href : string;
   id : string;
   images : image list;
   name : string;
   owner : owner;
-  public : bool;
+  public : bool option;
   snapshot_id : string;
   tracks : tracks_reference;
   uri : string;
@@ -52,7 +56,7 @@ type get_featured_playlists_response = {
   message : string;
   playlists : t paginated;
 }
-[@@deriving yojson]
+[@@deriving show]
 
 type get_featured_playlists_options = {
   country : string option;

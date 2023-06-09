@@ -2,41 +2,61 @@ module Me = struct
   let get_playlists _client = Lwt.return_ok ()
 end
 
-type external_urls = { spotify : string } [@@deriving yojson]
-type followers = { total : int } [@@deriving yojson]
-type image = { height : int; url : Http.Uri.t; width : int } [@@deriving yojson]
+type external_urls = { spotify : string } [@@deriving show, yojson]
+
+type followers = { href : Http.Uri.t option; (* nullable *) total : int }
+[@@deriving show, yojson]
+
+type image = {
+  height : int option; (* nullable *)
+  url : Http.Uri.t;
+  width : int option (* nullable *);
+}
+[@@deriving show, yojson]
 
 (* TODO: Move to User module *)
 type owner = {
   external_urls : external_urls;
-  followers : followers;
+  followers : followers option; (* nullable *) [@default None]
   href : string;
   id : string;
   spotify_type : [ `User ];
+      [@key "type"]
+      [@of_yojson
+        fun json ->
+          match json with
+          | `String "user" -> Ok `User
+          | _ -> failwith "Error parsing spotify type"]
   uri : string;
   display_name : string option; (* nullable *)
 }
-[@@deriving yojson]
+[@@deriving show, yojson]
 
-type tracks_reference = { href : Http.Uri.t; total : int } [@@deriving yojson]
+type tracks_reference = { href : Http.Uri.t; total : int }
+[@@deriving show, yojson]
 
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : external_urls;
-  followers : followers;
   href : string;
   id : string;
   images : image list;
   name : string;
   owner : owner;
-  public : bool;
+  public : bool option;
   snapshot_id : string;
   tracks : tracks_reference;
   uri : string;
   spotify_type : [ `Playlist ];
+      [@key "type"]
+      [@of_yojson
+        fun json ->
+          match json with
+          | `String "playlist" -> Ok `Playlist
+          | _ -> failwith "Error parsing spotify type"]
 }
-[@@deriving yojson]
+[@@deriving show, yojson { strict = false }]
 
 (* TODO: Move this out and make it resusable *)
 type 'a paginated = {
@@ -48,13 +68,13 @@ type 'a paginated = {
   previous : Http.Uri.t option;
   total : int;
 }
-[@@deriving yojson]
+[@@deriving show, yojson { strict = false }]
 
 type get_featured_playlists_response = {
   message : string;
   playlists : t paginated;
 }
-[@@deriving yojson]
+[@@deriving show, yojson]
 
 type get_featured_playlists_options = {
   country : string option;
