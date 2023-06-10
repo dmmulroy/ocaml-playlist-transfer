@@ -16,8 +16,10 @@ let () =
     | Ok featured_playlists ->
         print_newline ();
         List.iter
-          (fun playlist -> Printf.printf "%s\n" playlist.Spotify.Playlist.name)
-          featured_playlists.playlists.items;
+          (fun playlist ->
+            let open Spotify.Playlist in
+            Printf.printf "%s\n" playlist.name)
+          featured_playlists;
         Lwt.return_unit
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in

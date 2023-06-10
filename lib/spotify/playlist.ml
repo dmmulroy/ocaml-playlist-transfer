@@ -2,17 +2,17 @@ module Me = struct
   let get_playlists _client = Lwt.return_ok ()
 end
 
-type external_urls = { spotify : string } [@@deriving show, yojson]
+type external_urls = { spotify : string } [@@deriving yojson]
 
 type followers = { href : Http.Uri.t option; (* nullable *) total : int }
-[@@deriving show, yojson]
+[@@deriving yojson]
 
 type image = {
   height : int option; (* nullable *)
   url : Http.Uri.t;
   width : int option (* nullable *);
 }
-[@@deriving show, yojson]
+[@@deriving yojson]
 
 (* TODO: Move to User module *)
 type owner = {
@@ -30,10 +30,9 @@ type owner = {
   uri : string;
   display_name : string option; (* nullable *)
 }
-[@@deriving show, yojson]
+[@@deriving yojson]
 
-type tracks_reference = { href : Http.Uri.t; total : int }
-[@@deriving show, yojson]
+type tracks_reference = { href : Http.Uri.t; total : int } [@@deriving yojson]
 
 type t = {
   collaborative : bool;
@@ -56,25 +55,13 @@ type t = {
           | `String "playlist" -> Ok `Playlist
           | _ -> failwith "Error parsing spotify type"]
 }
-[@@deriving show, yojson { strict = false }]
-
-(* TODO: Move this out and make it resusable *)
-type 'a paginated = {
-  href : Http.Uri.t;
-  items : 'a list;
-  limit : int;
-  next : Http.Uri.t option;
-  offset : int;
-  previous : Http.Uri.t option;
-  total : int;
-}
-[@@deriving show, yojson { strict = false }]
+[@@deriving yojson { strict = false }]
 
 type get_featured_playlists_response = {
   message : string;
-  playlists : t paginated;
+  playlists : t Paginated_response.t;
 }
-[@@deriving show, yojson]
+[@@deriving yojson]
 
 type get_featured_playlists_options = {
   country : string option;
@@ -116,9 +103,9 @@ let get_featured_playlists (client : Client.t) ?(options = None) () =
          @@ Http.Response.status res -> (
       let%lwt json = Http.Body.to_yojson body in
       match get_featured_playlists_response_of_yojson json with
-      | Ok paginated -> Lwt.return_ok paginated
-      | Error err -> Lwt.return_error (`Msg err)
-      (* TODO: Figure out what's wrong here  *))
+      | Ok response ->
+          Lwt.return_ok @@ Paginated_response.get_items response.playlists
+      | Error err -> Lwt.return_error (`Msg err))
   | res, body ->
       let%lwt json = Http.Body.to_string body in
       let status_code = Http.Response.status res in

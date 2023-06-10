@@ -20,16 +20,6 @@ type owner = {
 
 type tracks_reference = { href : Uri.t; total : int }
 
-type 'a paginated = {
-  href : Uri.t;
-  items : 'a list;
-  limit : int;
-  next : Uri.t option;
-  offset : int;
-  previous : Uri.t option;
-  total : int;
-}
-
 (* TODO: Move this out and make it resusable *)
 type t = {
   collaborative : bool;
@@ -52,12 +42,6 @@ module Me : sig
   val get_playlists : Client.t -> (unit, [ `Msg of string ]) result Lwt.t
 end
 
-type get_featured_playlists_response = {
-  message : string;
-  playlists : t paginated;
-}
-[@@deriving show]
-
 type get_featured_playlists_options = {
   country : string option;
   locale : string option;
@@ -71,5 +55,5 @@ val get_featured_playlists :
   Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
-  (get_featured_playlists_response, [ `Msg of string ]) result Lwt.t
+  (t list, [ `Msg of string ]) result Lwt.t
 (* TODO: return t paginated *)
