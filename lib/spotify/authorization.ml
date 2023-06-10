@@ -1,5 +1,3 @@
-[@@@warning "-69"]
-
 module Access_token = struct
   type t = {
     token : string;
