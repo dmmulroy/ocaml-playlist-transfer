@@ -2,47 +2,17 @@ module Me = struct
   let get_playlists _client = Lwt.return_ok ()
 end
 
-type external_urls = { spotify : string } [@@deriving yojson]
-
-type followers = { href : Http.Uri.t option; (* nullable *) total : int }
-[@@deriving yojson]
-
-type image = {
-  height : int option; (* nullable *)
-  url : Http.Uri.t;
-  width : int option (* nullable *);
-}
-[@@deriving yojson]
-
-(* TODO: Move to User module *)
-type owner = {
-  external_urls : external_urls;
-  followers : followers option; (* nullable *) [@default None]
-  href : string;
-  id : string;
-  spotify_type : [ `User ];
-      [@key "type"]
-      [@of_yojson
-        fun json ->
-          match json with
-          | `String "user" -> Ok `User
-          | _ -> failwith "Error parsing spotify type"]
-  uri : string;
-  display_name : string option; (* nullable *)
-}
-[@@deriving yojson]
-
 type tracks_reference = { href : Http.Uri.t; total : int } [@@deriving yojson]
 
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
-  external_urls : external_urls;
+  external_urls : Common.external_urls;
   href : string;
   id : string;
-  images : image list;
+  images : Common.image list;
   name : string;
-  owner : owner;
+  owner : User.t;
   public : bool option;
   snapshot_id : string;
   tracks : tracks_reference;

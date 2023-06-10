@@ -1,35 +1,15 @@
-type external_urls = { spotify : string }
-type followers = { href : Uri.t option; (* nullable *) total : int }
-
-type image = {
-  height : int option; (* nullable *)
-  url : Uri.t;
-  width : int option (* nullable *);
-}
-
-(* TODO: Move to User module *)
-type owner = {
-  external_urls : external_urls;
-  followers : followers option; (* nullable *)
-  href : string;
-  id : string;
-  spotify_type : [ `User ];
-  uri : string; (* TODO: consider making spotify_uri type/module  *)
-  display_name : string option; (* nullable *)
-}
-
 type tracks_reference = { href : Uri.t; total : int }
 
 (* TODO: Move this out and make it resusable *)
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
-  external_urls : external_urls;
+  external_urls : Common.external_urls;
   href : string;
   id : string;
-  images : image list;
+  images : Common.image list;
   name : string;
-  owner : owner;
+  owner : User.t;
   public : bool option;
   snapshot_id : string;
   tracks : tracks_reference;
