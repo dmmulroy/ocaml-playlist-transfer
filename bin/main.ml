@@ -31,17 +31,19 @@ let () =
       | Ok access_token -> Lwt.return access_token
       | Error err -> Lwt.fail_with @@ Spotify.Error.to_human_string err
     in
-
-    (* print_endline @@ Spotify.Authorization.Access_token.show access_token; *)
     let spotify = Spotify.Client.make access_token in
-    let%lwt response = Spotify.Playlist.Me.get_playlists spotify () in
+    let%lwt response =
+      Spotify.Playlist.get_playlist spotify "37i9dQZF1E8Cpk7YYeCshQ" ()
+    in
     match response with
     | Ok featured_playlists ->
-        List.iter
-          (fun playlist ->
-            let open Spotify.Playlist in
-            Printf.printf "%s\n" playlist.name)
-          featured_playlists;
+        let open Spotify.Playlist in
+        Printf.printf "%s\n" featured_playlists.name;
+        (* List.iter *)
+        (*   (fun playlist -> *)
+        (*     let open Spotify.Playlist in *)
+        (*     Printf.printf "%s\n" playlist.name) *)
+        (*   featured_playlists; *)
         Lwt.return_unit
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in

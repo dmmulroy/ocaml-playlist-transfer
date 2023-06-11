@@ -11,26 +11,17 @@ type t = {
   owner : User.t;
   public : bool option;
   snapshot_id : string;
-  tracks : tracks_reference;
+  tracks : [ `Tracks_reference of tracks_reference | `Tracks ];
+  (* tracks : tracks_reference; *)
   uri : string;
   spotify_type : [ `Playlist ];
 }
 
-type get_current_users_playlists_options = {
-  limit : int option;
-  offset : int option;
+type get_playlist_options = {
+  fields : string option;
+  market : string option;
+  additional_types : [ `Track | `Episode ] option;
 }
-
-module Me : sig
-  type get_current_users_playlists_response = t Paginated_response.t
-
-  (* Spotify.Playlist.Me.get_playlists *)
-  val get_playlists :
-    Client.t ->
-    ?options:get_current_users_playlists_options option ->
-    unit ->
-    (t list, [ `Msg of string ]) result Lwt.t
-end
 
 type get_featured_playlists_options = {
   country : string option;
@@ -40,9 +31,31 @@ type get_featured_playlists_options = {
   offset : int option;
 }
 
+type get_current_users_playlists_options = {
+  limit : int option;
+  offset : int option;
+}
+
+(* Spotify.Playlist.get_playlist *)
+val get_playlist :
+  Client.t ->
+  string ->
+  ?options:get_playlist_options option ->
+  unit ->
+  (t, [ `Msg of string ]) result Lwt.t
+
 (* Spotify.Playlist.get_featured_playlists *)
 val get_featured_playlists :
   Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
   (t list, [ `Msg of string ]) result Lwt.t
+
+module Me : sig
+  (* Spotify.Playlist.Me.get_playlists *)
+  val get_playlists :
+    Client.t ->
+    ?options:get_current_users_playlists_options option ->
+    unit ->
+    (t list, [ `Msg of string ]) result Lwt.t
+end
