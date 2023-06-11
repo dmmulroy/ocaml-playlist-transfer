@@ -1,6 +1,5 @@
 type tracks_reference = { href : Uri.t; total : int }
 
-(* TODO: Move this out and make it resusable *)
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
@@ -17,9 +16,20 @@ type t = {
   spotify_type : [ `Playlist ];
 }
 
+type get_current_users_playlists_options = {
+  limit : int option;
+  offset : int option;
+}
+
 module Me : sig
+  type get_current_users_playlists_response = t Paginated_response.t
+
   (* Spotify.Playlist.Me.get_playlists *)
-  val get_playlists : Client.t -> (unit, [ `Msg of string ]) result Lwt.t
+  val get_playlists :
+    Client.t ->
+    ?options:get_current_users_playlists_options option ->
+    unit ->
+    (t list, [ `Msg of string ]) result Lwt.t
 end
 
 type get_featured_playlists_options = {
@@ -36,4 +46,3 @@ val get_featured_playlists :
   ?options:get_featured_playlists_options option ->
   unit ->
   (t list, [ `Msg of string ]) result Lwt.t
-(* TODO: return t paginated *)

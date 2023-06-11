@@ -1,7 +1,3 @@
-module Me = struct
-  let get_playlists _client = Lwt.return_ok ()
-end
-
 type tracks_reference = { href : Http.Uri.t; total : int } [@@deriving yojson]
 
 type t = {
@@ -27,12 +23,6 @@ type t = {
 }
 [@@deriving yojson { strict = false }]
 
-type get_featured_playlists_response = {
-  message : string;
-  playlists : t Paginated_response.t;
-}
-[@@deriving yojson]
-
 type get_featured_playlists_options = {
   country : string option;
   locale : string option;
@@ -41,20 +31,65 @@ type get_featured_playlists_options = {
   offset : int option;
 }
 
+type get_current_users_playlists_options = {
+  limit : int option;
+  offset : int option;
+}
+
 let query_params_of_request_options = function
-  | `Get_featured_playlists -> (
-      function
-      | None -> []
-      | Some options ->
-          List.filter_map
-            (fun (key, value) -> Option.map (fun value -> (key, value)) value)
-            [
-              ("country", options.country);
-              ("locale", options.locale);
-              ("timestamp", options.timestamp);
-              ("limit", Option.map string_of_int options.limit);
-              ("offset", Option.map string_of_int options.offset);
-            ])
+  | `Get_featured_playlists (Some options) ->
+      List.filter_map
+        (fun (key, value) -> Option.map (fun value -> (key, value)) value)
+        [
+          ("country", options.country);
+          ("locale", options.locale);
+          ("timestamp", options.timestamp);
+          ("limit", Option.map string_of_int options.limit);
+          ("offset", Option.map string_of_int options.offset);
+        ]
+  | `Get_current_users_playlists_options (Some options) ->
+      List.filter_map
+        (fun (key, value) -> Option.map (fun value -> (key, value)) value)
+        [
+          ("limit", Option.map string_of_int options.limit);
+          ("offset", Option.map string_of_int options.offset);
+        ]
+  | _ -> []
+
+module Me = struct
+  type get_current_users_playlists_response = t Paginated_response.t
+  [@@deriving yojson]
+
+  let get_playlists (client : Client.t) ?(options = None) () =
+    let base_endpoint =
+      Uri.of_string "https://api.spotify.com/v1/me/playlists"
+    in
+    let headers =
+      Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
+    in
+    let query_params =
+      query_params_of_request_options @@ `Get_current_users_playlists options
+    in
+    let endpoint = Uri.add_query_params' base_endpoint query_params in
+    match%lwt Http.Client.get ~headers endpoint with
+    | res, body
+      when Http.Code.is_success @@ Http.Code.code_of_status
+           @@ Http.Response.status res -> (
+        let%lwt json = Http.Body.to_yojson body in
+        match get_current_users_playlists_response_of_yojson json with
+        | Ok response -> Lwt.return_ok @@ Paginated_response.get_items response
+        | Error err -> Lwt.return_error (`Msg err))
+    | res, body ->
+        let%lwt json = Http.Body.to_string body in
+        let status_code = Http.Response.status res in
+        Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
+end
+
+type get_featured_playlists_response = {
+  message : string;
+  playlists : t Paginated_response.t;
+}
+[@@deriving yojson]
 
 let get_featured_playlists (client : Client.t) ?(options = None) () =
   let base_endpoint =
@@ -64,7 +99,7 @@ let get_featured_playlists (client : Client.t) ?(options = None) () =
     Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
   in
   let query_params =
-    query_params_of_request_options `Get_featured_playlists options
+    query_params_of_request_options @@ `Get_featured_playlists options
   in
   let endpoint = Uri.add_query_params' base_endpoint query_params in
   match%lwt Http.Client.get ~headers endpoint with

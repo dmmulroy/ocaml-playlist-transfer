@@ -1,6 +1,7 @@
 include Cohttp
 include Cohttp_lwt
 include Cohttp_lwt_unix
+module Redirect_server = Redirect_server
 
 module Body = struct
   include Body
