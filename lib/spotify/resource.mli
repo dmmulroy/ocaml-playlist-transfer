@@ -1,5 +1,5 @@
-type t = [ `Playlist | `Track | `User ]
-type reference = { href : Http.Uri.t option; total : int }
+type t = [ `Playlist | `Track | `User ] [@@deriving yojson]
+type reference = { href : Http.Uri.t option; total : int } [@@deriving yojson]
 
 val playlist_resource_of_yojson :
   Yojson.Safe.t -> ([ `Playlist ], string) result

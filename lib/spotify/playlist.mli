@@ -2,7 +2,7 @@ type t = {
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
-  followers : Common.resource_reference option; (* nullable *)
+  followers : Resource.reference option; (* nullable *)
   href : string;
   id : string;
   images : Common.image list;

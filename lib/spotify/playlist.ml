@@ -2,7 +2,7 @@ type t = {
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
-  followers : Common.resource_reference option; [@default None] (* nullable *)
+  followers : Resource.reference option; [@default None] (* nullable *)
   href : string;
   id : string;
   images : Common.image list;
@@ -55,8 +55,8 @@ let query_params_of_request_options = function
           ("market", options.market);
           ( "additional_types",
             Option.map
-              (fun spotify_type ->
-                match spotify_type with
+              (fun resource_type ->
+                match resource_type with
                 | `Track -> "track"
                 | `Episode -> "episode")
               options.additional_types );
