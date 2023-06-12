@@ -76,4 +76,4 @@ let of_string = function
   | "user-manage-entitlements" -> `User_manage_entitlements
   | "user-manage-partner" -> `User_manage_partner
   | "user-create-partner" -> `User_create_partner
-  | _ -> failwith "Unknown scope"
+  | _ -> failwith "Invalid scope"

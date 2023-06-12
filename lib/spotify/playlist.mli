@@ -1,9 +1,8 @@
-type tracks_reference = { href : Uri.t; total : int }
-
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
+  followers : Common.resource_reference option; (* nullable *)
   href : string;
   id : string;
   images : Common.image list;
@@ -11,10 +10,9 @@ type t = {
   owner : User.t;
   public : bool option;
   snapshot_id : string;
-  tracks : [ `Tracks_reference of tracks_reference | `Tracks ];
-  (* tracks : tracks_reference; *)
+  (* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
   uri : string;
-  spotify_type : [ `Playlist ];
+  resource_type : [ `Playlist ];
 }
 
 type get_playlist_options = {

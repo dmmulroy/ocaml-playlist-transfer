@@ -36,14 +36,10 @@ let () =
       Spotify.Playlist.get_playlist spotify "37i9dQZF1E8Cpk7YYeCshQ" ()
     in
     match response with
-    | Ok featured_playlists ->
+    | Ok playlist ->
         let open Spotify.Playlist in
-        Printf.printf "%s\n" featured_playlists.name;
-        (* List.iter *)
-        (*   (fun playlist -> *)
-        (*     let open Spotify.Playlist in *)
-        (*     Printf.printf "%s\n" playlist.name) *)
-        (*   featured_playlists; *)
+        Printf.printf "%s\n"
+        @@ Spotify.Resource.to_string playlist.resource_type;
         Lwt.return_unit
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in

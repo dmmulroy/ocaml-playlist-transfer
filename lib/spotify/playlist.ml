@@ -1,9 +1,8 @@
-type tracks_reference = { href : Http.Uri.t; total : int } [@@deriving yojson]
-
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
+  followers : Common.resource_reference option; [@default None] (* nullable *)
   href : string;
   id : string;
   images : Common.image list;
@@ -11,22 +10,20 @@ type t = {
   owner : User.t;
   public : bool option;
   snapshot_id : string;
-  tracks : [ `Tracks_reference of tracks_reference | `Tracks ];
-      [@of_yojson
-        fun json ->
-          match json with
-          | `Assoc [ ("href", `String href); ("total", `Int total) ] ->
-              Ok (`Tracks_reference { href = Uri.of_string href; total })
-          | _ -> Ok `Tracks]
+  (* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
+  (*     [@of_yojson *)
+  (*       fun json -> *)
+  (*         let open Common in *)
+  (*         match json with *)
+  (*         | `Assoc [ ("href", `String href); ("total", `Int total) ] -> *)
+  (*             Ok (`Tracks_reference { href = Http.Uri.of_string href; total }) *)
+  (*         | _ -> Ok `Tracks] *)
   (* tracks : tracks_reference; *)
   uri : string;
-  spotify_type : [ `Playlist ];
+  resource_type : [ `Playlist ];
       [@key "type"]
-      [@of_yojson
-        fun json ->
-          match json with
-          | `String "playlist" -> Ok `Playlist
-          | _ -> failwith "Error parsing spotify type"]
+      [@of_yojson Resource.playlist_resource_of_yojson]
+      [@to_yojson Resource.playlist_resource_to_yojson]
 }
 [@@deriving yojson { strict = false }]
 

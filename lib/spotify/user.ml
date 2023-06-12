@@ -1,9 +1,6 @@
-type followers = { href : Http.Uri.t option; (* nullable *) total : int }
-[@@deriving yojson]
-
 type t = {
   external_urls : Common.external_urls;
-  followers : followers option; (* nullable *) [@default None]
+  followers : Common.resource_reference option; (* nullable *) [@default None]
   href : string;
   id : string;
   spotify_type : [ `User ];
