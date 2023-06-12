@@ -29,7 +29,7 @@ let to_string = function
   | `Track -> "track"
   | `User -> "user"
 
-type 'a resource_type =
+type _ resource_type =
   | Playlist : [ `Playlist ] resource_type
   | Track : [ `Track ] resource_type
   | User : [ `User ] resource_type
