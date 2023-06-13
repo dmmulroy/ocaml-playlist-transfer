@@ -1,3 +1,23 @@
+let tracks_of_yojson json =
+  match Yojson.Safe.Util.member "items" json with
+  | exception Yojson.Safe.Util.Type_error _ -> (
+      match
+        ( Yojson.Safe.Util.member "href" json,
+          Yojson.Safe.Util.member "total" json )
+      with
+      | `String _, `Int _ -> (
+          match Resource_type.reference_of_yojson json with
+          | Error _ ->
+              Error
+                "Playlist tracks reference response is missing required fields"
+          | Ok reference -> Ok (`Resource_reference reference))
+      | _ ->
+          Error "Playlist tracks reference response is missing required fields")
+  | _ -> (
+      match Paginated_response.of_yojson Track.of_yojson json with
+      | Error _ -> Error "Playlist tracks response is missing required fields"
+      | Ok tracks -> Ok (`Tracks tracks))
+
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
@@ -14,19 +34,13 @@ type t = {
       [@of_yojson Resource_type.playlist_of_yojson]
       [@to_yojson Resource_type.playlist_to_yojson]
   snapshot_id : string;
+  tracks :
+    [ `Resource_reference of Resource_type.reference
+    | `Tracks of Track.t Paginated_response.t ];
+      [@of_yojson tracks_of_yojson]
   uri : string;
 }
 [@@deriving yojson { strict = false }]
-
-(* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
-(*     [@of_yojson *)
-(*       fun json -> *)
-(*         let open Common in *)
-(*         match json with *)
-(*         | `Assoc [ ("href", `String href); ("total", `Int total) ] -> *)
-(*             Ok (`Tracks_reference { href = Http.Uri.of_string href; total }) *)
-(*         | _ -> Ok `Tracks] *)
-(* tracks : tracks_reference; *)
 
 type get_playlist_options = {
   fields : string option;

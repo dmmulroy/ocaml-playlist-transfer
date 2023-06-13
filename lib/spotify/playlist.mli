@@ -12,6 +12,9 @@ type t = {
   public : bool option;
   resource_type : [ `Playlist ];
   snapshot_id : string;
+  tracks :
+    [ `Resource_reference of Resource_type.reference
+    | `Tracks of Track.t Paginated_response.t ];
   uri : string;
 }
 

@@ -1,3 +1,3 @@
-type 'a t [@@deriving show, yojson { strict = false }]
+type 'a t [@@deriving show, yojson]
 
 val get_items : 'a t -> 'a list

@@ -7,6 +7,6 @@ type 'a t = {
   previous : Http.Uri.t option;
   total : int;
 }
-[@@deriving show, yojson { strict = false }]
+[@@deriving show, yojson]
 
 let get_items t = t.items
