@@ -15,7 +15,7 @@ type t = {
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
   followers : Resource_type.reference option; [@default None] (* nullable *)
-  href : string;
+  href : Http.Uri.t;
   id : string;
   images : Common.image list;
   name : string;
