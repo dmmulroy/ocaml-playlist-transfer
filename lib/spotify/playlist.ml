@@ -1,18 +1,10 @@
 let tracks_of_yojson json =
   match Yojson.Safe.Util.member "items" json with
   | exception Yojson.Safe.Util.Type_error _ -> (
-      match
-        ( Yojson.Safe.Util.member "href" json,
-          Yojson.Safe.Util.member "total" json )
-      with
-      | `String _, `Int _ -> (
-          match Resource_type.reference_of_yojson json with
-          | Error _ ->
-              Error
-                "Playlist tracks reference response is missing required fields"
-          | Ok reference -> Ok (`Resource_reference reference))
-      | _ ->
-          Error "Playlist tracks reference response is missing required fields")
+      match Resource_type.reference_of_yojson json with
+      | Error _ ->
+          Error "Playlist tracks reference response is missing required fields"
+      | Ok reference -> Ok (`Resource_reference reference))
   | _ -> (
       match Paginated_response.of_yojson Track.of_yojson json with
       | Error _ -> Error "Playlist tracks response is missing required fields"
