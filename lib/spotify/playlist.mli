@@ -1,18 +1,18 @@
 type t = {
+  (* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
-  followers : Resource.reference option; (* nullable *)
+  followers : Resource_type.reference option; (* nullable *)
   href : string;
   id : string;
   images : Common.image list;
   name : string;
   owner : User.t;
   public : bool option;
-  snapshot_id : string;
-  (* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
-  uri : string;
   resource_type : [ `Playlist ];
+  snapshot_id : string;
+  uri : string;
 }
 
 type get_playlist_options = {

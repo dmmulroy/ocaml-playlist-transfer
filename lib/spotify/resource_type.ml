@@ -47,11 +47,11 @@ let make_resource_to_yojson :
   | Track, `Track -> `String "track"
   | User, `User -> `String "user"
 
-let episode_resource_of_yojson = make_resource_of_yojson Episode
-let episode_resource_to_yojson = make_resource_to_yojson Episode
-let playlist_resource_of_yojson = make_resource_of_yojson Playlist
-let playlist_resource_to_yojson = make_resource_to_yojson Playlist
-let track_resource_of_yojson = make_resource_of_yojson Track
-let track_resource_to_yojson = make_resource_to_yojson Track
-let user_resource_of_yojson = make_resource_of_yojson User
-let user_resource_to_yojson = make_resource_to_yojson User
+let episode_of_yojson = make_resource_of_yojson Episode
+let episode_to_yojson = make_resource_to_yojson Episode
+let playlist_of_yojson = make_resource_of_yojson Playlist
+let playlist_to_yojson = make_resource_to_yojson Playlist
+let track_of_yojson = make_resource_of_yojson Track
+let track_to_yojson = make_resource_to_yojson Track
+let user_of_yojson = make_resource_of_yojson User
+let user_to_yojson = make_resource_to_yojson User

@@ -2,19 +2,19 @@ type t = {
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
-  followers : Resource.reference option; [@default None] (* nullable *)
+  followers : Resource_type.reference option; [@default None] (* nullable *)
   href : string;
   id : string;
   images : Common.image list;
   name : string;
   owner : User.t;
   public : bool option;
-  snapshot_id : string;
-  uri : string;
   resource_type : [ `Playlist ];
       [@key "type"]
-      [@of_yojson Resource.playlist_resource_of_yojson]
-      [@to_yojson Resource.playlist_resource_to_yojson]
+      [@of_yojson Resource_type.playlist_of_yojson]
+      [@to_yojson Resource_type.playlist_to_yojson]
+  snapshot_id : string;
+  uri : string;
 }
 [@@deriving yojson { strict = false }]
 

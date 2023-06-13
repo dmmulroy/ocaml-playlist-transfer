@@ -39,7 +39,7 @@ let () =
     | Ok playlist ->
         let open Spotify.Playlist in
         Printf.printf "%s\n"
-        @@ Spotify.Resource.to_string playlist.resource_type;
+        @@ Spotify.Resource_type.to_string playlist.resource_type;
         Lwt.return_unit
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in
