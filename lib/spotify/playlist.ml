@@ -10,15 +10,6 @@ type t = {
   owner : User.t;
   public : bool option;
   snapshot_id : string;
-  (* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
-  (*     [@of_yojson *)
-  (*       fun json -> *)
-  (*         let open Common in *)
-  (*         match json with *)
-  (*         | `Assoc [ ("href", `String href); ("total", `Int total) ] -> *)
-  (*             Ok (`Tracks_reference { href = Http.Uri.of_string href; total }) *)
-  (*         | _ -> Ok `Tracks] *)
-  (* tracks : tracks_reference; *)
   uri : string;
   resource_type : [ `Playlist ];
       [@key "type"]
@@ -26,6 +17,16 @@ type t = {
       [@to_yojson Resource.playlist_resource_to_yojson]
 }
 [@@deriving yojson { strict = false }]
+
+(* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
+(*     [@of_yojson *)
+(*       fun json -> *)
+(*         let open Common in *)
+(*         match json with *)
+(*         | `Assoc [ ("href", `String href); ("total", `Int total) ] -> *)
+(*             Ok (`Tracks_reference { href = Http.Uri.of_string href; total }) *)
+(*         | _ -> Ok `Tracks] *)
+(* tracks : tracks_reference; *)
 
 type get_playlist_options = {
   fields : string option;
