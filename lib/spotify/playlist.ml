@@ -87,8 +87,8 @@ let query_params_of_request_options = function
         ]
   | _ -> []
 
-let get_playlist (client : Client.t) (playlist_id : string) ?(options = None) ()
-    =
+let get_playlist ~(client : Client.t) (playlist_id : string) ?(options = None)
+    () =
   let base_endpoint =
     Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ playlist_id
   in
@@ -116,7 +116,7 @@ type get_featured_playlists_response = {
 }
 [@@deriving yojson]
 
-let get_featured_playlists (client : Client.t) ?(options = None) () =
+let get_featured_playlists ~(client : Client.t) ?(options = None) () =
   let base_endpoint =
     Uri.of_string "https://api.spotify.com/v1/browse/featured-playlists"
   in
@@ -145,7 +145,7 @@ module Me = struct
   type get_current_users_playlists_response = t Paginated_response.t
   [@@deriving yojson]
 
-  let get_playlists (client : Client.t) ?(options = None) () =
+  let get_playlists ~(client : Client.t) ?(options = None) () =
     let base_endpoint =
       Uri.of_string "https://api.spotify.com/v1/me/playlists"
     in

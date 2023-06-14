@@ -1,5 +1,4 @@
 type t = {
-  (* tracks : [ `Tracks_reference of Common.resource_reference | `Tracks ]; *)
   collaborative : bool;
   description : string option; (* nullable *)
   external_urls : Common.external_urls;
@@ -39,7 +38,7 @@ type get_current_users_playlists_options = {
 
 (* Spotify.Playlist.get_playlist *)
 val get_playlist :
-  Client.t ->
+  client:Client.t ->
   string ->
   ?options:get_playlist_options option ->
   unit ->
@@ -47,7 +46,7 @@ val get_playlist :
 
 (* Spotify.Playlist.get_featured_playlists *)
 val get_featured_playlists :
-  Client.t ->
+  client:Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
   (t list, [ `Msg of string ]) result Lwt.t
@@ -55,7 +54,7 @@ val get_featured_playlists :
 module Me : sig
   (* Spotify.Playlist.Me.get_playlists *)
   val get_playlists :
-    Client.t ->
+    client:Client.t ->
     ?options:get_current_users_playlists_options option ->
     unit ->
     (t list, [ `Msg of string ]) result Lwt.t

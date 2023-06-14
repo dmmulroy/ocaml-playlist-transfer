@@ -31,9 +31,9 @@ let () =
       | Ok access_token -> Lwt.return access_token
       | Error err -> Lwt.fail_with @@ Spotify.Error.to_human_string err
     in
-    let spotify = Spotify.Client.make access_token in
+    let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify.Playlist.get_playlist spotify "37i9dQZF1E8Cpk7YYeCshQ" ()
+      Spotify.Playlist.get_playlist ~client "37i9dQZF1E8Cpk7YYeCshQ" ()
     in
     match response with
     | Ok playlist ->
