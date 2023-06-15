@@ -17,7 +17,7 @@ end
 type authorization_parameters = {
   client_id : string;
   client_secret : string;
-  redirect_uri : Uri.t;
+  redirect_uri : Http.Uri.t;
   state : string;
   scopes : Scope.t list option;
   show_dialog : bool;
@@ -26,7 +26,7 @@ type authorization_parameters = {
 type authorization_code_grant = {
   client_id : string;
   client_secret : string;
-  redirect_uri : Uri.t;
+  redirect_uri : Http.Uri.t;
   code : string;
 }
 
@@ -42,7 +42,7 @@ type authorization_response = { access_token : string; expires_in : float }
 type error =
   [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
 
-let token_endpoint = Uri.of_string "https://accounts.spotify.com/api/token"
+let token_endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
 let fetch_with_client_credentials_grant credentials =
   let body =
@@ -85,7 +85,8 @@ let fetch_with_authorization_code_grant authorization_code_grant =
     Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
       [
         ("code", [ authorization_code_grant.code ]);
-        ("redirect_uri", [ Uri.to_string authorization_code_grant.redirect_uri ]);
+        ( "redirect_uri",
+          [ Http.Uri.to_string authorization_code_grant.redirect_uri ] );
         ("grant_type", [ "authorization_code" ]);
       ]
   in
@@ -125,14 +126,14 @@ let fetch_access_token = function
   | `Authorization_code grant -> fetch_with_authorization_code_grant grant
   | `Client_credentials grant -> fetch_with_client_credentials_grant grant
 
-let authorize_uri = Uri.of_string "https://accounts.spotify.com/authorize"
+let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
 
 let make_authorization_url (params : authorization_parameters) =
   let query_params =
     [
       ("client_id", params.client_id);
       ("response_type", "code");
-      ("redirect_uri", Uri.to_string params.redirect_uri);
+      ("redirect_uri", Http.Uri.to_string params.redirect_uri);
       ("state", params.state);
       ("show_dialog", string_of_bool params.show_dialog);
     ]
@@ -143,6 +144,6 @@ let make_authorization_url (params : authorization_parameters) =
         String.concat " " @@ List.map Scope.to_string scope_list)
       params.scopes
   in
-  Uri.with_query' authorize_uri
+  Http.Uri.with_query' authorize_uri
     (query_params
     @ match scope with Some scope -> [ ("scope", scope) ] | None -> [])

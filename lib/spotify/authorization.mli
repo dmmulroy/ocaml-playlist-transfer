@@ -17,7 +17,7 @@ end
 type authorization_parameters = {
   client_id : string;
   client_secret : string;
-  redirect_uri : Uri.t;
+  redirect_uri : Http.Uri.t;
   state : string;
   scopes : Scope.t list option;
   show_dialog : bool;
@@ -26,7 +26,7 @@ type authorization_parameters = {
 type authorization_code_grant = {
   client_id : string;
   client_secret : string;
-  redirect_uri : Uri.t;
+  redirect_uri : Http.Uri.t;
   code : string;
 }
 
@@ -40,4 +40,4 @@ type error =
   [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
 
 val fetch_access_token : grant -> (Access_token.t, error) result Lwt.t
-val make_authorization_url : authorization_parameters -> Uri.t
+val make_authorization_url : authorization_parameters -> Http.Uri.t

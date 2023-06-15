@@ -1,12 +1,3 @@
-type t_old = {
-  added_at : string;
-  added_by : User.t;
-  external_urls : Common.external_urls;
-  followers : Resource_type.reference;
-  is_local : bool;
-}
-[@@deriving yojson { strict = false }]
-
 type t = {
   album : unit; (* TODO *)
   artists : unit list; (* TODO *)
@@ -30,4 +21,4 @@ type t = {
   track_number : int;
   uri : string;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]

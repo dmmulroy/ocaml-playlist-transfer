@@ -90,13 +90,13 @@ let query_params_of_request_options = function
 let get_playlist ~(client : Client.t) (playlist_id : string) ?(options = None)
     () =
   let base_endpoint =
-    Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ playlist_id
+    Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ playlist_id
   in
   let headers =
     Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
   in
   let query_params = query_params_of_request_options @@ `Get_playlist options in
-  let endpoint = Uri.add_query_params' base_endpoint query_params in
+  let endpoint = Http.Uri.add_query_params' base_endpoint query_params in
   match%lwt Http.Client.get ~headers endpoint with
   | res, body
     when Http.Code.is_success @@ Http.Code.code_of_status
@@ -118,7 +118,7 @@ type get_featured_playlists_response = {
 
 let get_featured_playlists ~(client : Client.t) ?(options = None) () =
   let base_endpoint =
-    Uri.of_string "https://api.spotify.com/v1/browse/featured-playlists"
+    Http.Uri.of_string "https://api.spotify.com/v1/browse/featured-playlists"
   in
   let headers =
     Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
@@ -126,7 +126,7 @@ let get_featured_playlists ~(client : Client.t) ?(options = None) () =
   let query_params =
     query_params_of_request_options @@ `Get_featured_playlists options
   in
-  let endpoint = Uri.add_query_params' base_endpoint query_params in
+  let endpoint = Http.Uri.add_query_params' base_endpoint query_params in
   match%lwt Http.Client.get ~headers endpoint with
   | res, body
     when Http.Code.is_success @@ Http.Code.code_of_status
@@ -147,7 +147,7 @@ module Me = struct
 
   let get_playlists ~(client : Client.t) ?(options = None) () =
     let base_endpoint =
-      Uri.of_string "https://api.spotify.com/v1/me/playlists"
+      Http.Uri.of_string "https://api.spotify.com/v1/me/playlists"
     in
     let headers =
       Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
@@ -155,7 +155,7 @@ module Me = struct
     let query_params =
       query_params_of_request_options @@ `Get_current_users_playlists options
     in
-    let endpoint = Uri.add_query_params' base_endpoint query_params in
+    let endpoint = Http.Uri.add_query_params' base_endpoint query_params in
     match%lwt Http.Client.get ~headers endpoint with
     | res, body
       when Http.Code.is_success @@ Http.Code.code_of_status
