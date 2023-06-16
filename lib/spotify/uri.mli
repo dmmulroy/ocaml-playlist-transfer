@@ -1,4 +1,4 @@
-type t
+type t [@@deriving yojson]
 
-val of_string : string -> (t, [ `Msg of string ]) result
+val of_string : string -> t
 val to_string : t -> string

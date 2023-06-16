@@ -1,6 +1,6 @@
 type t = {
-  album : unit; (* TODO *)
-  artists : unit list; (* TODO *)
+  (* album : unit; (* TODO *) *)
+  (* artists : unit list; (* TODO *) *)
   available_markets : string list;
   disc_number : int;
   duration_ms : int;
@@ -9,8 +9,8 @@ type t = {
   href : Http.Uri.t;
   id : string;
   is_local : bool;
-  is_playable : bool;
-  linked_from : unit option; (* TODO *)
+  is_playable : bool option; [@default None] (* nullable *)
+  (* linked_from : unit option; (* TODO *) *)
   name : string;
   popularity : int;
   preview_url : string option; (* nullable *)
@@ -21,4 +21,4 @@ type t = {
   track_number : int;
   uri : string;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]

@@ -7,7 +7,7 @@ let of_string = function
   | "playlist" -> `Playlist
   | "track" -> `Track
   | "user" -> `User
-  | _ -> failwith "Invalid resource type"
+  | str -> failwith @@ "Invalid resource type: " ^ str
 
 let to_string = function
   | `Album -> "album"

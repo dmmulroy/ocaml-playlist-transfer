@@ -8,6 +8,6 @@ type t = {
       [@of_yojson Resource_type.user_of_yojson]
       [@to_yojson Resource_type.user_to_yojson]
   uri : string;
-  display_name : string option; (* nullable *)
+  display_name : string option; [@default None] (* nullable *)
 }
 [@@deriving yojson]

@@ -33,14 +33,20 @@ let () =
     in
     let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify.Playlist.get_playlist ~client "37i9dQZF1E8Cpk7YYeCshQ" ()
+      Spotify.Playlist.get_playlist ~client "2t0Yxn35CNGdT7yV9wr4cr" ()
     in
     match response with
-    | Ok playlist ->
+    | Ok playlist -> (
         let open Spotify.Playlist in
-        Printf.printf "%s\n"
-        @@ Spotify.Resource_type.to_string playlist.resource_type;
-        Lwt.return_unit
+        print_endline @@ "Playlist: " ^ playlist.name;
+        match playlist.tracks with
+        | `Tracks paginated_tracks ->
+            Lwt.return
+            @@ List.iter (fun playlist_track ->
+                   let open Spotify.Track in
+                   print_endline playlist_track.track.name)
+            @@ Spotify.Paginated_response.get_items paginated_tracks
+        | _ -> Lwt.return_unit)
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in
   Lwt_main.run main

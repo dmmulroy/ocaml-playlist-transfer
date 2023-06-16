@@ -1,13 +1,25 @@
+type playlist_track = {
+  added_at : string;
+  added_by : User.t;
+  is_local : bool;
+  track : Track.t;
+}
+[@@deriving yojson { strict = false }]
+
 let tracks_of_yojson json =
   match Yojson.Safe.Util.member "items" json with
   | exception Yojson.Safe.Util.Type_error _ -> (
       match Resource_type.reference_of_yojson json with
-      | Error _ ->
-          Error "Playlist tracks reference response is missing required fields"
+      | Error err ->
+          Error
+            ("Playlist tracks reference response is missing required fields"
+           ^ err)
       | Ok reference -> Ok (`Resource_reference reference))
   | _ -> (
-      match Paginated_response.of_yojson Track.of_yojson json with
-      | Error _ -> Error "Playlist tracks response is missing required fields"
+      match Paginated_response.of_yojson playlist_track_of_yojson json with
+      | Error err ->
+          print_endline @@ Yojson.Safe.to_string json;
+          Error ("Playlist tracks response is missing required fields: " ^ err)
       | Ok tracks -> Ok (`Tracks tracks))
 
 type t = {
@@ -28,9 +40,9 @@ type t = {
   snapshot_id : string;
   tracks :
     [ `Resource_reference of Resource_type.reference
-    | `Tracks of Track.t Paginated_response.t ];
+    | `Tracks of playlist_track Paginated_response.t ];
       [@of_yojson tracks_of_yojson]
-  uri : string;
+  uri : Uri.t;
 }
 [@@deriving yojson { strict = false }]
 

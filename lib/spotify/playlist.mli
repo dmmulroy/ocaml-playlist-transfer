@@ -1,3 +1,11 @@
+type playlist_track = {
+  added_at : string;
+  added_by : User.t;
+  is_local : bool;
+  track : Track.t;
+}
+[@@deriving yojson]
+
 type t = {
   collaborative : bool;
   description : string option; (* nullable *)
@@ -13,8 +21,8 @@ type t = {
   snapshot_id : string;
   tracks :
     [ `Resource_reference of Resource_type.reference
-    | `Tracks of Track.t Paginated_response.t ];
-  uri : string;
+    | `Tracks of playlist_track Paginated_response.t ];
+  uri : Uri.t;
 }
 
 type get_playlist_options = {
