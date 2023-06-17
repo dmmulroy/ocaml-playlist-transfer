@@ -25,14 +25,13 @@ type t = {
   uri : Uri.t;
 }
 
-type create_playlist_options = {
+type create_options = {
   public : bool option;
   collaborative : bool option;
   description : string option;
 }
-[@@derive yojson]
 
-type get_playlist_options = {
+type get_by_id_options = {
   fields : string option;
   market : string option;
   additional_types : [ `Track | `Episode ] option;
@@ -51,24 +50,25 @@ type get_current_users_playlists_options = {
   offset : int option;
 }
 
-val create_playlist :
+(* Spotify.Playlist.create*)
+val create :
   client:Client.t ->
   user_id:string ->
   name:string ->
-  ?options:create_playlist_options option ->
+  ?options:create_options option ->
   unit ->
   (t, [ `Msg of string ]) result Lwt.t
 
-(* Spotify.Playlist.get_playlist *)
-val get_playlist :
+(* Spotify.Playlist.get_by_id *)
+val get_by_id :
   client:Client.t ->
   string ->
-  ?options:get_playlist_options option ->
+  ?options:get_by_id_options option ->
   unit ->
   (t, [ `Msg of string ]) result Lwt.t
 
-(* Spotify.Playlist.get_featured_playlists *)
-val get_featured_playlists :
+(* Spotify.Playlist.get_featured  *)
+val get_featured :
   client:Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
@@ -76,7 +76,7 @@ val get_featured_playlists :
 
 module Me : sig
   (* Spotify.Playlist.Me.get_playlists *)
-  val get_playlists :
+  val get_all :
     client:Client.t ->
     ?options:get_current_users_playlists_options option ->
     unit ->

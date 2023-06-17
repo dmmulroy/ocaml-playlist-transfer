@@ -39,8 +39,7 @@ let () =
     in
     let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify.Playlist.create_playlist ~client ~user_id:"dmmulroy"
-        ~name:"test-0" ()
+      Spotify.Playlist.create ~client ~user_id:"dmmulroy" ~name:"test-0" ()
     in
 
     (* let%lwt response = *)

@@ -46,13 +46,13 @@ type t = {
 }
 [@@deriving yojson { strict = false }]
 
-type create_playlist_options = {
+type create_options = {
   public : bool option;
   collaborative : bool option;
   description : string option;
 }
 
-type create_playlist_request = {
+type create_request = {
   name : string;
   public : bool option;
   collaborative : bool option;
@@ -60,7 +60,7 @@ type create_playlist_request = {
 }
 [@@deriving yojson]
 
-type get_playlist_options = {
+type get_by_id_options = {
   fields : string option;
   market : string option;
   additional_types : [ `Track | `Episode ] option;
@@ -113,8 +113,8 @@ let query_params_of_request_options = function
         ]
   | _ -> []
 
-let create_playlist ~(client : Client.t) ~(user_id : string) ~(name : string)
-    ?(options : create_playlist_options option = None) () =
+let create ~(client : Client.t) ~(user_id : string) ~(name : string)
+    ?(options : create_options option = None) () =
   let endpoint =
     Http.Uri.of_string @@ "https://api.spotify.com/v1/users/" ^ user_id
     ^ "/playlists"
@@ -127,7 +127,7 @@ let create_playlist ~(client : Client.t) ~(user_id : string) ~(name : string)
       ]
   in
   let body =
-    Http.Body.of_yojson @@ create_playlist_request_to_yojson
+    Http.Body.of_yojson @@ create_request_to_yojson
     @@
     match options with
     | Some { public; collaborative; description } ->
@@ -147,8 +147,7 @@ let create_playlist ~(client : Client.t) ~(user_id : string) ~(name : string)
       let status_code = Http.Response.status res in
       Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 
-let get_playlist ~(client : Client.t) (playlist_id : string) ?(options = None)
-    () =
+let get_by_id ~(client : Client.t) (playlist_id : string) ?(options = None) () =
   let base_endpoint =
     Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ playlist_id
   in
@@ -176,7 +175,7 @@ type get_featured_playlists_response = {
 }
 [@@deriving yojson]
 
-let get_featured_playlists ~(client : Client.t) ?(options = None) () =
+let get_featured ~(client : Client.t) ?(options = None) () =
   let base_endpoint =
     Http.Uri.of_string "https://api.spotify.com/v1/browse/featured-playlists"
   in
@@ -205,7 +204,7 @@ module Me = struct
   type get_current_users_playlists_response = t Paginated_response.t
   [@@deriving yojson]
 
-  let get_playlists ~(client : Client.t) ?(options = None) () =
+  let get_all ~(client : Client.t) ?(options = None) () =
     let base_endpoint =
       Http.Uri.of_string "https://api.spotify.com/v1/me/playlists"
     in
