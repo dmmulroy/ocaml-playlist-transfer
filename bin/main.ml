@@ -14,7 +14,13 @@ let () =
           client_secret;
           redirect_uri;
           state;
-          scopes = Some [ `Playlist_read_private ];
+          scopes =
+            Some
+              [
+                `Playlist_read_private;
+                `Playlist_modify_public;
+                `Playlist_modify_private;
+              ];
           show_dialog = true;
         }
     in
@@ -33,8 +39,13 @@ let () =
     in
     let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify.Playlist.get_playlist ~client "2t0Yxn35CNGdT7yV9wr4cr" ()
+      Spotify.Playlist.create_playlist ~client ~user_id:"dmmulroy"
+        ~name:"test-0" ()
     in
+
+    (* let%lwt response = *)
+    (*   Spotify.Playlist.get_playlist ~client "2t0Yxn35CNGdT7yV9wr4cr" () *)
+    (* in *)
     match response with
     | Ok playlist -> (
         let open Spotify.Playlist in

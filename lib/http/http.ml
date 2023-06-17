@@ -10,6 +10,8 @@ module Body = struct
     let%lwt body = Body.to_string body in
     let json = Yojson.Safe.from_string body in
     Lwt.return json
+
+  let of_yojson json = Body.of_string @@ Yojson.Safe.to_string json
 end
 
 module Uri = struct

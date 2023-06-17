@@ -46,6 +46,20 @@ type t = {
 }
 [@@deriving yojson { strict = false }]
 
+type create_playlist_options = {
+  public : bool option;
+  collaborative : bool option;
+  description : string option;
+}
+
+type create_playlist_request = {
+  name : string;
+  public : bool option;
+  collaborative : bool option;
+  description : string option;
+}
+[@@deriving yojson]
+
 type get_playlist_options = {
   fields : string option;
   market : string option;
@@ -98,6 +112,40 @@ let query_params_of_request_options = function
           ("offset", Option.map string_of_int options.offset);
         ]
   | _ -> []
+
+let create_playlist ~(client : Client.t) ~(user_id : string) ~(name : string)
+    ?(options : create_playlist_options option = None) () =
+  let endpoint =
+    Http.Uri.of_string @@ "https://api.spotify.com/v1/users/" ^ user_id
+    ^ "/playlists"
+  in
+  let headers =
+    Http.Header.of_list
+      [
+        ("Authorization", Client.get_bearer_token client);
+        ("Content-Type", "application/json");
+      ]
+  in
+  let body =
+    Http.Body.of_yojson @@ create_playlist_request_to_yojson
+    @@
+    match options with
+    | Some { public; collaborative; description } ->
+        { name; public; collaborative; description }
+    | None -> { name; public = None; collaborative = None; description = None }
+  in
+  match%lwt Http.Client.post ~headers ~body endpoint with
+  | res, body
+    when Http.Code.is_success @@ Http.Code.code_of_status
+         @@ Http.Response.status res -> (
+      let%lwt json = Http.Body.to_yojson body in
+      match of_yojson json with
+      | Ok response -> Lwt.return_ok response
+      | Error err -> Lwt.return_error (`Msg err))
+  | res, body ->
+      let%lwt json = Http.Body.to_string body in
+      let status_code = Http.Response.status res in
+      Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 
 let get_playlist ~(client : Client.t) (playlist_id : string) ?(options = None)
     () =

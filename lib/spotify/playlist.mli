@@ -25,6 +25,13 @@ type t = {
   uri : Uri.t;
 }
 
+type create_playlist_options = {
+  public : bool option;
+  collaborative : bool option;
+  description : string option;
+}
+[@@derive yojson]
+
 type get_playlist_options = {
   fields : string option;
   market : string option;
@@ -43,6 +50,14 @@ type get_current_users_playlists_options = {
   limit : int option;
   offset : int option;
 }
+
+val create_playlist :
+  client:Client.t ->
+  user_id:string ->
+  name:string ->
+  ?options:create_playlist_options option ->
+  unit ->
+  (t, [ `Msg of string ]) result Lwt.t
 
 (* Spotify.Playlist.get_playlist *)
 val get_playlist :
