@@ -35,16 +35,12 @@ let () =
         @@ `Authorization_code { client_secret; client_id; code; redirect_uri }
       with
       | Ok access_token -> Lwt.return access_token
-      | Error err -> Lwt.fail_with @@ Spotify.Error.to_human_string err
+      | Error err -> Lwt.fail_with @@ Spotify.Error.to_string err
     in
     let client = Spotify.Client.make access_token in
     let%lwt response =
       Spotify.Playlist.create ~client ~user_id:"dmmulroy" ~name:"test-0" ()
     in
-
-    (* let%lwt response = *)
-    (*   Spotify.Playlist.get_playlist ~client "2t0Yxn35CNGdT7yV9wr4cr" () *)
-    (* in *)
     match response with
     | Ok playlist -> (
         let open Spotify.Playlist in

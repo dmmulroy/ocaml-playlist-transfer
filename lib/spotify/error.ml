@@ -1,6 +1,6 @@
 type error = [ Authorization.error | `Unknown_error ]
 
-let to_human_string (err : [< error ]) =
+let to_string (err : [< error ]) =
   match err with
   | `Request_error (status_code, msg) ->
       Printf.sprintf "Request error: %d %s"
