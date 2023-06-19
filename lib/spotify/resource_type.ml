@@ -61,14 +61,3 @@ let track_of_yojson = make_resource_of_yojson Track
 let track_to_yojson = make_resource_to_yojson Track
 let user_of_yojson = make_resource_of_yojson User
 let user_to_yojson = make_resource_to_yojson User
-
-(* let resource_of_yojson resource resource_of_yojson json = *)
-(*   match Yojson.Safe.Util.member "items" json with *)
-(*   | exception Yojson.Safe.Util.Type_error _ -> ( *)
-(*       match resource_of_yojson json with *)
-(*       | Error _ -> Error "Resource response is missing required fields" *)
-(*       | Ok data -> Ok (resource data)) *)
-(*   | _ -> ( *)
-(*       match Paginated_response.of_yojson resource_of_yojson json with *)
-(*       | Error _ -> Error "Resource response is missing required fields" *)
-(*       | Ok data -> Ok (resource data)) *)
