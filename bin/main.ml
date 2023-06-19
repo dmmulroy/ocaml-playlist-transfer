@@ -22,7 +22,6 @@ let () =
                 `Playlist_modify_private;
               ];
           show_dialog = false;
-          (* show_dialog = true; *)
         }
     in
     let cmd =
