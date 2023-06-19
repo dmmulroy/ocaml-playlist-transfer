@@ -21,7 +21,8 @@ let () =
                 `Playlist_modify_public;
                 `Playlist_modify_private;
               ];
-          show_dialog = true;
+          show_dialog = false;
+          (* show_dialog = true; *)
         }
     in
     let cmd =
@@ -39,7 +40,7 @@ let () =
     in
     let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify.Playlist.create ~client ~user_id:"dmmulroy" ~name:"test-0" ()
+      Spotify.Playlist.get_by_id ~client "2t0Yxn35CNGdT7yV9wr4cr" ()
     in
     match response with
     | Ok playlist -> (
@@ -48,9 +49,10 @@ let () =
         match playlist.tracks with
         | `Tracks paginated_tracks ->
             Lwt.return
-            @@ List.iter (fun playlist_track ->
+            @@ List.iteri (fun idx playlist_track ->
                    let open Spotify.Track in
-                   print_endline playlist_track.track.name)
+                   print_endline @@ string_of_int idx ^ ": "
+                   ^ playlist_track.track.name)
             @@ Spotify.Paginated_response.get_items paginated_tracks
         | _ -> Lwt.return_unit)
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
