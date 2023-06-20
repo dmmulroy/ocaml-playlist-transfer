@@ -1,7 +1,7 @@
 type album_type = [ `Album | `Single | `Compilation ]
-type album_group = [ album_type | `AppearsOn ]
+type album_group = [ album_type | `Appears_on ]
 type release_date_precision = [ `Year | `Month | `Day ]
-type resource_type = [ `Artist ]
+type resource_type = [ `Album ]
 type restrictions_reason = [ `Market | `Product | `Explicit ]
 
 let restrictions_reason_of_yojson = function
@@ -32,14 +32,14 @@ let album_group_of_yojson = function
   | `String "album" -> Ok `Album
   | `String "single" -> Ok `Single
   | `String "compilation" -> Ok `Compilation
-  | `String "appears_on" -> Ok `AppearsOn
+  | `String "appears_on" -> Ok `Appears_on
   | _ -> Error "album_group"
 
 let album_group_to_yojson = function
   | `Album -> `String "album"
   | `Single -> `String "single"
   | `Compilation -> `String "compilation"
-  | `AppearsOn -> `String "appears_on"
+  | `Appears_on -> `String "appears_on"
 
 let release_date_precision_of_yojson = function
   | `String "year" -> Ok `Year
@@ -53,16 +53,16 @@ let release_date_precision_to_yojson = function
   | `Day -> `String "day"
 
 let resource_type_of_yojson = function
-  | `String "artist" -> Ok `Artist
-  | _ -> Error "resource_type"
+  | `String "album" -> Ok `Album
+  | _ -> Error "album resource_type"
 
-let resource_type_to_yojson = function `Artist -> `String "artist"
+let resource_type_to_yojson = function `Album -> `String "album"
 
 type t = {
-  album_group : album_group option;
+  album_group : album_group option; [@default None]
   album_type : album_type;
   artists : Artist.t list;
-  available_markets : string list option;
+  available_markets : string list;
   external_urls : Common.external_urls;
   href : Http.Uri.t;
   id : string;
@@ -70,9 +70,9 @@ type t = {
   name : string;
   release_date : string;
   release_date_precision : release_date_precision;
-  restrictions : restrictions list;
+  restrictions : restrictions list option; [@default None]
   total_tracks : int;
-  resource_type : resource_type;
+  resource_type : resource_type; [@key "type"]
   uri : Uri.t;
 }
 [@@deriving yojson]
