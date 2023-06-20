@@ -1,7 +1,6 @@
 type t = {
-  (* album : unit; (* TODO *) *)
+  album : Album.t;
   artists : Artist.t list;
-  (* available_markets : string list; *)
   available_markets : string list;
   disc_number : int;
   duration_ms : int;
