@@ -22,7 +22,8 @@ type t = {
   images : Common.image list option; [@default None] (* nullable *)
   name : string;
   popularity : int option; [@default None] (* nullable *)
-  resource_type : resource_type; [@key "type"] (* uri : Uri.t; *)
+  resource_type : resource_type; [@key "type"]
+  uri : Uri.t;
 }
 [@@deriving yojson { strict = false }]
 

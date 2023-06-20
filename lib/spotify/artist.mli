@@ -11,4 +11,3 @@ type t = {
   uri : Uri.t;
 }
 [@@deriving yojson]
-

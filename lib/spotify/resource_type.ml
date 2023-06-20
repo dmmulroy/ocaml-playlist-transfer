@@ -1,8 +1,11 @@
-type t = [ `Album | `Episode | `Playlist | `Track | `User ] [@@deriving yojson]
+type t = [ `Album | `Artist | `Episode | `Playlist | `Track | `User ]
+[@@deriving yojson]
+
 type reference = { href : Http.Uri.t option; total : int } [@@deriving yojson]
 
 let of_string = function
   | "album" -> `Album
+  | "artist" -> `Artist
   | "episode" -> `Episode
   | "playlist" -> `Playlist
   | "track" -> `Track
@@ -11,6 +14,7 @@ let of_string = function
 
 let to_string = function
   | `Album -> "album"
+  | `Artist -> "artist"
   | `Episode -> "episode"
   | `Playlist -> "playlist"
   | `Track -> "track"
@@ -25,6 +29,7 @@ let to_yojson resource_type = `String (to_string resource_type)
 
 type _ resource_type_specifier =
   | Album : [ `Album ] resource_type_specifier
+  | Artist : [ `Artist ] resource_type_specifier
   | Episode : [ `Episode ] resource_type_specifier
   | Playlist : [ `Playlist ] resource_type_specifier
   | Track : [ `Track ] resource_type_specifier
@@ -35,6 +40,7 @@ let make_resource_to_yojson :
  fun resource_type resource ->
   match (resource_type, resource) with
   | Album, `Album -> `String "album"
+  | Artist, `Artist -> `String "artist"
   | Episode, `Episode -> `String "episode"
   | Playlist, `Playlist -> `String "playlist"
   | Track, `Track -> `String "track"
@@ -53,6 +59,8 @@ let make_resource_of_yojson :
 
 let album_of_yojson = make_resource_of_yojson Album
 let album_to_yojson = make_resource_to_yojson Album
+let artist_of_yojson = make_resource_of_yojson Artist
+let artist_to_yojson = make_resource_to_yojson Artist
 let episode_of_yojson = make_resource_of_yojson Episode
 let episode_to_yojson = make_resource_to_yojson Episode
 let playlist_of_yojson = make_resource_of_yojson Playlist
