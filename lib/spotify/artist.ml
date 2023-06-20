@@ -25,7 +25,7 @@ type t = {
   resource_type : resource_type; [@key "type"]
   uri : Uri.t;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
 
 (* let album_type_of_yojson = function *)
 (*   | `String "album" -> Ok `Album *)
