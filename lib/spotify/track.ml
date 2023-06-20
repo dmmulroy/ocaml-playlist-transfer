@@ -1,3 +1,4 @@
+(* TODO Wednesday morning: Implement "simplified" modles + refactor resource_type  *)
 type t = {
   album : Album.t;
   artists : Artist.t list;
