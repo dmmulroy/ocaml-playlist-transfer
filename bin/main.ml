@@ -42,18 +42,18 @@ let () =
       Spotify.Playlist.get_by_id ~client "2t0Yxn35CNGdT7yV9wr4cr" ()
     in
     match response with
-    | Ok playlist -> (
+    | Ok playlist ->
         let open Spotify.Playlist in
         print_endline @@ "Playlist: " ^ playlist.name;
-        match playlist.tracks with
-        | `Tracks paginated_tracks ->
-            Lwt.return
-            @@ List.iteri (fun idx playlist_track ->
-                   let open Spotify.Track in
-                   print_endline @@ string_of_int idx ^ ": "
-                   ^ playlist_track.track.name)
-            @@ Spotify.Paginated_response.get_items paginated_tracks
-        | _ -> Lwt.return_unit)
+        let () =
+          List.iteri
+            (fun idx playlist_track ->
+              let open Spotify.Track in
+              print_endline @@ string_of_int idx ^ ": "
+              ^ playlist_track.track.name)
+            playlist.tracks
+        in
+        Lwt.return_unit
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in
   Lwt_main.run main
