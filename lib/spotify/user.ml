@@ -1,4 +1,4 @@
-(* TODO Thursday: Refactor this module and Resource_type module*)
+(* TODO Thursday: Refactor this module, Resource_type module, and remove { strict = false } where possible *)
 type t = {
   external_urls : Common.external_urls;
   followers : Resource_type.reference option; (* nullable *) [@default None]
