@@ -12,7 +12,7 @@ type playlist_track = {
   is_local : bool;
   track : Track.t;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 type simple = {
   collaborative : bool;
@@ -44,10 +44,10 @@ type t = {
   public : bool option; [@default None]
   resource_type : resource_type; [@key "type"]
   snapshot_id : string;
-  tracks : playlist_track list;
+  tracks : playlist_track Paginated_response.t;
   uri : Uri.t;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 type create_options = {
   public : bool option;

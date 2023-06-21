@@ -46,12 +46,11 @@ let () =
         let open Spotify.Playlist in
         print_endline @@ "Playlist: " ^ playlist.name;
         let () =
-          List.iteri
-            (fun idx playlist_track ->
+          List.iteri (fun idx playlist_track ->
               let open Spotify.Track in
               print_endline @@ string_of_int idx ^ ": "
               ^ playlist_track.track.name)
-            playlist.tracks
+          @@ Spotify.Paginated_response.get_items playlist.tracks
         in
         Lwt.return_unit
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)

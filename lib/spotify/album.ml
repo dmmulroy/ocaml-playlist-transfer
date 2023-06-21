@@ -45,7 +45,7 @@ let resource_type_of_yojson = function
 let resource_type_to_yojson = function `Album -> `String "album"
 
 type simple = {
-  album_group : album_group option;
+  album_group : album_group option; [@default None]
   album_type : album_type;
   artists : Artist.simple list;
   available_markets : string list;
@@ -56,7 +56,7 @@ type simple = {
   name : string;
   release_date : string;
   release_date_precision : release_date_precision;
-  restrictions : Common.restriction list option;
+  restrictions : Common.restriction list option; [@default None]
   total_tracks : int;
   resource_type : resource_type; [@key "type"]
   uri : Uri.t;

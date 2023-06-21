@@ -36,7 +36,7 @@ type t = {
   public : bool option;
   resource_type : [ `Playlist ];
   snapshot_id : string;
-  tracks : playlist_track list;
+  tracks : playlist_track Paginated_response.t;
   uri : Uri.t;
 }
 [@@deriving yojson]

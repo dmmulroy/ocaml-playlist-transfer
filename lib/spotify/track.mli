@@ -30,7 +30,7 @@ type simple = {
 
 type t = {
   album : Album.simple;
-  artists : Artist.t list;
+  artists : Artist.simple list;
   available_markets : string list;
   disc_number : int;
   duration_ms : int;

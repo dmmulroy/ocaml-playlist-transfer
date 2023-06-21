@@ -9,7 +9,11 @@ let copyright_to_yojson = function
   | `C s -> `Assoc [ ("text", `String s); ("type", `String "C") ]
   | `P s -> `Assoc [ ("text", `String s); ("type", `String "P") ]
 
-type external_ids = { ean : string; isrc : string; upc : string }
+type external_ids = {
+  ean : string option; [@default None]
+  isrc : string option; [@default None]
+  upc : string option; [@default None]
+}
 [@@deriving yojson]
 
 type external_urls = { spotify : string } [@@deriving yojson]

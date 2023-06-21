@@ -38,7 +38,7 @@ type simple = {
 
 type t = {
   album : Album.simple;
-  artists : Artist.t list;
+  artists : Artist.simple list;
   available_markets : string list;
   disc_number : int;
   duration_ms : int;
@@ -48,14 +48,14 @@ type t = {
   href : Http.Uri.t;
   id : string;
   is_local : bool;
-  is_playable : bool option;
-  linked_from : linked_track option;
+  is_playable : bool option; [@default None]
+  linked_from : linked_track option; [@default None]
   name : string;
   popularity : int;
   preview_url : string option;
   resource_type : resource_type; [@key "type"]
-  restrictions : Common.restriction list option;
+  restrictions : Common.restriction list option; [@default None]
   track_number : int;
   uri : Uri.t;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
