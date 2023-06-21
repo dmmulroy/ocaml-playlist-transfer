@@ -1,12 +1,22 @@
-type t = {
+type simple = {
   external_urls : Common.external_urls;
-  followers : Resource_type.reference option; (* nullable *)
-  genres : string list option; (* nullable *)
   href : Http.Uri.t;
   id : string;
-  images : Common.image list option; (* nullable *)
   name : string;
-  popularity : int option; (* nullable *)
+  resource_type : [ `Artist ];
+  uri : Uri.t;
+}
+[@@deriving yojson]
+
+type t = {
+  external_urls : Common.external_urls;
+  followers : Resource_type.reference;
+  genres : string list;
+  href : Http.Uri.t;
+  id : string;
+  images : Common.image list;
+  name : string;
+  popularity : int;
   resource_type : [ `Artist ];
   uri : Uri.t;
 }
