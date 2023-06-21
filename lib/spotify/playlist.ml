@@ -1,50 +1,53 @@
+type resource_type = [ `Playlist ]
+
+let resource_type_of_yojson = function
+  | `String "playlist" -> Ok `Playlist
+  | _ -> Error "Invalid playlist resource_type"
+
+let resource_type_to_yojson = function `Playlist -> `String "playlist"
+
 type playlist_track = {
   added_at : string;
   added_by : User.t;
   is_local : bool;
   track : Track.t;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
 
-let tracks_of_yojson json =
-  match Yojson.Safe.Util.member "items" json with
-  | exception Yojson.Safe.Util.Type_error _ -> (
-      match Resource_type.reference_of_yojson json with
-      | Error err ->
-          Error
-            ("Playlist tracks reference response is missing required fields"
-           ^ err)
-      | Ok reference -> Ok (`Resource_reference reference))
-  | _ -> (
-      match Paginated_response.of_yojson playlist_track_of_yojson json with
-      | Error err ->
-          print_endline @@ Yojson.Safe.to_string json;
-          Error ("Playlist tracks response is missing required fields: " ^ err)
-      | Ok tracks -> Ok (`Tracks tracks))
-
-type t = {
+type simple = {
   collaborative : bool;
-  description : string option; (* nullable *)
+  description : string option; [@default None]
   external_urls : Common.external_urls;
-  followers : Resource_type.reference option; [@default None] (* nullable *)
   href : Http.Uri.t;
   id : string;
   images : Common.image list;
   name : string;
   owner : User.t;
-  public : bool option;
-  resource_type : [ `Playlist ];
-      [@key "type"]
-      [@of_yojson Resource_type.playlist_of_yojson]
-      [@to_yojson Resource_type.playlist_to_yojson]
+  public : bool option; [@default None]
+  resource_type : resource_type; [@key "type"]
   snapshot_id : string;
-  tracks :
-    [ `Resource_reference of Resource_type.reference
-    | `Tracks of playlist_track Paginated_response.t ];
-      [@of_yojson tracks_of_yojson]
+  tracks : Resource_type.reference;
   uri : Uri.t;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
+
+type t = {
+  collaborative : bool;
+  description : string option; [@default None]
+  external_urls : Common.external_urls;
+  followers : Resource_type.reference;
+  href : Http.Uri.t;
+  id : string;
+  images : Common.image list;
+  name : string;
+  owner : User.t;
+  public : bool option; [@default None]
+  resource_type : resource_type; [@key "type"]
+  snapshot_id : string;
+  tracks : playlist_track list;
+  uri : Uri.t;
+}
+[@@deriving yojson]
 
 type create_options = {
   public : bool option;
@@ -171,7 +174,7 @@ let get_by_id ~(client : Client.t) (playlist_id : string) ?(options = None) () =
 
 type get_featured_playlists_response = {
   message : string;
-  playlists : t Paginated_response.t;
+  playlists : simple Paginated_response.t;
 }
 [@@deriving yojson]
 
@@ -201,7 +204,7 @@ let get_featured ~(client : Client.t) ?(options = None) () =
       Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 
 module Me = struct
-  type get_current_users_playlists_response = t Paginated_response.t
+  type get_current_users_playlists_response = simple Paginated_response.t
   [@@deriving yojson]
 
   let get_all ~(client : Client.t) ?(options = None) () =
