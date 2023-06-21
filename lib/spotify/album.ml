@@ -2,26 +2,12 @@ type album_type = [ `Album | `Single | `Compilation ]
 type album_group = [ album_type | `Appears_on ]
 type release_date_precision = [ `Year | `Month | `Day ]
 type resource_type = [ `Album ]
-type restrictions_reason = [ `Market | `Product | `Explicit ]
-
-let restrictions_reason_of_yojson = function
-  | `String "market" -> Ok `Market
-  | `String "product" -> Ok `Product
-  | `String "explicit" -> Ok `Explicit
-  | _ -> Error "restrictions_reason"
-
-let restrictions_reason_to_yojson = function
-  | `Market -> `String "market"
-  | `Product -> `String "product"
-  | `Explicit -> `String "explicit"
-
-type restrictions = { reason : restrictions_reason } [@@deriving yojson]
 
 let album_type_of_yojson = function
   | `String "album" -> Ok `Album
   | `String "single" -> Ok `Single
   | `String "compilation" -> Ok `Compilation
-  | _ -> Error "album_type"
+  | _ -> Error "Invalid album album_type"
 
 let album_type_to_yojson = function
   | `Album -> `String "album"
@@ -33,7 +19,7 @@ let album_group_of_yojson = function
   | `String "single" -> Ok `Single
   | `String "compilation" -> Ok `Compilation
   | `String "appears_on" -> Ok `Appears_on
-  | _ -> Error "album_group"
+  | _ -> Error "Invalid album album_group"
 
 let album_group_to_yojson = function
   | `Album -> `String "album"
@@ -45,7 +31,7 @@ let release_date_precision_of_yojson = function
   | `String "year" -> Ok `Year
   | `String "month" -> Ok `Month
   | `String "day" -> Ok `Day
-  | _ -> Error "release_date_precision"
+  | _ -> Error "Invalid album release_date_precision"
 
 let release_date_precision_to_yojson = function
   | `Year -> `String "year"
@@ -54,7 +40,7 @@ let release_date_precision_to_yojson = function
 
 let resource_type_of_yojson = function
   | `String "album" -> Ok `Album
-  | _ -> Error "album resource_type"
+  | _ -> Error "Invalid album resource_type"
 
 let resource_type_to_yojson = function `Album -> `String "album"
 
@@ -70,7 +56,7 @@ type simple = {
   name : string;
   release_date : string;
   release_date_precision : release_date_precision;
-  restrictions : restrictions list option;
+  restrictions : Common.restriction list option;
   total_tracks : int;
   resource_type : resource_type; [@key "type"]
   uri : Uri.t;
@@ -94,7 +80,7 @@ type t = {
   release_date : string;
   release_date_precision : release_date_precision;
   resource_type : resource_type; [@key "type"]
-  restrictions : restrictions list option; [@default None]
+  restrictions : Common.restriction list option; [@default None]
   total_tracks : int;
   (* tracks : Track.t list; (* TODO: Make Track.simple *) *)
   uri : Uri.t;

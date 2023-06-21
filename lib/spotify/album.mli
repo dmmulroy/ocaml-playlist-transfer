@@ -1,5 +1,3 @@
-type restrictions = { reason : [ `Market | `Product | `Explicit ] }
-
 type simple = {
   album_group : [ `Album | `Single | `Compilation | `Appears_on ] option;
   album_type : [ `Album | `Single | `Compilation ];
@@ -12,7 +10,7 @@ type simple = {
   name : string;
   release_date : string;
   release_date_precision : [ `Year | `Month | `Day ];
-  restrictions : restrictions list option;
+  restrictions : Common.restriction list option;
   total_tracks : int;
   resource_type : [ `Album ];
   uri : Uri.t;
@@ -36,7 +34,7 @@ type t = {
   release_date : string;
   release_date_precision : [ `Year | `Month | `Day ];
   resource_type : [ `Album ];
-  restrictions : restrictions list option;
+  restrictions : Common.restriction list option;
   total_tracks : int;
   (* tracks : Track.t list; (* TODO: Make Track.simple *) *)
   uri : Uri.t;

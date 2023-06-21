@@ -2,7 +2,7 @@ type resource_type = [ `Artist ]
 
 let resource_type_of_yojson = function
   | `String "artist" -> Ok `Artist
-  | _ -> Error "resource_type"
+  | _ -> Error "Invalid artist resource_type"
 
 let resource_type_to_yojson = function `Artist -> `String "artist"
 

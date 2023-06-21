@@ -1,16 +1,8 @@
-type resource_type = [ `Track ]
-
-let resource_type_of_yojson = function
-  | `String "track" -> Ok `Track
-  | _ -> Error "Invalid track resource_type"
-
-let resource_type_to_yojson = function `Track -> `String "track"
-
 type linked_track = {
   external_urls : Common.external_urls;
   href : Http.Uri.t;
   id : string;
-  resource_type : resource_type; [@key "type"]
+  resource_type : [ `Track ];
   uri : string;
 }
 [@@deriving yojson]
@@ -29,7 +21,7 @@ type simple = {
   linked_from : linked_track option;
   name : string;
   preview_url : string option;
-  resource_type : resource_type; [@key "type"]
+  resource_type : [ `Track ];
   restrictions : Common.restriction list option;
   track_number : int;
   uri : Uri.t;
@@ -53,7 +45,7 @@ type t = {
   name : string;
   popularity : int;
   preview_url : string option;
-  resource_type : resource_type; [@key "type"]
+  resource_type : [ `Track ];
   restrictions : Common.restriction list option;
   track_number : int;
   uri : Uri.t;
