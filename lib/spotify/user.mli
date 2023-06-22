@@ -1,10 +1,10 @@
 type t = {
   external_urls : Common.external_urls;
-  followers : Resource_type.reference option; (* nullable *)
-  href : string;
+  followers : Resource_type.reference option;
+  href : Http.Uri.t;
   id : string;
   resource_type : [ `User ];
-  uri : string;
-  display_name : string option; (* nullable *)
+  uri : Uri.t;
+  display_name : string option;
 }
 [@@deriving yojson]
