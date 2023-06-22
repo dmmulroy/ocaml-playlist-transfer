@@ -1,10 +1,7 @@
-type resource_type = [ `Artist ]
+type resource_type = [ `Artist ] [@@deriving yojson]
 
-let resource_type_of_yojson = function
-  | `String "artist" -> Ok `Artist
-  | _ -> Error "Invalid artist resource_type"
-
-let resource_type_to_yojson = function `Artist -> `String "artist"
+let resource_type_of_yojson = Common.make_resource_type_of_yojson Artist
+let resource_type_to_yojson = Common.make_resource_type_to_yojson Artist
 
 type simple = {
   external_urls : Common.external_urls;
