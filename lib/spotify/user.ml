@@ -1,4 +1,4 @@
-(* TODO Thursday: Refactor this module, Resource_type module, and remove { strict = false } where possible *)
+(* TODO Thursday: Resource_type module and remove { strict = false } where possible *)
 type resource_type = [ `User ]
 
 let resource_type_of_yojson = function
@@ -38,7 +38,7 @@ module Me = struct
 
   type t = {
     country : string;
-    email : string option; [@default None]
+    email : string;
     explicit_content : explicit_content option; [@default None]
     product : product;
     display_name : string option; [@default None]
