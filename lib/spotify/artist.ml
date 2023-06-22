@@ -13,6 +13,18 @@ type simple = {
 }
 [@@deriving yojson]
 
+module Simple = struct
+  type t = {
+    external_urls : Common.external_urls;
+    href : Http.Uri.t;
+    id : string;
+    name : string;
+    resource_type : resource_type; [@key "type"]
+    uri : Uri.t;
+  }
+  [@@deriving yojson]
+end
+
 type t = {
   external_urls : Common.external_urls;
   followers : Common.reference;

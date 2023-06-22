@@ -37,6 +37,16 @@ let restriction_reason_to_yojson = function
 
 type restriction = { reason : restriction_reason } [@@deriving yojson]
 
+(* type resource_type_v2 = *)
+(*   | Artist of Artist.t *)
+(*   | SimpleArtist of Artist.Simple.t *)
+(*   | Album *)
+(*   | Episode *)
+(*   | Track *)
+(*   | Playlist *)
+(*   | Show *)
+(*   | User *)
+
 type _ resource_type =
   | Artist : [ `Artist ] resource_type
   | Album : [ `Album ] resource_type
@@ -45,19 +55,6 @@ type _ resource_type =
   | Show : [ `Show ] resource_type
   | Track : [ `Track ] resource_type
   | User : [ `User ] resource_type
-
-let resource_type_of_string_v2 : type a. string -> a resource_type =
-  let coerce : type b. b -> b resource_type = fun res -> res in
-  fun str ->
-    match str with
-    | "artist" -> coerce Artist
-    (* | "album" -> coerce Album *)
-    (* | "episode" -> coerce Episode *)
-    (* | "playlist" -> coerce Playlist *)
-    (* | "show" -> coerce Show *)
-    (* | "track" -> coerce Track *)
-    (* | "user" -> coerce User *)
-    | _ -> failwith "Invalid resource type"
 
 let resource_type_of_string :
     string ->

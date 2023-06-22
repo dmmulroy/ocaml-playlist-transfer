@@ -3,7 +3,7 @@ type simple = {
   href : Http.Uri.t;
   id : string;
   name : string;
-  resource_type : [ `Artist ];
+  resource_type : Artist;
   uri : Uri.t;
 }
 [@@deriving yojson]
