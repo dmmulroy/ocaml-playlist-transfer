@@ -10,7 +10,7 @@ let resource_type_to_yojson = function `User -> `String "user"
 type t = {
   display_name : string option; [@default None]
   external_urls : Common.external_urls;
-  followers : Resource_type.reference option; [@default None]
+  followers : Common.reference option; [@default None]
   href : Http.Uri.t;
   id : string;
   image : Common.image list option; [@default None]
@@ -43,7 +43,7 @@ module Me = struct
     product : product;
     display_name : string option; [@default None]
     external_urls : Common.external_urls;
-    followers : Resource_type.reference option; [@default None]
+    followers : Common.reference option; [@default None]
     href : Http.Uri.t;
     id : string;
     image : Common.image list option; [@default None]

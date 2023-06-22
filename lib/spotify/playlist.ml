@@ -26,7 +26,7 @@ type simple = {
   public : bool option; [@default None]
   resource_type : resource_type; [@key "type"]
   snapshot_id : string;
-  tracks : Resource_type.reference;
+  tracks : Common.reference;
   uri : Uri.t;
 }
 [@@deriving yojson]
@@ -35,7 +35,7 @@ type t = {
   collaborative : bool;
   description : string option; [@default None]
   external_urls : Common.external_urls;
-  followers : Resource_type.reference;
+  followers : Common.reference;
   href : Http.Uri.t;
   id : string;
   images : Common.image list;

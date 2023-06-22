@@ -18,7 +18,7 @@ type simple = {
 
 type t = {
   external_urls : Common.external_urls;
-  followers : Resource_type.reference;
+  followers : Common.reference;
   genres : string list;
   href : Http.Uri.t;
   id : string;

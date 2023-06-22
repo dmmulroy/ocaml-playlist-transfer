@@ -1,7 +1,7 @@
 type t = {
   display_name : string option;
   external_urls : Common.external_urls;
-  followers : Resource_type.reference option;
+  followers : Common.reference option;
   href : Http.Uri.t;
   id : string;
   image : Common.image list option;
@@ -23,7 +23,7 @@ module Me : sig
     product : product;
     display_name : string option;
     external_urls : Common.external_urls;
-    followers : Resource_type.reference option;
+    followers : Common.reference option;
     href : Http.Uri.t;
     id : string;
     image : Common.image list option;
