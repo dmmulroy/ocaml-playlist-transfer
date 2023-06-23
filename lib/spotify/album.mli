@@ -1,7 +1,7 @@
 type simple = {
   album_group : [ `Album | `Single | `Compilation | `Appears_on ] option;
   album_type : [ `Album | `Single | `Compilation ];
-  artists : Artist.simple list;
+  artists : Artist.Simple.t list;
   available_markets : string list;
   external_urls : Common.external_urls;
   href : Http.Uri.t;

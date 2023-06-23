@@ -47,7 +47,7 @@ let resource_type_to_yojson = function `Album -> `String "album"
 type simple = {
   album_group : album_group option; [@default None]
   album_type : album_type;
-  artists : Artist.simple list;
+  artists : Artist.Simple.t list;
   available_markets : string list;
   external_urls : Common.external_urls;
   href : Http.Uri.t;

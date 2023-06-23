@@ -1,13 +1,3 @@
-type simple = {
-  external_urls : Common.external_urls;
-  href : Http.Uri.t;
-  id : string;
-  name : string;
-  resource_type : Artist;
-  uri : Uri.t;
-}
-[@@deriving yojson]
-
 type t = {
   external_urls : Common.external_urls;
   followers : Common.reference;
@@ -17,7 +7,19 @@ type t = {
   images : Common.image list;
   name : string;
   popularity : int;
-  resource_type : [ `Artist ];
-  uri : Uri.t;
+  resource_type : Resource.t;
+  uri : Resource.uri;
 }
 [@@deriving yojson]
+
+module Simple : sig
+  type t = {
+    external_urls : Common.external_urls;
+    href : Http.Uri.t;
+    id : string;
+    name : string;
+    resource_type : Resource.t;
+    uri : Resource.uri;
+  }
+  [@@deriving yojson]
+end

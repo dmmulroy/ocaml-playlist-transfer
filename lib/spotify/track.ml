@@ -16,7 +16,7 @@ type linked_track = {
 [@@deriving yojson]
 
 type simple = {
-  artists : Artist.simple list;
+  artists : Artist.Simple.t list;
   available_markets : string list;
   disc_number : int;
   duration_ms : int;
@@ -38,7 +38,7 @@ type simple = {
 
 type t = {
   album : Album.simple;
-  artists : Artist.simple list;
+  artists : Artist.Simple.t list;
   available_markets : string list;
   disc_number : int;
   duration_ms : int;
