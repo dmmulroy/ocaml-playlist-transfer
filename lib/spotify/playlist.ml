@@ -1,11 +1,3 @@
-type resource_type = [ `Playlist ]
-
-let resource_type_of_yojson = function
-  | `String "playlist" -> Ok `Playlist
-  | _ -> Error "Invalid playlist resource_type"
-
-let resource_type_to_yojson = function `Playlist -> `String "playlist"
-
 type playlist_track = {
   added_at : string;
   added_by : User.t;
@@ -14,40 +6,42 @@ type playlist_track = {
 }
 [@@deriving yojson { strict = false }]
 
-type simple = {
-  collaborative : bool;
-  description : string option; [@default None]
-  external_urls : Common.external_urls;
-  href : Http.Uri.t;
-  id : string;
-  images : Common.image list;
-  name : string;
-  owner : User.t;
-  public : bool option; [@default None]
-  resource_type : resource_type; [@key "type"]
-  snapshot_id : string;
-  tracks : Common.reference;
-  uri : Uri.t;
-}
-[@@deriving yojson]
-
 type t = {
   collaborative : bool;
   description : string option; [@default None]
   external_urls : Common.external_urls;
-  followers : Common.reference;
+  followers : [ `Follower ] Resource.reference;
   href : Http.Uri.t;
   id : string;
   images : Common.image list;
   name : string;
   owner : User.t;
   public : bool option; [@default None]
-  resource_type : resource_type; [@key "type"]
+  resource_type : [ `Playlist ] Resource.t; [@key "type"]
   snapshot_id : string;
   tracks : playlist_track Paginated_response.t;
-  uri : Uri.t;
+  uri : [ `Playlist ] Resource.uri;
 }
 [@@deriving yojson { strict = false }]
+
+module Simple = struct
+  type t = {
+    collaborative : bool;
+    description : string option;
+    external_urls : Common.external_urls;
+    href : Http.Uri.t;
+    id : string;
+    images : Common.image list;
+    name : string;
+    owner : User.t;
+    public : bool option;
+    resource_type : [ `Playlist ] Resource.t; [@key "type"]
+    snapshot_id : string;
+    tracks : Common.reference;
+    uri : [ `Playlist ] Resource.uri;
+  }
+  [@@deriving yojson]
+end
 
 type create_options = {
   public : bool option;
@@ -174,7 +168,7 @@ let get_by_id ~(client : Client.t) (playlist_id : string) ?(options = None) () =
 
 type get_featured_playlists_response = {
   message : string;
-  playlists : simple Paginated_response.t;
+  playlists : Simple.t Paginated_response.t;
 }
 [@@deriving yojson]
 
@@ -204,7 +198,7 @@ let get_featured ~(client : Client.t) ?(options = None) () =
       Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 
 module Me = struct
-  type get_current_users_playlists_response = simple Paginated_response.t
+  type get_current_users_playlists_response = Simple.t Paginated_response.t
   [@@deriving yojson]
 
   let get_all ~(client : Client.t) ?(options = None) () =

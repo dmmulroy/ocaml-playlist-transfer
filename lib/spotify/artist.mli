@@ -1,14 +1,14 @@
 type t = {
   external_urls : Common.external_urls;
-  followers : Common.reference;
+  followers : [ `Follower ] Resource.reference;
   genres : string list;
   href : Http.Uri.t;
   id : string;
   images : Common.image list;
   name : string;
   popularity : int;
-  resource_type : Resource.t;
-  uri : Resource.uri;
+  resource_type : [ `Artist ];
+  uri : [ `Artist ] Resource.uri;
 }
 [@@deriving yojson]
 
@@ -18,8 +18,8 @@ module Simple : sig
     href : Http.Uri.t;
     id : string;
     name : string;
-    resource_type : Resource.t;
-    uri : Resource.uri;
+    resource_type : [ `Artist ];
+    uri : [ `Artist ] Resource.uri;
   }
   [@@deriving yojson]
 end
