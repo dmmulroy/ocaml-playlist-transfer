@@ -51,22 +51,3 @@ let to_yojson = function
   | `Track -> `String "track"
   | `User -> `String "user"
   | #t -> .
-
-type reference = { resource_type : t; href : Http.Uri.t option; total : int }
-[@@deriving yojson]
-
-type uri = { resource_type : t; id : string } [@@deriving yojson]
-
-let uri_to_string uri =
-  Printf.sprintf "spotify:%s:%s" (to_string uri.resource_type) uri.id
-
-let uri_of_string str =
-  match String.split_on_char ':' str with
-  | [ _; resource_type; id ] -> { resource_type = of_string resource_type; id }
-  | _ -> failwith @@ "Invalid Spotify URI: " ^ str
-
-let uri_to_yojson uri = `String (uri_to_string uri)
-
-let uri_of_yojson = function
-  | `String str -> Ok (uri_of_string str)
-  | _ -> Error "Invalid Spotify URI"

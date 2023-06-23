@@ -1,12 +1,3 @@
-(* TODO Thursday: Resource_type module and remove { strict = false } where possible *)
-type resource_type = [ `User ]
-
-let resource_type_of_yojson = function
-  | `String "user" -> Ok `User
-  | _ -> Error "Invalid user resource_type"
-
-let resource_type_to_yojson = function `User -> `String "user"
-
 type t = {
   display_name : string option; [@default None]
   external_urls : Common.external_urls;
@@ -14,8 +5,8 @@ type t = {
   href : Http.Uri.t;
   id : string;
   image : Common.image list option; [@default None]
-  resource_type : resource_type; [@key "type"]
-  uri : Uri.t;
+  resource_type : Resource.t; [@key "type"]
+  uri : Resource.uri;
 }
 [@@deriving yojson]
 
