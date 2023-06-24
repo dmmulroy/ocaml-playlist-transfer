@@ -1,4 +1,4 @@
-type resource_type =
+type t =
   [ `Artist
   | `Album
   | `Episode
@@ -9,25 +9,7 @@ type resource_type =
   | `User ]
 [@@deriving yojson]
 
-type 'a t = 'a constraint 'a = [< resource_type ] [@@deriving yojson]
+val of_string : string -> t
+val to_string : [< t ] -> string
 
-val of_string : string -> resource_type t
-val to_string : resource_type t -> string
-
-type 'a reference = {
-  resource_type : 'a;
-  href : Http.Uri.t option;
-  total : int;
-}
-  constraint 'a = [< resource_type ]
-[@@deriving yojson]
-
-type 'a uri = {
-  resource_type : 'a;
-  id : string;
-}
-  constraint 'a = [< resource_type ]
-[@@deriving yojson]
-
-val uri_of_string : string -> resource_type uri
-val uri_to_string : resource_type uri -> string
+type reference = { href : Http.Uri.t option; total : int } [@@deriving yojson]

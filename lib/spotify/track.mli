@@ -2,8 +2,8 @@ type linked_track = {
   external_urls : Common.external_urls;
   href : Http.Uri.t;
   id : string;
-  resource_type : [ `Track ];
-  uri : [ `Track ] Resource.uri;
+  resource_type : Resource.t;
+  uri : string;
 }
 [@@deriving yojson]
 
@@ -24,10 +24,10 @@ type t = {
   name : string;
   popularity : int;
   preview_url : string option;
-  resource_type : [ `Track ];
+  resource_type : Resource.t;
   restrictions : Common.restriction list option;
   track_number : int;
-  uri : [ `Track ] Resource.uri;
+  uri : string;
 }
 [@@deriving yojson]
 
@@ -46,10 +46,10 @@ module Simple : sig
     linked_from : linked_track option;
     name : string;
     preview_url : string option;
-    resource_type : [ `Track ];
+    resource_type : Resource.t;
     restrictions : Common.restriction list option;
     track_number : int;
-    uri : [ `Track ] Resource.uri;
+    uri : string;
   }
   [@@deriving yojson]
 end

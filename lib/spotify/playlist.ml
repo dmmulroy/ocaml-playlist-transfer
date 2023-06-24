@@ -10,17 +10,17 @@ type t = {
   collaborative : bool;
   description : string option; [@default None]
   external_urls : Common.external_urls;
-  followers : [ `Follower ] Resource.reference;
+  followers : Resource.reference;
   href : Http.Uri.t;
   id : string;
   images : Common.image list;
   name : string;
   owner : User.t;
   public : bool option; [@default None]
-  resource_type : [ `Playlist ] Resource.t; [@key "type"]
+  resource_type : Resource.t; [@key "type"]
   snapshot_id : string;
   tracks : playlist_track Paginated_response.t;
-  uri : [ `Playlist ] Resource.uri;
+  uri : string;
 }
 [@@deriving yojson { strict = false }]
 
@@ -35,12 +35,12 @@ module Simple = struct
     name : string;
     owner : User.t;
     public : bool option;
-    resource_type : [ `Playlist ] Resource.t; [@key "type"]
+    resource_type : Resource.t; [@key "type"]
     snapshot_id : string;
     tracks : Common.reference;
-    uri : [ `Playlist ] Resource.uri;
+    uri : string;
   }
-  [@@deriving yojson]
+  [@@deriving yojson { strict = false }]
 end
 
 type create_options = {

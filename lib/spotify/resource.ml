@@ -1,4 +1,4 @@
-type resource_type =
+type t =
   [ `Artist
   | `Album
   | `Episode
@@ -8,7 +8,7 @@ type resource_type =
   | `Track
   | `User ]
 
-let resource_type_of_string = function
+let of_string = function
   | "artist" -> `Artist
   | "album" -> `Album
   | "episode" -> `Episode
@@ -19,7 +19,7 @@ let resource_type_of_string = function
   | "user" -> `User
   | _ -> failwith "Invalid resource type"
 
-let resource_type_to_string = function
+let to_string = function
   | `Artist -> "artist"
   | `Album -> "album"
   | `Episode -> "episode"
@@ -28,9 +28,9 @@ let resource_type_to_string = function
   | `Show -> "show"
   | `Track -> "track"
   | `User -> "user"
-  | #resource_type -> .
+  | #t -> .
 
-let resource_type_of_yojson = function
+let of_yojson = function
   | `String "artist" -> Ok `Artist
   | `String "album" -> Ok `Album
   | `String "episode" -> Ok `Episode
@@ -41,7 +41,7 @@ let resource_type_of_yojson = function
   | `String "user" -> Ok `User
   | _ -> Error "Invalid resource type"
 
-let resource_type_to_yojson = function
+let to_yojson = function
   | `Artist -> `String "artist"
   | `Album -> `String "album"
   | `Episode -> `String "episode"
@@ -50,35 +50,6 @@ let resource_type_to_yojson = function
   | `Show -> `String "show"
   | `Track -> `String "track"
   | `User -> `String "user"
-  | #resource_type -> .
+  | #t -> .
 
-type 'a t = 'a constraint 'a = [< resource_type ] [@@deriving yojson]
-
-let of_string = resource_type_of_string
-let to_string = resource_type_to_string
-
-type 'a reference = {
-  resource_type : 'a;
-  href : Http.Uri.t option;
-  total : int;
-}
-  constraint 'a = [< resource_type ]
-[@@deriving yojson]
-
-type 'a uri = {
-  resource_type : 'a;
-  id : string;
-}
-  constraint 'a = [< resource_type ]
-[@@deriving yojson]
-
-let uri_of_string str =
-  match String.split_on_char ':' str with
-  | [ _; resource_type; id ] ->
-      { resource_type = resource_type_of_string resource_type; id }
-  | _ -> failwith @@ "Invalid Spotify URI: " ^ str
-
-let uri_to_string uri =
-  Printf.sprintf "spotify:%s:%s"
-    (resource_type_to_string uri.resource_type)
-    uri.id
+type reference = { href : Http.Uri.t option; total : int } [@@deriving yojson]

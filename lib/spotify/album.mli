@@ -14,11 +14,11 @@ type t = {
   popularity : int;
   release_date : string;
   release_date_precision : [ `Year | `Month | `Day ];
-  resource_type : [ `Album ];
+  resource_type : Resource.t;
   restrictions : Common.restriction list option;
   total_tracks : int;
-  (* tracks : Track.t list; (* TODO: Make Track.simple *) *)
-  uri : [ `Album ] Resource.uri;
+  (* tracks : Track.Simple.t list; *)
+  uri : string;
 }
 [@@deriving yojson]
 
@@ -37,8 +37,8 @@ module Simple : sig
     release_date_precision : [ `Year | `Month | `Day ];
     restrictions : Common.restriction list option;
     total_tracks : int;
-    resource_type : [ `Album ];
-    uri : [ `Album ] Resource.uri;
+    resource_type : Resource.t;
+    uri : string;
   }
   [@@deriving yojson]
 end

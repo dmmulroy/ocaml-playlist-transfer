@@ -10,17 +10,17 @@ type t = {
   collaborative : bool;
   description : string option;
   external_urls : Common.external_urls;
-  followers : [ `Follower ] Resource.reference;
+  followers : Resource.reference;
   href : Http.Uri.t;
   id : string;
   images : Common.image list;
   name : string;
   owner : User.t;
   public : bool option;
-  resource_type : [ `Playlist ];
+  resource_type : Resource.t;
   snapshot_id : string;
   tracks : playlist_track Paginated_response.t;
-  uri : [ `Playlist ] Resource.uri;
+  uri : string;
 }
 [@@deriving yojson]
 
@@ -35,10 +35,10 @@ module Simple : sig
     name : string;
     owner : User.t;
     public : bool option;
-    resource_type : [ `Playlist ];
+    resource_type : Resource.t;
     snapshot_id : string;
     tracks : Common.reference;
-    uri : [ `Playlist ] Resource.uri;
+    uri : string;
   }
   [@@deriving yojson]
 end

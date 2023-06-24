@@ -53,18 +53,18 @@ type t = {
   popularity : int;
   release_date : string;
   release_date_precision : release_date_precision;
-  resource_type : [ `Album ] Resource.t; [@key "type"]
+  resource_type : Resource.t; [@key "type"]
   restrictions : Common.restriction list option; [@default None]
   total_tracks : int;
-  (* tracks : Track.t list; (* TODO: Make Track.simple *) *)
-  uri : [ `Album ] Resource.uri;
+  (* tracks : Track.Simple.t list; *)
+  uri : string;
 }
 [@@deriving yojson]
 
 module Simple = struct
   type t = {
-    album_group : [ `Album | `Single | `Compilation | `Appears_on ] option;
-    album_type : [ `Album | `Single | `Compilation ];
+    album_group : album_group option; [@default None]
+    album_type : album_type;
     artists : Artist.Simple.t list;
     available_markets : string list;
     external_urls : Common.external_urls;
@@ -73,11 +73,11 @@ module Simple = struct
     images : Common.image list;
     name : string;
     release_date : string;
-    release_date_precision : [ `Year | `Month | `Day ];
-    restrictions : Common.restriction list option;
+    release_date_precision : release_date_precision;
+    restrictions : Common.restriction list option; [@default None]
     total_tracks : int;
-    resource_type : [ `Album ] Resource.t; [@key "type"]
-    uri : [ `Album ] Resource.uri;
+    resource_type : Resource.t; [@key "type"]
+    uri : string;
   }
   [@@deriving yojson]
 end

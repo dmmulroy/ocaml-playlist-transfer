@@ -1,12 +1,12 @@
 type t = {
   display_name : string option;
   external_urls : Common.external_urls;
-  followers : [ `Follower ] Resource.reference option;
+  followers : Resource.reference option;
   href : Http.Uri.t;
   id : string;
   image : Common.image list option;
-  resource_type : [ `User ];
-  uri : [ `User ] Resource.uri;
+  resource_type : Resource.t;
+  uri : string;
 }
 [@@deriving yojson]
 
@@ -23,12 +23,12 @@ module Me : sig
     product : product;
     display_name : string option;
     external_urls : Common.external_urls;
-    followers : [ `Follower ] Resource.reference option;
+    followers : Resource.reference option;
     href : Http.Uri.t;
     id : string;
     image : Common.image list option;
-    resource_type : [ `User ];
-    uri : [ `User ] Resource.uri;
+    resource_type : Resource.t;
+    uri : string;
   }
   [@@deriving yojson]
 end
