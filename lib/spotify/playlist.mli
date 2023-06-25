@@ -1,3 +1,15 @@
+type video_thumbnail = { url : Http.Uri.t option }
+
+type playlist_track = {
+  added_at : string;
+  added_by : User.t;
+  is_local : bool;
+  primary_color : string option;
+  track : Track.t;
+  video_thumbnail : video_thumbnail option;
+}
+[@@deriving yojson]
+
 type t = {
   collaborative : bool;
   description : string option;
@@ -14,15 +26,6 @@ type t = {
   snapshot_id : string;
   tracks : playlist_track Page.t;
   uri : string;
-}
-[@@deriving yojson]
-
-and playlist_track = {
-  added_at : string;
-  added_by : User.t;
-  is_local : bool;
-  primary_color : string option; [@default None]
-  track : Track.t;
 }
 [@@deriving yojson]
 
