@@ -1,11 +1,3 @@
-type playlist_track = {
-  added_at : string;
-  added_by : User.t;
-  is_local : bool;
-  track : Track.t;
-}
-[@@deriving yojson { strict = false }]
-
 type t = {
   collaborative : bool;
   description : string option;
@@ -16,13 +8,23 @@ type t = {
   images : Common.image list;
   name : string;
   owner : User.t;
+  primary_color : string option;
   public : bool option;
   resource_type : Resource.t;
   snapshot_id : string;
   tracks : playlist_track Page.t;
   uri : string;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
+
+and playlist_track = {
+  added_at : string;
+  added_by : User.t;
+  is_local : bool;
+  primary_color : string option; [@default None]
+  track : Track.t;
+}
+[@@deriving yojson]
 
 type create_options = {
   public : bool option;

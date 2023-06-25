@@ -1,11 +1,3 @@
-type playlist_track = {
-  added_at : string;
-  added_by : User.t;
-  is_local : bool;
-  track : Track.t;
-}
-[@@deriving yojson { strict = false }]
-
 type t = {
   collaborative : bool;
   description : string option; [@default None]
@@ -16,13 +8,23 @@ type t = {
   images : Common.image list;
   name : string;
   owner : User.t;
+  primary_color : string option; [@default None]
   public : bool option; [@default None]
   resource_type : Resource.t; [@key "type"]
   snapshot_id : string;
   tracks : playlist_track Page.t;
   uri : string;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
+
+and playlist_track = {
+  added_at : string;
+  added_by : User.t;
+  is_local : bool;
+  primary_color : string option; [@default None]
+  track : Track.t;
+}
+[@@deriving yojson]
 
 type create_options = {
   public : bool option;
@@ -139,6 +141,7 @@ let get_by_id ~(client : Client.t) (playlist_id : string) ?(options = None) () =
     when Http.Code.is_success @@ Http.Code.code_of_status
          @@ Http.Response.status res -> (
       let%lwt json = Http.Body.to_yojson body in
+      print_endline @@ Yojson.Safe.pretty_to_string json;
       match of_yojson json with
       | Ok response -> Lwt.return_ok response
       | Error err -> Lwt.return_error (`Msg err))
