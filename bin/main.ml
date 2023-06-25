@@ -8,7 +8,7 @@ let () =
     let redirect_server = Http.Redirect_server.make ~state ~redirect_uri in
     let%lwt _ = Http.Redirect_server.run redirect_server () in
     let authorization_uri =
-      Spotify_old.Authorization.make_authorization_url
+      Spotify.Authorization.make_authorization_url
         {
           client_id;
           client_secret;
@@ -31,26 +31,26 @@ let () =
     let%lwt code = Http.Redirect_server.get_code redirect_server in
     let%lwt access_token =
       match%lwt
-        Spotify_old.Authorization.fetch_access_token
+        Spotify.Authorization.fetch_access_token
         @@ `Authorization_code { client_secret; client_id; code; redirect_uri }
       with
       | Ok access_token -> Lwt.return access_token
-      | Error err -> Lwt.fail_with @@ Spotify_old.Error.to_string err
+      | Error err -> Lwt.fail_with @@ Spotify.Error.to_string err
     in
-    let client = Spotify_old.Client.make access_token in
+    let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify_old.Playlist.get_by_id ~client "2t0Yxn35CNGdT7yV9wr4cr" ()
+      Spotify.Playlist.get_by_id ~client "2t0Yxn35CNGdT7yV9wr4cr" ()
     in
     match response with
     | Ok playlist ->
-        let open Spotify_old.Playlist in
+        let open Spotify.Playlist in
         print_endline @@ "Playlist: " ^ playlist.name;
         let () =
           List.iteri (fun idx playlist_track ->
-              let open Spotify_old.Track in
+              let open Spotify.Track in
               print_endline @@ string_of_int idx ^ ": "
               ^ playlist_track.track.name)
-          @@ Spotify_old.Paginated_response.get_items playlist.tracks
+          @@ Spotify.Paginated_response.get_items playlist.tracks
         in
         Lwt.return_unit
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)

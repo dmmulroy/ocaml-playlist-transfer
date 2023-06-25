@@ -16,6 +16,11 @@ type external_ids = {
 }
 [@@deriving yojson]
 
+type external_urls = { spotify : string } [@@deriving yojson]
+
+type image = { height : int option; url : Http.Uri.t; width : int option }
+[@@deriving yojson]
+
 type reference = { href : Http.Uri.t option; total : int } [@@deriving yojson]
 type restriction_reason = [ `Market | `Product | `Explicit ]
 
