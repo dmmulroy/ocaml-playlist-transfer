@@ -11,15 +11,3 @@ type t = {
   uri : string;
 }
 [@@deriving yojson]
-
-module Simple : sig
-  type t = {
-    external_urls : Common.external_urls;
-    href : Http.Uri.t;
-    id : string;
-    name : string;
-    resource_type : Resource.t;
-    uri : string;
-  }
-  [@@deriving yojson]
-end

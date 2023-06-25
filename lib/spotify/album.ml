@@ -60,24 +60,3 @@ type t = {
   uri : string;
 }
 [@@deriving yojson]
-
-module Simple = struct
-  type t = {
-    album_group : album_group option; [@default None]
-    album_type : album_type;
-    artists : Artist.Simple.t list;
-    available_markets : string list;
-    external_urls : Common.external_urls;
-    href : Http.Uri.t;
-    id : string;
-    images : Common.image list;
-    name : string;
-    release_date : string;
-    release_date_precision : release_date_precision;
-    restrictions : Common.restriction list option; [@default None]
-    total_tracks : int;
-    resource_type : Resource.t; [@key "type"]
-    uri : string;
-  }
-  [@@deriving yojson]
-end

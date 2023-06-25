@@ -19,29 +19,10 @@ type t = {
   public : bool option; [@default None]
   resource_type : Resource.t; [@key "type"]
   snapshot_id : string;
-  tracks : playlist_track Paginated_response.t;
+  tracks : playlist_track Page.t;
   uri : string;
 }
 [@@deriving yojson { strict = false }]
-
-module Simple = struct
-  type t = {
-    collaborative : bool;
-    description : string option;
-    external_urls : Common.external_urls;
-    href : Http.Uri.t;
-    id : string;
-    images : Common.image list;
-    name : string;
-    owner : User.t;
-    public : bool option;
-    resource_type : Resource.t; [@key "type"]
-    snapshot_id : string;
-    tracks : Common.reference;
-    uri : string;
-  }
-  [@@deriving yojson { strict = false }]
-end
 
 type create_options = {
   public : bool option;
@@ -101,7 +82,7 @@ let query_params_of_request_options = function
           ("limit", Option.map string_of_int options.limit);
           ("offset", Option.map string_of_int options.offset);
         ]
-  | `Get_current_users_playlists_options (Some options) ->
+  | `Get_current_users_playlists (Some options) ->
       List.filter_map
         (fun (key, value) -> Option.map (fun value -> (key, value)) value)
         [
@@ -166,9 +147,9 @@ let get_by_id ~(client : Client.t) (playlist_id : string) ?(options = None) () =
       let status_code = Http.Response.status res in
       Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 
-type get_featured_playlists_response = {
+type get_featured_response = {
   message : string;
-  playlists : Simple.t Paginated_response.t;
+  playlists : Simple_playlist.t Page.t;
 }
 [@@deriving yojson]
 
@@ -188,9 +169,8 @@ let get_featured ~(client : Client.t) ?(options = None) () =
     when Http.Code.is_success @@ Http.Code.code_of_status
          @@ Http.Response.status res -> (
       let%lwt json = Http.Body.to_yojson body in
-      match get_featured_playlists_response_of_yojson json with
-      | Ok response ->
-          Lwt.return_ok @@ Paginated_response.get_items response.playlists
+      match get_featured_response_of_yojson json with
+      | Ok response -> Lwt.return_ok response
       | Error err -> Lwt.return_error (`Msg err))
   | res, body ->
       let%lwt json = Http.Body.to_string body in
@@ -198,7 +178,7 @@ let get_featured ~(client : Client.t) ?(options = None) () =
       Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 
 module Me = struct
-  type get_current_users_playlists_response = Simple.t Paginated_response.t
+  type get_current_users_playlists_response = Simple_playlist.t Page.t
   [@@deriving yojson]
 
   let get_all ~(client : Client.t) ?(options = None) () =
@@ -218,7 +198,7 @@ module Me = struct
            @@ Http.Response.status res -> (
         let%lwt json = Http.Body.to_yojson body in
         match get_current_users_playlists_response_of_yojson json with
-        | Ok response -> Lwt.return_ok @@ Paginated_response.get_items response
+        | Ok response -> Lwt.return_ok response
         | Error err -> Lwt.return_error (`Msg err))
     | res, body ->
         let%lwt json = Http.Body.to_string body in

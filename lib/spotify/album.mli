@@ -1,6 +1,10 @@
+type album_type = [ `Album | `Single | `Compilation ] [@@deriving yojson]
+type album_group = [ album_type | `Appears_on ] [@@deriving yojson]
+type release_date_precision = [ `Year | `Month | `Day ] [@@deriving yojson]
+
 type t = {
-  album_group : [ `Album | `Single | `Compilation | `Appears_on ] option;
-  album_type : [ `Album | `Single | `Compilation ];
+  album_group : album_group option;
+  album_type : album_type;
   artists : Artist.t list;
   available_markets : string list;
   copyrights : Common.copyright list;
@@ -21,24 +25,3 @@ type t = {
   uri : string;
 }
 [@@deriving yojson]
-
-module Simple : sig
-  type t = {
-    album_group : [ `Album | `Single | `Compilation | `Appears_on ] option;
-    album_type : [ `Album | `Single | `Compilation ];
-    artists : Artist.Simple.t list;
-    available_markets : string list;
-    external_urls : Common.external_urls;
-    href : Http.Uri.t;
-    id : string;
-    images : Common.image list;
-    name : string;
-    release_date : string;
-    release_date_precision : [ `Year | `Month | `Day ];
-    restrictions : Common.restriction list option;
-    total_tracks : int;
-    resource_type : Resource.t;
-    uri : string;
-  }
-  [@@deriving yojson]
-end

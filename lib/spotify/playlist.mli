@@ -4,7 +4,7 @@ type playlist_track = {
   is_local : bool;
   track : Track.t;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 type t = {
   collaborative : bool;
@@ -19,29 +19,10 @@ type t = {
   public : bool option;
   resource_type : Resource.t;
   snapshot_id : string;
-  tracks : playlist_track Paginated_response.t;
+  tracks : playlist_track Page.t;
   uri : string;
 }
-[@@deriving yojson]
-
-module Simple : sig
-  type t = {
-    collaborative : bool;
-    description : string option;
-    external_urls : Common.external_urls;
-    href : Http.Uri.t;
-    id : string;
-    images : Common.image list;
-    name : string;
-    owner : User.t;
-    public : bool option;
-    resource_type : Resource.t;
-    snapshot_id : string;
-    tracks : Common.reference;
-    uri : string;
-  }
-  [@@deriving yojson]
-end
+[@@deriving yojson { strict = false }]
 
 type create_options = {
   public : bool option;
@@ -85,12 +66,18 @@ val get_by_id :
   unit ->
   (t, [ `Msg of string ]) result Lwt.t
 
+type get_featured_response = {
+  message : string;
+  playlists : Simple_playlist.t Page.t;
+}
+[@@deriving yojson]
+
 (* Spotify.Playlist.get_featured  *)
 val get_featured :
   client:Client.t ->
   ?options:get_featured_playlists_options option ->
   unit ->
-  (Simple.t list, [ `Msg of string ]) result Lwt.t
+  (get_featured_response, [ `Msg of string ]) result Lwt.t
 
 module Me : sig
   (* Spotify.Playlist.Me.get_playlists *)
@@ -98,5 +85,5 @@ module Me : sig
     client:Client.t ->
     ?options:get_current_users_playlists_options option ->
     unit ->
-    (Simple.t list, [ `Msg of string ]) result Lwt.t
+    (Simple_playlist.t Page.t, [ `Msg of string ]) result Lwt.t
 end
