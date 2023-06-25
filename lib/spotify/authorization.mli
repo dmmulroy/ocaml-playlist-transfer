@@ -1,16 +1,20 @@
 module Access_token : sig
   type t
 
+  val get_expiration_time : t -> float
+  val get_refresh_token : t -> string option
+  val get_scopes : t -> Scope.t list option
+  val get_token : t -> string
   val is_expired : t -> bool
 
   val make :
     token:string ->
     expiration_time:float ->
+    ?scopes:Scope.t list option ->
     ?refresh_token:string option ->
     unit ->
     t
 
-  val show : t -> string
   val to_bearer_token : t -> string
 end
 

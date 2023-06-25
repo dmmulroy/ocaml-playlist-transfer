@@ -13,6 +13,7 @@ type t = {
   available_markets : string list;
   disc_number : int;
   duration_ms : int;
+  episode : bool;
   explicit : bool;
   external_ids : Common.external_ids;
   external_urls : Common.external_urls;
@@ -23,10 +24,11 @@ type t = {
   linked_from : linked_track option; [@default None]
   name : string;
   popularity : int;
-  preview_url : string option;
+  preview_url : string option; [@default None]
   resource_type : Resource.t; [@key "type"]
   restrictions : Common.restriction list option; [@default None]
+  track : bool;
   track_number : int;
   uri : string;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]

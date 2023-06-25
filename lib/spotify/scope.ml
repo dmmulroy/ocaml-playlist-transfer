@@ -77,3 +77,6 @@ let of_string = function
   | "user-manage-partner" -> `User_manage_partner
   | "user-create-partner" -> `User_create_partner
   | _ -> failwith "Invalid scope"
+
+let to_string_list scopes = List.map to_string scopes
+let of_string_list scopes = List.map of_string scopes

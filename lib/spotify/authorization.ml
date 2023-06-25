@@ -1,15 +1,19 @@
 module Access_token = struct
   type t = {
-    token : string;
     expiration_time : float;
     refresh_token : string option;
+    scopes : Scope.t list option;
+    token : string;
   }
-  [@@deriving show]
 
+  let get_expiration_time t = t.expiration_time
+  let get_refresh_token t = t.refresh_token
+  let get_scopes t = t.scopes
+  let get_token t = t.token
   let is_expired t = Unix.time () > t.expiration_time
 
-  let make ~token ~expiration_time ?(refresh_token = None) () =
-    { token; expiration_time; refresh_token }
+  let make ~token ~expiration_time ?(scopes = None) ?(refresh_token = None) () =
+    { token; expiration_time; refresh_token; scopes }
 
   let to_bearer_token t = "Bearer " ^ t.token
 end
@@ -30,14 +34,27 @@ type authorization_code_grant = {
   code : string;
 }
 
+type authorization_code_grant_response = {
+  access_token : string;
+  expires_in : float;
+  scope : string;
+  token_type : string;
+  refresh_token : string;
+}
+[@@deriving yojson]
+
 type client_credentials_grant = { client_id : string; client_secret : string }
 
 type grant =
   [ `Authorization_code of authorization_code_grant
   | `Client_credentials of client_credentials_grant ]
 
-type authorization_response = { access_token : string; expires_in : float }
-[@@deriving yojson { strict = false }]
+type client_credentials_grant_response = {
+  access_token : string;
+  expires_in : float;
+  token_type : string;
+}
+[@@deriving yojson]
 
 type error =
   [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
@@ -65,15 +82,16 @@ let fetch_with_client_credentials_grant credentials =
          @@ Http.Response.status res -> (
       let%lwt json = Http.Body.to_string body in
       match
-        authorization_response_of_yojson @@ Yojson.Safe.from_string json
+        client_credentials_grant_response_of_yojson
+        @@ Yojson.Safe.from_string json
       with
       | Ok res ->
-          let at =
+          let access_token =
             Access_token.make ~token:res.access_token
               ~expiration_time:(Unix.time () +. res.expires_in)
-              ()
+              ~refresh_token:None ~scopes:None ()
           in
-          Lwt.return_ok at
+          Lwt.return_ok access_token
       | Error _ -> Lwt.return_error `Json_parse_error)
   | res, body ->
       let%lwt json = Http.Body.to_string body in
@@ -107,12 +125,17 @@ let fetch_with_authorization_code_grant authorization_code_grant =
          @@ Http.Response.status res -> (
       let%lwt json = Http.Body.to_string body in
       match
-        authorization_response_of_yojson @@ Yojson.Safe.from_string json
+        authorization_code_grant_response_of_yojson
+        @@ Yojson.Safe.from_string json
       with
       | Ok res ->
           let at =
             Access_token.make ~token:res.access_token
               ~expiration_time:(Unix.time () +. res.expires_in)
+              ~refresh_token:(Some res.refresh_token)
+              ~scopes:
+                (Some
+                   (Scope.of_string_list @@ String.split_on_char ' ' res.scope))
               ()
           in
           Lwt.return_ok at
