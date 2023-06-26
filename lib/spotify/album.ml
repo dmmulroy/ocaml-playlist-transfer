@@ -1,6 +1,5 @@
 type album_type = [ `Album | `Single | `Compilation ]
 type album_group = [ album_type | `Appears_on ]
-type release_date_precision = [ `Year | `Month | `Day ]
 
 let album_type_of_yojson = function
   | `String "album" -> Ok `Album
@@ -26,17 +25,6 @@ let album_group_to_yojson = function
   | `Compilation -> `String "compilation"
   | `Appears_on -> `String "appears_on"
 
-let release_date_precision_of_yojson = function
-  | `String "year" -> Ok `Year
-  | `String "month" -> Ok `Month
-  | `String "day" -> Ok `Day
-  | _ -> Error "Invalid album release_date_precision"
-
-let release_date_precision_to_yojson = function
-  | `Year -> `String "year"
-  | `Month -> `String "month"
-  | `Day -> `String "day"
-
 type t = {
   album_group : album_group option; [@default None]
   album_type : album_type;
@@ -52,11 +40,11 @@ type t = {
   name : string;
   popularity : int;
   release_date : string;
-  release_date_precision : release_date_precision;
+  release_date_precision : Common.release_date_precision;
   resource_type : Resource.t; [@key "type"]
   restrictions : Common.restriction list option; [@default None]
   total_tracks : int;
-  (* tracks : Track.Simple.t list; *)
+  tracks : Simple_track.t list;
   uri : string;
 }
 [@@deriving yojson]

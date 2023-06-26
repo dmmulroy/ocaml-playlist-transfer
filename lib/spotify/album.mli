@@ -1,6 +1,5 @@
 type album_type = [ `Album | `Single | `Compilation ] [@@deriving yojson]
 type album_group = [ album_type | `Appears_on ] [@@deriving yojson]
-type release_date_precision = [ `Year | `Month | `Day ] [@@deriving yojson]
 
 type t = {
   album_group : album_group option;
@@ -17,11 +16,11 @@ type t = {
   name : string;
   popularity : int;
   release_date : string;
-  release_date_precision : [ `Year | `Month | `Day ];
+  release_date_precision : Common.release_date_precision;
   resource_type : Resource.t;
   restrictions : Common.restriction list option;
   total_tracks : int;
-  (* tracks : Track.Simple.t list; *)
+  tracks : Simple_track.t list;
   uri : string;
 }
 [@@deriving yojson]

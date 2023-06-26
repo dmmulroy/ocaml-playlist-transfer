@@ -9,7 +9,7 @@ type t = {
   id : string;
   is_local : bool;
   is_playable : bool option;
-  linked_from : Track.linked_track option;
+  linked_from : Common.linked_track option;
   name : string;
   preview_url : string option;
   resource_type : Resource.t; [@key "type"]

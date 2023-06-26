@@ -9,7 +9,7 @@ type t = {
   images : Common.image list;
   name : string;
   release_date : string;
-  release_date_precision : Album.release_date_precision;
+  release_date_precision : Common.release_date_precision;
   restrictions : Common.restriction list option; [@default None]
   total_tracks : int;
   resource_type : Resource.t; [@key "type"]
