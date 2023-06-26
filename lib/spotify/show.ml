@@ -1,7 +1,8 @@
 type t = {
-  audio_preview_url : Http.Uri.t;
+  available_markets : string list;
+  copyrights : Common.copyright list;
   description : string;
-  duration_ms : int;
+  episodes : Simple_episode.t list;
   explicit : bool;
   external_urls : Common.external_urls;
   href : Http.Uri.t;
@@ -9,18 +10,12 @@ type t = {
   id : string;
   images : Common.image list;
   is_externally_hosted : bool;
-  is_playable : bool;
   languages : string list;
+  media_type : string;
   name : string;
-  release_date : string;
-  release_date_precision : string;
+  publisher : string;
   resource_type : Resource.t; [@key "type"]
-  restrictions : Common.restriction option; [@default None]
-  resume_point : resume_point;
-  show : Simple_show.t;
+  total_episodes : int;
   uri : string;
 }
-[@@deriving yojson]
-
-and resume_point = { fully_played : bool; resume_position_ms : int }
 [@@deriving yojson]
