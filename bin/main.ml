@@ -39,7 +39,7 @@ let () =
     in
     let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify.Playlist.get_by_id ~client "2t0Yxn35CNGdT7yV9wr4cr" ()
+      Spotify.Playlist.get_by_id ~client "3cRmAiWeZE27wxoefjddLU" ()
     in
     match response with
     | Ok playlist ->
@@ -48,8 +48,12 @@ let () =
         let () =
           List.iteri
             (fun idx playlist_track ->
-              print_endline @@ string_of_int idx ^ ": "
-              ^ playlist_track.track.name)
+              let name =
+                match playlist_track.track with
+                | `Track track -> track.name
+                | `Episode episode -> episode.name
+              in
+              print_endline @@ string_of_int idx ^ ": " ^ name)
             playlist.tracks.items
         in
         Lwt.return_unit

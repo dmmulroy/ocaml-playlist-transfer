@@ -12,6 +12,7 @@ let copyright_to_yojson = function
 type external_ids = {
   ean : string option; [@default None]
   isrc : string option; [@default None]
+  spotify : string option; [@default None]
   upc : string option; [@default None]
 }
 [@@deriving yojson]

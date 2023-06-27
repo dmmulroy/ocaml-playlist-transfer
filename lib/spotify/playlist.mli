@@ -3,7 +3,7 @@ type playlist_track = {
   added_by : User.t;
   is_local : bool;
   primary_color : string option;
-  track : Track.t;
+  track : [ `Track of Track.t | `Episode of Episode.t ];
   video_thumbnail : video_thumbnail option;
 }
 [@@deriving yojson]
