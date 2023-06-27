@@ -1,5 +1,3 @@
-type video_thumbnail = { url : Http.Uri.t option }
-
 type playlist_track = {
   added_at : string;
   added_by : User.t;
@@ -9,6 +7,8 @@ type playlist_track = {
   video_thumbnail : video_thumbnail option;
 }
 [@@deriving yojson]
+
+and video_thumbnail = { url : Http.Uri.t option } [@@deriving yojson]
 
 type t = {
   collaborative : bool;

@@ -2,10 +2,10 @@ type t = {
   available_markets : string list;
   copyrights : Common.copyright list;
   description : string;
-  html_description : string;
   explicit : bool;
   external_urls : Common.external_urls;
   href : Http.Uri.t;
+  html_description : string;
   id : string;
   images : Common.image list;
   is_externally_hosted : bool;
@@ -14,7 +14,7 @@ type t = {
   name : string;
   publisher : string;
   resource_type : Resource.t; [@key "type"]
-  uri : string;
   total_episodes : int;
+  uri : string;
 }
 [@@deriving yojson]
