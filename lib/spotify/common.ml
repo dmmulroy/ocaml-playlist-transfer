@@ -45,7 +45,7 @@ let release_date_precision_to_yojson = function
   | `Month -> `String "month"
   | `Day -> `String "day"
 
-type restriction_reason = [ `Market | `Product | `Explicit ]
+type restriction_reason = [ `Market | `Product | `Explicit ] [@@deriving yojson]
 
 let restriction_reason_of_yojson = function
   | `String "market" -> Ok `Market
@@ -60,61 +60,3 @@ let restriction_reason_to_yojson = function
   | #restriction_reason -> .
 
 type restriction = { reason : restriction_reason } [@@deriving yojson]
-
-type _ resource_type =
-  | Artist : [ `Artist ] resource_type
-  | Album : [ `Album ] resource_type
-  | Episode : [ `Episode ] resource_type
-  | Playlist : [ `Playlist ] resource_type
-  | Show : [ `Show ] resource_type
-  | Track : [ `Track ] resource_type
-  | User : [ `User ] resource_type
-
-let resource_type_of_yojson = function
-  | `String "artist" -> Ok `Artist
-  | `String "album" -> Ok `Album
-  | `String "episode" -> Ok `Episode
-  | `String "playlist" -> Ok `Playlist
-  | `String "show" -> Ok `Show
-  | `String "track" -> Ok `Track
-  | `String "user" -> Ok `User
-  | _ -> Error "Invalid resource type"
-
-let resource_type_to_yojson : type a. a resource_type -> Yojson.Safe.t =
-  function
-  | Artist -> `String "artist"
-  | Album -> `String "album"
-  | Episode -> `String "episode"
-  | Playlist -> `String "playlist"
-  | Show -> `String "show"
-  | Track -> `String "track"
-  | User -> `String "user"
-
-let make_resource_type_of_yojson :
-    type a. a resource_type -> Yojson.Safe.t -> (a, string) result = function
-  | Artist -> (
-      function `String "artist" -> Ok `Artist | _ -> Error "Expected 'artist'")
-  | Album -> (
-      function `String "album" -> Ok `Album | _ -> Error "Expected 'album'")
-  | Episode -> (
-      function
-      | `String "episode" -> Ok `Episode | _ -> Error "Expected 'episode'")
-  | Playlist -> (
-      function
-      | `String "playlist" -> Ok `Playlist | _ -> Error "Expected 'playlist'")
-  | Show -> (
-      function `String "show" -> Ok `Show | _ -> Error "Expected 'show'")
-  | Track -> (
-      function `String "track" -> Ok `Track | _ -> Error "Expected 'track'")
-  | User -> (
-      function `String "user" -> Ok `User | _ -> Error "Expected 'user'")
-
-let make_resource_type_to_yojson : type a. a resource_type -> a -> Yojson.Safe.t
-    = function
-  | Artist -> ( function `Artist -> `String "artist")
-  | Album -> ( function `Album -> `String "album")
-  | Episode -> ( function `Episode -> `String "episode")
-  | Playlist -> ( function `Playlist -> `String "playlist")
-  | Show -> ( function `Show -> `String "show")
-  | Track -> ( function `Track -> `String "track")
-  | User -> ( function `User -> `String "user")

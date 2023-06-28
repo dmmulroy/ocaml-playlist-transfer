@@ -17,11 +17,9 @@ type t = {
   resource_type : Resource.t; [@key "type"]
   restrictions : Common.restriction option; [@default None]
   resume_point : resume_point option; [@default None]
-  (* TODO: Start here Wednesday *)
-  (* show : Simple_show.t; *)
   uri : string;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
 
 and resume_point = { fully_played : bool; resume_position_ms : int }
 [@@deriving yojson]

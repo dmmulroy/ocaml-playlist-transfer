@@ -7,10 +7,11 @@ type t = {
   href : Http.Uri.t;
   id : string;
   images : Common.image list;
+  is_playable : bool option; [@default None]
   name : string;
-  release_date : string;
-  release_date_precision : Common.release_date_precision;
-  restrictions : Common.restriction list option; [@default None]
+  release_date : string option; [@default None]
+  release_date_precision : Common.release_date_precision option; [@default None]
+  restrictions : Common.restriction option; [@default None]
   total_tracks : int;
   resource_type : Resource.t; [@key "type"]
   uri : string;

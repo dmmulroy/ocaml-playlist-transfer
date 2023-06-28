@@ -48,12 +48,13 @@ let () =
         let () =
           List.iteri
             (fun idx playlist_track ->
-              let name =
-                match playlist_track.track with
-                | `Track track -> track.name
-                | `Episode episode -> episode.name
-              in
-              print_endline @@ string_of_int idx ^ ": " ^ name)
+              (* let name = *)
+              (*   match playlist_track.track with *)
+              (*   | `Track track -> track.name *)
+              (*   | `Episode episode -> episode.name *)
+              (* in *)
+              print_endline @@ string_of_int idx ^ ": "
+              ^ playlist_track.track.name)
             playlist.tracks.items
         in
         Lwt.return_unit

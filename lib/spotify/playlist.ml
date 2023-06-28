@@ -1,22 +1,23 @@
-type track_or_episode = [ `Track of Track.t | `Episode of Episode.t ]
-[@@deriving yojson]
-
-let track_or_episode_of_yojson = function
-  | `Assoc key_value_pairs -> (
-      let ( >>= ) = Result.bind in
-      match List.assoc_opt "type" key_value_pairs with
-      | Some (`String "track") ->
-          Track.of_yojson @@ `Assoc key_value_pairs >>= fun track ->
-          Ok (`Track track)
-      | Some (`String "episode") ->
-          Episode.of_yojson @@ `Assoc key_value_pairs >>= fun episode ->
-          Ok (`Episode episode)
-      | _ -> Error "Invalid track_or_episode, missing type field")
-  | _ -> Error "Invalid track_or_episode"
-
-let track_or_episode_to_yojson = function
-  | `Track track -> Track.to_yojson track
-  | `Episode episode -> Episode.to_yojson episode
+(* type track_or_episode = [ `Track of Track.t | `Episode of Episode.t ] *)
+(* [@@deriving yojson] *)
+(***)
+(* let track_or_episode_of_yojson = function *)
+(*   | `Assoc key_value_pairs -> ( *)
+(*       let ( >>= ) = Result.bind in *)
+(*       match List.assoc_opt "type" key_value_pairs with *)
+(*       | Some (`String "track") -> *)
+(*           Track.of_yojson @@ `Assoc key_value_pairs >>= fun track -> *)
+(*           Ok (`Track track) *)
+(*       | Some (`String "episode") -> *)
+(*           print_endline @@ Yojson.Safe.pretty_to_string (`Assoc key_value_pairs); *)
+(*           Episode.of_yojson @@ `Assoc key_value_pairs >>= fun episode -> *)
+(*           Ok (`Episode episode) *)
+(*       | _ -> Error "Invalid track_or_episode, missing type field") *)
+(*   | _ -> Error "Invalid track_or_episode" *)
+(***)
+(* let track_or_episode_to_yojson = function *)
+(*   | `Track track -> Track.to_yojson track *)
+(*   | `Episode episode -> Episode.to_yojson episode *)
 
 type video_thumbnail = { url : Http.Uri.t option } [@@deriving yojson]
 
@@ -25,7 +26,7 @@ type playlist_track = {
   added_by : User.t;
   is_local : bool;
   primary_color : string option; [@default None]
-  track : track_or_episode;
+  track : Track.t;
   video_thumbnail : video_thumbnail option; [@default None]
 }
 [@@deriving yojson]
