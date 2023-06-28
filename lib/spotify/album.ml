@@ -11,19 +11,16 @@ let album_type_to_yojson = function
   | `Album -> `String "album"
   | `Single -> `String "single"
   | `Compilation -> `String "compilation"
+  | #album_type -> .
 
 let album_group_of_yojson = function
-  | `String "album" -> Ok `Album
-  | `String "single" -> Ok `Single
-  | `String "compilation" -> Ok `Compilation
   | `String "appears_on" -> Ok `Appears_on
-  | _ -> Error "Invalid album album_group"
+  | json -> album_type_of_yojson json
 
 let album_group_to_yojson = function
-  | `Album -> `String "album"
-  | `Single -> `String "single"
-  | `Compilation -> `String "compilation"
   | `Appears_on -> `String "appears_on"
+  | #album_type as group -> album_type_to_yojson group
+  | #album_group -> .
 
 type t = {
   album_group : album_group option; [@default None]
