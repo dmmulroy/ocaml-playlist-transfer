@@ -36,3 +36,6 @@ _opam/
 
 # Ignore .git
 .git
+
+# Ignore direnv
+.envrc

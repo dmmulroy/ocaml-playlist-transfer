@@ -4,6 +4,7 @@ val get_bearer_token : t -> string
 val make : Authorization.Access_token.t -> t
 
 (*
+  Client API: 
   Spotify.Playlist.get_by_id ~client:client ~id:"123" ()
   
   in Playlist.ml:
