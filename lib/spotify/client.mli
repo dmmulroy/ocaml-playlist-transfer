@@ -8,9 +8,9 @@ val make : Authorization.Access_token.t -> t
 *)
 
 module HttpRequest : sig
-  type t = method_ * headers * endpoint * body
+  type t = method' * headers * endpoint * body
 
-  and method_ =
+  and method' =
     [ `GET
     | `POST
     | `PUT

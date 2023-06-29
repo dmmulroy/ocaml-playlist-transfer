@@ -6,9 +6,9 @@ let make access_token = access_token
 type 'a promise = 'a Lwt.t
 
 module HttpRequest = struct
-  type t = method_ * headers * endpoint * body
+  type t = method' * headers * endpoint * body
 
-  and method_ =
+  and method' =
     [ `GET
     | `POST
     | `PUT
@@ -51,8 +51,8 @@ let execute_request (type input output error)
       with type input = input
        and type output = output
        and type error = error) (t : t) (input : M.input) =
-  let method_, headers, endpoint, _body = M.to_http input in
-  match method_ with
+  let method', headers, endpoint, _body = M.to_http input in
+  match method' with
   | `GET ->
       let headers = ("Authorization", get_bearer_token t) :: headers in
       let%lwt response =
@@ -60,4 +60,4 @@ let execute_request (type input output error)
       in
       Lwt.return (M.of_http response)
   | _ -> failwith "Not implemented"
-(* TODO Friday: Continue implementing execute_reqeust *)
+(* TODO Friday: Continue implementing and iterating on execute_request *)
