@@ -54,31 +54,8 @@ module type SpotifyRequest = sig
   val of_http : HttpResponse.t -> (output, error) result
 end
 
-type ('input, 'output, 'error) request =
-  (module SpotifyRequest
-     with type input = 'input
-      and type output = 'output
-      and type error = 'error)
-
 type 'a promise = 'a Lwt.t
 
-val execute_request :
-  ('input, 'output, 'error) request ->
-  t ->
-  'input ->
-  ('output, 'error) result promise
-
-(* module GetPlaylistByid : sig *)
-(*   type input = string *)
-(*   type output = string *)
-(*   type error = string *)
-(***)
-(*   val to_http : input -> Http.HttpRequest.t *)
-(*   val of_http : Http.HttpResponse.t -> (output, error) result *)
-(***)
-(*   include *)
-(*     SpotifyRequest *)
-(*       with type input := input *)
-(*        and type output := output *)
-(*        and type error := error *)
-(* end *)
+module MakeRequestExecutor (M : SpotifyRequest) : sig
+  val execute : client:t -> M.input -> (M.output, M.error) result promise
+end

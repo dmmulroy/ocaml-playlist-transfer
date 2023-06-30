@@ -40,24 +40,18 @@ module type SpotifyRequest = sig
   val of_http : HttpResponse.t -> (output, error) result
 end
 
-type ('input, 'output, 'error) request =
-  (module SpotifyRequest
-     with type input = 'input
-      and type output = 'output
-      and type error = 'error)
+module MakeRequestExecutor (M : SpotifyRequest) = struct
+  let execute ~(client : t) (input : M.input) :
+      (M.output, M.error) result promise =
+    let method', headers, endpoint, _body = M.to_http input in
+    match method' with
+    | `GET ->
+        let headers = ("Authorization", get_bearer_token client) :: headers in
+        let%lwt response =
+          Http.Client.get ~headers:(Http.Header.of_list headers) endpoint
+        in
+        Lwt.return (M.of_http response)
+    | _ -> failwith "Not implemented"
+end
 
-let execute_request (type input output error)
-    (module M : SpotifyRequest
-      with type input = input
-       and type output = output
-       and type error = error) (t : t) (input : M.input) =
-  let method', headers, endpoint, _body = M.to_http input in
-  match method' with
-  | `GET ->
-      let headers = ("Authorization", get_bearer_token t) :: headers in
-      let%lwt response =
-        Http.Client.get ~headers:(Http.Header.of_list headers) endpoint
-      in
-      Lwt.return (M.of_http response)
-  | _ -> failwith "Not implemented"
 (* TODO Friday: Continue implementing and iterating on execute_request *)
