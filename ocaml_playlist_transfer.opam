@@ -10,14 +10,14 @@ homepage: "https://github.com/dmmulroy/ocaml-playlist-transfer"
 doc: "https://github.com/dmmulroy/ocaml-playlist-transfer"
 bug-reports: "https://github.com/dmmulroy/ocaml-playlist-transfer/issues"
 depends: [
-  "ocaml"
-  "dune" {>= "3.7"}
   "cohttp-lwt-unix"
-  "lwt_ssl"
+  "dune" {>= "3.7"}
   "lwt_ppx"
-  "yojson"
-  "ppx_yojson_conv"
+  "lwt_ssl"
+  "ocaml"
   "ppx_deriving"
+  "ppx_yojson_conv"
+  "yojson"
   "odoc" {with-doc}
 ]
 build: [
