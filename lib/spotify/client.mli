@@ -19,32 +19,19 @@ val make : Authorization.Access_token.t -> t
 
 *)
 
-module HttpRequest : sig
-  type t = method' * headers * endpoint * body
-  and method' = [ `GET | `POST ]
-  and headers = Http.Header.t
-  and endpoint = Uri.t
-  and body = Http.Body.t
-
-  (* val method_to_string : [< method_ ] -> string *)
-  (* val method_of_string : string -> method_ *)
-end
-
-module HttpResponse : sig
-  type t
-end
-
 module type SpotifyRequest = sig
   type input
   type output
   type error
 
-  val to_http : input -> HttpRequest.t
-  val of_http : HttpResponse.t -> (output, error) result
+  val to_http :
+    input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
+
+  val of_http : Http.Response.t * Http.Body.t -> (output, error) result
 end
 
-type 'a promise = 'a Lwt.t
-
 module MakeRequestExecutor (M : SpotifyRequest) : sig
-  val execute : client:t -> M.input -> (M.output, M.error) result promise
+  open Async
+
+  val execute : client:t -> M.input -> (M.output, M.error) result Promise.t
 end
