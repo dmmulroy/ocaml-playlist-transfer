@@ -1,0 +1,5 @@
+(library
+ (name async)
+ (libraries lwt)
+ (preprocess
+  (pps lwt_ppx)))
