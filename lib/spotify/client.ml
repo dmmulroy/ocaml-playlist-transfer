@@ -7,21 +7,10 @@ type 'a promise = 'a Lwt.t
 
 module HttpRequest = struct
   type t = method' * headers * endpoint * body
-
-  and method' =
-    [ `GET
-    | `POST
-    | `PUT
-    | `DELETE
-    | `HEAD
-    | `CONNECT
-    | `OPTIONS
-    | `TRACE
-    | `PATCH ]
-
-  and headers = (string * string) list
+  and method' = [ `GET | `POST ]
+  and headers = Http.Header.t
   and endpoint = Uri.t
-  and body = string option
+  and body = Http.Body.t
 
   (* val method_to_string : [< method_ ] -> string *)
   (* val method_of_string : string -> method_ *)
@@ -43,15 +32,18 @@ end
 module MakeRequestExecutor (M : SpotifyRequest) = struct
   let execute ~(client : t) (input : M.input) :
       (M.output, M.error) result promise =
-    let method', headers, endpoint, _body = M.to_http input in
+    let method', headers, endpoint, body = M.to_http input in
     match method' with
     | `GET ->
-        let headers = ("Authorization", get_bearer_token client) :: headers in
-        let%lwt response =
-          Http.Client.get ~headers:(Http.Header.of_list headers) endpoint
+        let headers =
+          Http.Header.add headers "Authorization" @@ get_bearer_token client
         in
+        let%lwt response = Http.Client.get ~headers endpoint in
         Lwt.return (M.of_http response)
-    | _ -> failwith "Not implemented"
+    | `POST ->
+        let headers =
+          Http.Header.add headers "Authorization" @@ get_bearer_token client
+        in
+        let%lwt response = Http.Client.post ~headers ~body endpoint in
+        Lwt.return (M.of_http response)
 end
-
-(* TODO Friday: Continue implementing and iterating on execute_request *)

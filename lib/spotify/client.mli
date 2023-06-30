@@ -21,21 +21,10 @@ val make : Authorization.Access_token.t -> t
 
 module HttpRequest : sig
   type t = method' * headers * endpoint * body
-
-  and method' =
-    [ `GET
-    | `POST
-    | `PUT
-    | `DELETE
-    | `HEAD
-    | `CONNECT
-    | `OPTIONS
-    | `TRACE
-    | `PATCH ]
-
-  and headers = (string * string) list
+  and method' = [ `GET | `POST ]
+  and headers = Http.Header.t
   and endpoint = Uri.t
-  and body = string option
+  and body = Http.Body.t
 
   (* val method_to_string : [< method_ ] -> string *)
   (* val method_of_string : string -> method_ *)
