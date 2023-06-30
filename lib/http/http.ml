@@ -23,3 +23,8 @@ module Uri = struct
     | `String s -> Ok (Uri.of_string s)
     | _ -> Error "Error parsing Uri.t with yojson"
 end
+
+(* TODO NEXT: Refactor Http Module*)
+module Request = struct
+  include Request
+end
