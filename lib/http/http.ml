@@ -23,12 +23,8 @@ end
 module Response = struct
   include Response
 
-  let is_success = function
-    | res
-      when res |> Response.status |> Code.code_of_status |> Code.is_success
-           = true ->
-        true
-    | _ -> false
+  let is_success res =
+    res |> Response.status |> Code.code_of_status |> Code.is_success
 end
 
 module Uri = struct
