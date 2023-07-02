@@ -24,7 +24,11 @@ module Uri = struct
     | _ -> Error "Error parsing Uri.t with yojson"
 end
 
-(* TODO NEXT: Refactor Http Module*)
-module Request = struct
-  include Request
-end
+type my_variant = [ `A | `B ]
+
+let my_fn (_ : unit) : [ `A ] = `A
+
+let my_other_fn (idk : [< my_variant ]) =
+  match idk with `A -> print_endline "A" | `B -> print_endline "B"
+
+let _ = my_fn () |> my_other_fn

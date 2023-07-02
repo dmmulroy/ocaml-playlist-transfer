@@ -210,3 +210,18 @@ module Me = struct
         let status_code = Http.Response.status res in
         Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 end
+
+module GetPlaylistById : Spotify_request.S = struct
+  type input = string
+  type output = t
+  type error = [ `Msg of string ]
+
+  let to_http playlist_id =
+    ( `GET,
+      Http.Header.init (),
+      Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/"
+      ^ playlist_id,
+      Http.Body.empty )
+
+  let of_http = function _ -> failwith "not implemented"
+end
