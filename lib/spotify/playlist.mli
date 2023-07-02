@@ -1,3 +1,5 @@
+open Async
+
 type playlist_track = {
   added_at : string;
   added_by : User.t;
@@ -49,13 +51,13 @@ type get_current_users_playlists_options = {
 }
 
 (* Spotify.Playlist.create*)
-val create :
-  client:Client.t ->
-  user_id:string ->
-  name:string ->
-  ?options:create_options option ->
-  unit ->
-  (t, [ `Msg of string ]) result Lwt.t
+(* val create : *)
+(*   client:Client.t -> *)
+(*   user_id:string -> *)
+(*   name:string -> *)
+(*   ?options:create_options option -> *)
+(*   unit -> *)
+(*   (t, [ `Msg of string ]) result Lwt.t *)
 
 type get_playlist_by_id_options = {
   fields : string option;
@@ -66,8 +68,9 @@ type get_playlist_by_id_options = {
 (* Spotify.Playlist.get_by_id *)
 val get_by_id :
   client:Client.t ->
-  [ `Id of string | `Id_with_options of string * get_playlist_by_id_options ] ->
-  (t, [ `Msg of string ]) result Lwt.t
+  ?options:get_playlist_by_id_options option ->
+  string ->
+  (t, [ `Msg of string ]) result Promise.t
 
 type get_featured_response = {
   message : string;

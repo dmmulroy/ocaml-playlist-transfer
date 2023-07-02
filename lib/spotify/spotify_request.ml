@@ -1,25 +1,34 @@
-module type S = sig
-  open Async
+open Async
 
+module type S = sig
   type input
+  type options
   type output
   type error
 
   val to_http :
-    input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
+    ?options:options ->
+    input ->
+    Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
 
   val of_http :
     Http.Response.t * Http.Body.t -> (output, error) result Promise.t
 end
 
 module Make (M : S) = struct
-  open Async
-
-  let request ~(client : Client.t) (input : M.input) :
+  let request ~(client : Client.t) ?(options = None) (input : M.input) :
       (M.output, M.error) result Promise.t =
-    let method', headers, endpoint, body = M.to_http input in
+    let method', headers, endpoint, body =
+      match options with
+      | Some options -> M.to_http ~options input
+      | None -> M.to_http input
+    in
     let headers =
-      Http.Header.add headers "Authorization" @@ Client.get_bearer_token client
+      Http.Header.add_list headers
+        [
+          ("Authorization", Client.get_bearer_token client);
+          ("Content-Type", "application/json");
+        ]
     in
     let%lwt response =
       match method' with
