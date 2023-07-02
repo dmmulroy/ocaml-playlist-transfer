@@ -14,6 +14,17 @@ module Body = struct
   let of_yojson json = Body.of_string @@ Yojson.Safe.to_string json
 end
 
+module Response = struct
+  include Response
+
+  let is_success = function
+    | res
+      when res |> Response.status |> Code.code_of_status |> Code.is_success
+           = true ->
+        true
+    | _ -> false
+end
+
 module Uri = struct
   include Uri
 
@@ -23,12 +34,3 @@ module Uri = struct
     | `String s -> Ok (Uri.of_string s)
     | _ -> Error "Error parsing Uri.t with yojson"
 end
-
-type my_variant = [ `A | `B ]
-
-let my_fn (_ : unit) : [ `A ] = `A
-
-let my_other_fn (idk : [< my_variant ]) =
-  match idk with `A -> print_endline "A" | `B -> print_endline "B"
-
-let _ = my_fn () |> my_other_fn

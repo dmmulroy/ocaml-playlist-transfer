@@ -32,7 +32,7 @@ let () =
     let%lwt access_token =
       match%lwt
         Spotify.Authorization.fetch_access_token
-        @@ `Authorization_code { client_secret; client_id; code; redirect_uri }
+          (`Authorization_code { client_secret; client_id; code; redirect_uri })
       with
       | Ok access_token -> Lwt.return access_token
       | Error err -> Lwt.fail_with @@ Spotify.Error.to_string err

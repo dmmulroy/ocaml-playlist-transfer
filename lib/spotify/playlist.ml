@@ -201,8 +201,7 @@ module GetPlaylistById = Spotify_request.Make (struct
 
   let to_http = function
     | `Id playlist_id ->
-        let endpoint = make_endpoint playlist_id in
-        (`GET, Http.Header.init (), endpoint, Http.Body.empty)
+        (`GET, Http.Header.init (), make_endpoint playlist_id, Http.Body.empty)
     | `Id_with_options (playlist_id, options) ->
         let query_params =
           query_params_of_request_options @@ `Get_playlist options
