@@ -159,7 +159,7 @@ type get_featured_response = {
 }
 [@@deriving yojson]
 
-let get_featured ~(client : Client.t) ?(options = None) () =
+let get_featured ~(client : Client.t) ?options () =
   let base_endpoint =
     Http.Uri.of_string "https://api.spotify.com/v1/browse/featured-playlists"
   in

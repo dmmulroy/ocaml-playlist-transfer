@@ -39,9 +39,7 @@ let () =
     in
     let client = Spotify.Client.make access_token in
     let options =
-      Option.some
-        Spotify.Playlist.
-          { fields = None; market = None; additional_types = None }
+      Spotify.Playlist.{ fields = None; market = None; additional_types = None }
     in
     let%lwt response =
       Spotify.Playlist.get_by_id ~client ~options "3cRmAiWeZE27wxoefjddLU"
@@ -61,3 +59,10 @@ let () =
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in
   Lwt_main.run main
+
+let my_fn ?word () =
+  match word with
+  | Some word -> print_endline word
+  | None -> print_endline "yolo"
+
+let _ = my_fn ~word:"dillon" ()

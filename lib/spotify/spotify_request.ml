@@ -16,7 +16,7 @@ module type S = sig
 end
 
 module Make (M : S) = struct
-  let request ~(client : Client.t) ?(options = None) (input : M.input) :
+  let request ~(client : Client.t) ?options (input : M.input) :
       (M.output, M.error) result Promise.t =
     let method', headers, endpoint, body =
       match options with

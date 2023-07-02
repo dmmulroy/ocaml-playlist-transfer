@@ -81,7 +81,7 @@ type get_featured_response = {
 (* Spotify.Playlist.get_featured  *)
 val get_featured :
   client:Client.t ->
-  ?options:get_featured_playlists_options option ->
+  ?options:get_featured_playlists_options ->
   unit ->
   (get_featured_response, [ `Msg of string ]) result Lwt.t
 
