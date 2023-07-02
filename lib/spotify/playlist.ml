@@ -212,9 +212,7 @@ module GetPlaylistById = Spotify_request.Make (struct
         (`GET, Http.Header.init (), endpoint, Http.Body.empty)
 
   let of_http = function
-    | res, body
-      when Http.Code.is_success @@ Http.Code.code_of_status
-           @@ Http.Response.status res -> (
+    | res, body when Http.Response.is_success res -> (
         let%lwt json = Http.Body.to_yojson body in
         match of_yojson json with
         | Ok response -> Lwt.return_ok response

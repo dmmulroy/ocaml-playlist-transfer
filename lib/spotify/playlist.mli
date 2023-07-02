@@ -57,17 +57,6 @@ val create :
   unit ->
   (t, [ `Msg of string ]) result Lwt.t
 
-module GetPlaylistByIdInput : sig
-  type t
-
-  val make :
-    ?fields:string ->
-    ?market:string ->
-    ?additional_types:[ `Track | `Episode ] ->
-    string ->
-    t
-end
-
 type get_playlist_by_id_options = {
   fields : string option;
   market : string option;
