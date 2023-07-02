@@ -14,6 +14,12 @@ module Body = struct
   let of_yojson json = Body.of_string @@ Yojson.Safe.to_string json
 end
 
+module Header = struct
+  include Header
+
+  let empty = Header.init ()
+end
+
 module Response = struct
   include Response
 
