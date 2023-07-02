@@ -38,8 +38,13 @@ let () =
       | Error err -> Lwt.fail_with @@ Spotify.Error.to_string err
     in
     let client = Spotify.Client.make access_token in
+    let options =
+      Option.some
+        Spotify.Playlist.
+          { fields = None; market = None; additional_types = None }
+    in
     let%lwt response =
-      Spotify.Playlist.get_by_id ~client "3cRmAiWeZE27wxoefjddLU"
+      Spotify.Playlist.get_by_id ~client ~options "3cRmAiWeZE27wxoefjddLU"
     in
     match response with
     | Ok playlist ->

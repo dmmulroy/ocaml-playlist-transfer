@@ -68,7 +68,7 @@ type get_playlist_by_id_options = {
 (* Spotify.Playlist.get_by_id *)
 val get_by_id :
   client:Client.t ->
-  ?options:get_playlist_by_id_options option ->
+  ?options:get_playlist_by_id_options ->
   string ->
   (t, [ `Msg of string ]) result Promise.t
 
