@@ -97,7 +97,7 @@ type create_playlist_input = {
 }
 [@@deriving yojson]
 
-module CreatePlaylist = struct
+module CreatePlaylist = Spotify_request.Make (struct
   type input = create_playlist_input [@@deriving yojson]
   type options = unit
   type output = t
@@ -122,11 +122,9 @@ module CreatePlaylist = struct
         let%lwt json = Http.Body.to_string body in
         let status_code = Http.Response.status res in
         Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
-end
+end)
 
-module CreatePlaylistRequest = Spotify_request.Make (CreatePlaylist)
-
-let create = CreatePlaylistRequest.request
+let create = CreatePlaylist.request
 
 type get_featured_response = {
   message : string;
