@@ -118,9 +118,7 @@ let create ~(client : Client.t) ~(user_id : string) ~(name : string)
     | None -> { name; public = None; collaborative = None; description = None }
   in
   match%lwt Http.Client.post ~headers ~body endpoint with
-  | res, body
-    when Http.Code.is_success @@ Http.Code.code_of_status
-         @@ Http.Response.status res -> (
+  | res, body when Http.Response.is_success res -> (
       let%lwt json = Http.Body.to_yojson body in
       match of_yojson json with
       | Ok response -> Lwt.return_ok response
@@ -148,9 +146,7 @@ let get_featured ~(client : Client.t) ?(options = None) () =
   in
   let endpoint = Http.Uri.add_query_params' base_endpoint query_params in
   match%lwt Http.Client.get ~headers endpoint with
-  | res, body
-    when Http.Code.is_success @@ Http.Code.code_of_status
-         @@ Http.Response.status res -> (
+  | res, body when Http.Response.is_success res -> (
       let%lwt json = Http.Body.to_yojson body in
       match get_featured_response_of_yojson json with
       | Ok response -> Lwt.return_ok response
@@ -176,9 +172,7 @@ module Me = struct
     in
     let endpoint = Http.Uri.add_query_params' base_endpoint query_params in
     match%lwt Http.Client.get ~headers endpoint with
-    | res, body
-      when Http.Code.is_success @@ Http.Code.code_of_status
-           @@ Http.Response.status res -> (
+    | res, body when Http.Response.is_success res -> (
         let%lwt json = Http.Body.to_yojson body in
         match get_current_users_playlists_response_of_yojson json with
         | Ok response -> Lwt.return_ok response
