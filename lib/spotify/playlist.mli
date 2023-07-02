@@ -50,14 +50,20 @@ type get_current_users_playlists_options = {
   offset : int option;
 }
 
+type create_playlist_input = {
+  collaborative : bool option;
+  description : string option;
+  name : string;
+  public : bool option;
+  user_id : string;
+}
+
 (* Spotify.Playlist.create*)
-(* val create : *)
-(*   client:Client.t -> *)
-(*   user_id:string -> *)
-(*   name:string -> *)
-(*   ?options:create_options option -> *)
-(*   unit -> *)
-(*   (t, [ `Msg of string ]) result Lwt.t *)
+val create :
+  client:Client.t ->
+  ?options:unit ->
+  create_playlist_input ->
+  (t, [ `Msg of string ]) result Lwt.t
 
 type get_playlist_by_id_options = {
   fields : string option;

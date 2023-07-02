@@ -88,17 +88,18 @@ let query_params_of_request_options = function
         ]
   | _ -> []
 
-module CreatePlaylist = struct
-  type input = {
-    collaborative : bool option;
-    description : string option;
-    name : string;
-    public : bool option;
-    user_id : string;
-  }
-  [@@deriving yojson]
+type create_playlist_input = {
+  collaborative : bool option;
+  description : string option;
+  name : string;
+  public : bool option;
+  user_id : string;
+}
+[@@deriving yojson]
 
-  type options
+module CreatePlaylist = struct
+  type input = create_playlist_input [@@deriving yojson]
+  type options = unit
   type output = t
   type error = [ `Msg of string ]
 
@@ -125,7 +126,7 @@ end
 
 module CreatePlaylistRequest = Spotify_request.Make (CreatePlaylist)
 
-(* let create = CreatePlaylistRequest.request *)
+let create = CreatePlaylistRequest.request
 
 type get_featured_response = {
   message : string;
