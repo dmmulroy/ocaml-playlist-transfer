@@ -1,18 +1,21 @@
 module type S = sig
+  open Async
+
   type input
   type output
   type error
 
   val to_http :
-    input -> [< Http.Code.meth ] * Http.Header.t * Http.Uri.t * Http.Body.t
+    input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
 
-  val of_http : Http.Response.t * Http.Body.t -> (output, error) result
+  val of_http :
+    Http.Response.t * Http.Body.t -> (output, error) result Promise.t
 end
 
-module MakeRequestExecutor (M : S) = struct
+module Make (M : S) = struct
   open Async
 
-  let execute ~(client : Client.t) (input : M.input) :
+  let request ~(client : Client.t) (input : M.input) :
       (M.output, M.error) result Promise.t =
     let method', headers, endpoint, body = M.to_http input in
     let headers =
@@ -26,5 +29,5 @@ module MakeRequestExecutor (M : S) = struct
       | `DELETE -> Http.Client.delete ~headers ~body endpoint
       | _ -> failwith "Not implemented"
     in
-    Lwt.return @@ M.of_http response
+    M.of_http response
 end

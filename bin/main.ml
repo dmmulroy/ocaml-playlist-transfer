@@ -39,7 +39,7 @@ let () =
     in
     let client = Spotify.Client.make access_token in
     let%lwt response =
-      Spotify.Playlist.get_by_id ~client "3cRmAiWeZE27wxoefjddLU" ()
+      Spotify.Playlist.get_by_id ~client (`Id "3cRmAiWeZE27wxoefjddLU")
     in
     match response with
     | Ok playlist ->

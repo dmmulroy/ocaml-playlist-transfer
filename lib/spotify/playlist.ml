@@ -43,12 +43,6 @@ type create_request = {
 }
 [@@deriving yojson]
 
-type get_by_id_options = {
-  fields : string option;
-  market : string option;
-  additional_types : [ `Track | `Episode ] option;
-}
-
 type get_featured_playlists_options = {
   country : string option;
   locale : string option;
@@ -62,8 +56,14 @@ type get_current_users_playlists_options = {
   offset : int option;
 }
 
+type get_playlist_by_id_options = {
+  fields : string option;
+  market : string option;
+  additional_types : [ `Track | `Episode ] option;
+}
+
 let query_params_of_request_options = function
-  | `Get_playlist (Some options) ->
+  | `Get_playlist options ->
       List.filter_map
         (fun (key, value) -> Option.map (fun value -> (key, value)) value)
         [
@@ -118,28 +118,6 @@ let create ~(client : Client.t) ~(user_id : string) ~(name : string)
     | None -> { name; public = None; collaborative = None; description = None }
   in
   match%lwt Http.Client.post ~headers ~body endpoint with
-  | res, body
-    when Http.Code.is_success @@ Http.Code.code_of_status
-         @@ Http.Response.status res -> (
-      let%lwt json = Http.Body.to_yojson body in
-      match of_yojson json with
-      | Ok response -> Lwt.return_ok response
-      | Error err -> Lwt.return_error (`Msg err))
-  | res, body ->
-      let%lwt json = Http.Body.to_string body in
-      let status_code = Http.Response.status res in
-      Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
-
-let get_by_id ~(client : Client.t) (playlist_id : string) ?(options = None) () =
-  let base_endpoint =
-    Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ playlist_id
-  in
-  let headers =
-    Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
-  in
-  let query_params = query_params_of_request_options @@ `Get_playlist options in
-  let endpoint = Http.Uri.add_query_params' base_endpoint query_params in
-  match%lwt Http.Client.get ~headers endpoint with
   | res, body
     when Http.Code.is_success @@ Http.Code.code_of_status
          @@ Http.Response.status res -> (
@@ -211,17 +189,41 @@ module Me = struct
         Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 end
 
-module GetPlaylistById : Spotify_request.S = struct
-  type input = string
+module GetPlaylistById = Spotify_request.Make (struct
+  type input =
+    [ `Id of string | `Id_with_options of string * get_playlist_by_id_options ]
+
   type output = t
   type error = [ `Msg of string ]
 
-  let to_http playlist_id =
-    ( `GET,
-      Http.Header.init (),
-      Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/"
-      ^ playlist_id,
-      Http.Body.empty )
+  let make_endpoint id =
+    Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ id
 
-  let of_http = function _ -> failwith "not implemented"
-end
+  let to_http = function
+    | `Id playlist_id ->
+        let endpoint = make_endpoint playlist_id in
+        (`GET, Http.Header.init (), endpoint, Http.Body.empty)
+    | `Id_with_options (playlist_id, options) ->
+        let query_params =
+          query_params_of_request_options @@ `Get_playlist options
+        in
+        let endpoint =
+          Http.Uri.add_query_params' (make_endpoint playlist_id) query_params
+        in
+        (`GET, Http.Header.init (), endpoint, Http.Body.empty)
+
+  let of_http = function
+    | res, body
+      when Http.Code.is_success @@ Http.Code.code_of_status
+           @@ Http.Response.status res -> (
+        let%lwt json = Http.Body.to_yojson body in
+        match of_yojson json with
+        | Ok response -> Lwt.return_ok response
+        | Error err -> Lwt.return_error (`Msg err))
+    | res, body ->
+        let%lwt json = Http.Body.to_string body in
+        let status_code = Http.Response.status res in
+        Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
+end)
+
+let get_by_id = GetPlaylistById.request

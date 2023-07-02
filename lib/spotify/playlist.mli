@@ -35,12 +35,6 @@ type create_options = {
   description : string option;
 }
 
-type get_by_id_options = {
-  fields : string option;
-  market : string option;
-  additional_types : [ `Track | `Episode ] option;
-}
-
 type get_featured_playlists_options = {
   country : string option;
   locale : string option;
@@ -63,12 +57,27 @@ val create :
   unit ->
   (t, [ `Msg of string ]) result Lwt.t
 
+module GetPlaylistByIdInput : sig
+  type t
+
+  val make :
+    ?fields:string ->
+    ?market:string ->
+    ?additional_types:[ `Track | `Episode ] ->
+    string ->
+    t
+end
+
+type get_playlist_by_id_options = {
+  fields : string option;
+  market : string option;
+  additional_types : [ `Track | `Episode ] option;
+}
+
 (* Spotify.Playlist.get_by_id *)
 val get_by_id :
   client:Client.t ->
-  string ->
-  ?options:get_by_id_options option ->
-  unit ->
+  [ `Id of string | `Id_with_options of string * get_playlist_by_id_options ] ->
   (t, [ `Msg of string ]) result Lwt.t
 
 type get_featured_response = {
