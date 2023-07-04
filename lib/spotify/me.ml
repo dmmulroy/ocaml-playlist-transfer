@@ -17,7 +17,7 @@ module Me = struct
   type get_current_users_playlists_response = Simple_playlist.t Page.t
   [@@deriving yojson]
 
-  let get_all ?options ~(client : Client.t) =
+  let get_all ?options ~(client : Client.t) () =
     let base_endpoint =
       Http.Uri.of_string "https://api.spotify.com/v1/me/playlists"
     in
