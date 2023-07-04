@@ -43,11 +43,6 @@ type get_featured_playlists_options = {
   offset : int option;
 }
 
-type get_current_users_playlists_options = {
-  limit : int option;
-  offset : int option;
-}
-
 type get_playlist_by_id_options = {
   fields : string option;
   market : string option;

@@ -45,11 +45,6 @@ type get_featured_playlists_options = {
   offset : int option;
 }
 
-type get_current_users_playlists_options = {
-  limit : int option;
-  offset : int option;
-}
-
 type create_playlist_input = {
   collaborative : bool option;
   description : string option;
@@ -90,12 +85,3 @@ val get_featured :
   ?options:get_featured_playlists_options ->
   unit ->
   (get_featured_response, [ `Msg of string ]) result Lwt.t
-
-module Me : sig
-  (* Spotify.Playlist.Me.get_playlists *)
-  val get_all :
-    client:Client.t ->
-    ?options:get_current_users_playlists_options option ->
-    unit ->
-    (Simple_playlist.t Page.t, [ `Msg of string ]) result Lwt.t
-end
