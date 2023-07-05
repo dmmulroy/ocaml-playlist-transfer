@@ -29,12 +29,6 @@ type t = {
 }
 [@@deriving yojson]
 
-type create_options = {
-  public : bool option;
-  collaborative : bool option;
-  description : string option;
-}
-
 type get_featured_playlists_options = {
   country : string option;
   locale : string option;
@@ -120,27 +114,35 @@ type get_featured_response = {
 }
 [@@deriving yojson]
 
-let get_featured ~(client : Client.t) ?options () =
+module GetFeaturePlaylists = Spotify_request.Make (struct
+  type input = unit
+  type options = get_featured_playlists_options
+  type output = get_featured_response
+  type error = [ `Msg of string ]
+
   let base_endpoint =
     Http.Uri.of_string "https://api.spotify.com/v1/browse/featured-playlists"
-  in
-  let headers =
-    Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
-  in
-  let query_params =
-    query_params_of_request_options @@ `Get_featured_playlists options
-  in
-  let endpoint = Http.Uri.add_query_params' base_endpoint query_params in
-  match%lwt Http.Client.get ~headers endpoint with
-  | res, body when Http.Response.is_success res -> (
-      let%lwt json = Http.Body.to_yojson body in
-      match get_featured_response_of_yojson json with
-      | Ok response -> Lwt.return_ok response
-      | Error err -> Lwt.return_error (`Msg err))
-  | res, body ->
-      let%lwt json = Http.Body.to_string body in
-      let status_code = Http.Response.status res in
-      Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
+
+  let make_endpoint options =
+    Http.Uri.add_query_params' base_endpoint
+      (query_params_of_request_options @@ `Get_featured_playlists options)
+
+  let to_http ?options _ =
+    (`GET, Http.Header.empty, make_endpoint options, Http.Body.empty)
+
+  let of_http = function
+    | res, body when Http.Response.is_success res -> (
+        let%lwt json = Http.Body.to_yojson body in
+        match get_featured_response_of_yojson json with
+        | Ok response -> Lwt.return_ok response
+        | Error err -> Lwt.return_error (`Msg err))
+    | res, body ->
+        let%lwt json = Http.Body.to_string body in
+        let status_code = Http.Response.status res in
+        Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
+end)
+
+let get_featured = GetFeaturePlaylists.request
 
 module GetPlaylistById = Spotify_request.Make (struct
   type input = string
