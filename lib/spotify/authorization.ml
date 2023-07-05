@@ -170,3 +170,13 @@ let make_authorization_url (params : authorization_parameters) =
   Http.Uri.with_query' authorize_uri
     (query_params
     @ match scope with Some scope -> [ ("scope", scope) ] | None -> [])
+
+module RequestAccessToken = struct
+  type input = grant
+  type options = unit
+  type output = Access_token.t
+  type nonrec error = error
+
+  let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
+  let to_http ?_options = function `Authorization_grant _grant -> ()
+end
