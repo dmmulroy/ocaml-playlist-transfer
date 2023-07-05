@@ -178,5 +178,8 @@ module RequestAccessToken = struct
   type nonrec error = error
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
-  let to_http ?_options = function `Authorization_grant _grant -> ()
+
+  let to_http ?_options = function
+    | `Authorization_grant _grant -> ()
+    | `Client_credentials _grant -> ()
 end
