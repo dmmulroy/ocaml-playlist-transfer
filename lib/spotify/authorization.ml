@@ -177,9 +177,37 @@ module RequestAccessToken = struct
   type output = Access_token.t
   type nonrec error = error
 
+  let make_headers (grant : grant) =
+    let client_id, client_secret =
+      match grant with
+      | `Authorization_code { client_id; client_secret; _ }
+      | `Client_credentials { client_id; client_secret } ->
+          (client_id, client_secret)
+    in
+    Http.Header.of_list
+      [
+        ("Content-Type", "application/x-www-form-urlencoded");
+        ( "Authorization",
+          "Basic " ^ Base64.encode_string (client_id ^ ":" ^ client_secret) );
+      ]
+
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
   let to_http ?_options = function
-    | `Authorization_grant _grant -> ()
-    | `Client_credentials _grant -> ()
+    | `Authorization_code (grant : authorization_code_grant) ->
+        ( `POST,
+          make_headers (`Authorization_code grant),
+          endpoint,
+          Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+            [
+              ("code", [ grant.code ]);
+              ("redirect_uri", [ Http.Uri.to_string grant.redirect_uri ]);
+              ("grant_type", [ "authorization_code" ]);
+            ] )
+    | `Client_credentials grant ->
+        ( `POST,
+          make_headers grant,
+          endpoint,
+          Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+            [ ("grant_type", [ "client_credentials" ]) ] )
 end
