@@ -31,8 +31,10 @@ let () =
     let%lwt code = Http.Redirect_server.get_code redirect_server in
     let%lwt access_token =
       match%lwt
-        Spotify.Authorization.fetch_access_token
-          (`Authorization_code { client_secret; client_id; code; redirect_uri })
+        Spotify.Authorization.request_access_token
+          (`Authorization_code
+            Spotify.Authorization.
+              { client_secret; client_id; code; redirect_uri })
       with
       | Ok access_token -> Lwt.return access_token
       | Error err -> Lwt.fail_with @@ Spotify.Error.to_string err
@@ -59,10 +61,3 @@ let () =
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in
   Lwt_main.run main
-
-let my_fn ?word () =
-  match word with
-  | Some word -> print_endline word
-  | None -> print_endline "yolo"
-
-let _ = my_fn ~word:"dillon" ()

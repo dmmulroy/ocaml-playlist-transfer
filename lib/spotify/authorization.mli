@@ -45,5 +45,11 @@ type grant =
 type error =
   [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
 
-val request_access_token : grant -> (Access_token.t, error) result Promise.t
 val make_authorization_url : authorization_parameters -> Http.Uri.t
+
+(* val request_access_token : grant -> (Access_token.t, error) result Promise.t *)
+val request_access_token :
+  client:Client.t ->
+  ?options:unit ->
+  grant ->
+  (Access_token.t, error) result Promise.t

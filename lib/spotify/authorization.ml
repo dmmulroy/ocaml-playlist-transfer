@@ -162,3 +162,5 @@ module RequestAccessToken = Spotify_request.Make (struct
         let status_code = Http.Response.status res in
         Lwt.return_error (`Request_error (status_code, json))
 end)
+
+let request_access_token = RequestAccessToken.request
