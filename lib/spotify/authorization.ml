@@ -193,6 +193,29 @@ module RequestAccessToken = struct
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
+  let parse_respone json =
+    match authorization_code_grant_response_of_yojson json with
+    | Ok res ->
+        let access_token =
+          Access_token.make ~token:res.access_token
+            ~expiration_time:(Unix.time () +. res.expires_in)
+            ~refresh_token:(Some res.refresh_token)
+            ~scopes:
+              (Some (Scope.of_string_list @@ String.split_on_char ' ' res.scope))
+            ()
+        in
+        Ok access_token
+    | Error _ -> (
+        match client_credentials_grant_response_of_yojson json with
+        | Ok res ->
+            let access_token =
+              Access_token.make ~token:res.access_token
+                ~expiration_time:(Unix.time () +. res.expires_in)
+                ~refresh_token:None ~scopes:None ()
+            in
+            Ok access_token
+        | Error _ -> Error `Json_parse_error)
+
   let to_http ?_options = function
     | `Authorization_code (grant : authorization_code_grant) ->
         ( `POST,
@@ -210,4 +233,16 @@ module RequestAccessToken = struct
           endpoint,
           Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
             [ ("grant_type", [ "client_credentials" ]) ] )
+
+  let of_http = function
+    | res, body when Http.Response.is_success res -> (
+        let%lwt json = Http.Body.to_yojson body in
+        match parse_respone json with
+        | Ok response -> Lwt.return_ok response
+        | Error err -> Lwt.return_error err)
+    | res, body ->
+        let%lwt json = Http.Body.to_string body in
+        let status_code = Http.Response.status res in
+        Lwt.return_error
+          (`Request_error (Http.Code.string_of_status status_code, json))
 end
