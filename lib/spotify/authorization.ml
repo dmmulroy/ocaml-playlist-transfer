@@ -59,7 +59,6 @@ type client_credentials_grant_response = {
 type error =
   [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
 
-let token_endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
 
 let make_authorization_url (params : authorization_parameters) =
