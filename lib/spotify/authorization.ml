@@ -81,11 +81,16 @@ let make_authorization_url (params : authorization_parameters) =
     (query_params
     @ match scope with Some scope -> [ ("scope", scope) ] | None -> [])
 
-module RequestAccessToken = struct
-  type input = grant
+module RequestAccessToken = Spotify_request.Make (struct
+  type input =
+    [ `Authorization_code of authorization_code_grant
+    | `Client_credentials of client_credentials_grant ]
+
   type options = unit
   type output = Access_token.t
-  type nonrec error = error
+
+  type error =
+    [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
 
   let make_headers (grant : grant) =
     let client_id, client_secret =
@@ -125,23 +130,26 @@ module RequestAccessToken = struct
             Ok access_token
         | Error _ -> Error `Json_parse_error)
 
-  let to_http ?_options = function
-    | `Authorization_code (grant : authorization_code_grant) ->
-        ( `POST,
-          make_headers (`Authorization_code grant),
-          endpoint,
-          Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-            [
-              ("code", [ grant.code ]);
-              ("redirect_uri", [ Http.Uri.to_string grant.redirect_uri ]);
-              ("grant_type", [ "authorization_code" ]);
-            ] )
-    | `Client_credentials grant ->
-        ( `POST,
-          make_headers grant,
-          endpoint,
-          Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-            [ ("grant_type", [ "client_credentials" ]) ] )
+  let to_http ?options input =
+    match options with
+    | _ -> (
+        match input with
+        | `Authorization_code (grant : authorization_code_grant) ->
+            ( `POST,
+              make_headers (`Authorization_code grant),
+              endpoint,
+              Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+                [
+                  ("code", [ grant.code ]);
+                  ("redirect_uri", [ Http.Uri.to_string grant.redirect_uri ]);
+                  ("grant_type", [ "authorization_code" ]);
+                ] )
+        | `Client_credentials (grant : client_credentials_grant) ->
+            ( `POST,
+              make_headers (`Client_credentials grant),
+              endpoint,
+              Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+                [ ("grant_type", [ "client_credentials" ]) ] ))
 
   let of_http = function
     | res, body when Http.Response.is_success res -> (
@@ -152,6 +160,5 @@ module RequestAccessToken = struct
     | res, body ->
         let%lwt json = Http.Body.to_string body in
         let status_code = Http.Response.status res in
-        Lwt.return_error
-          (`Request_error (Http.Code.string_of_status status_code, json))
-end
+        Lwt.return_error (`Request_error (status_code, json))
+end)
