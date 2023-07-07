@@ -12,7 +12,7 @@ module Access_token = struct
   let get_token t = t.token
   let is_expired t = Unix.time () > t.expiration_time
 
-  let make ~token ~expiration_time ?(scopes = None) ?(refresh_token = None) () =
+  let make ?scopes ?refresh_token ~expiration_time ~token () =
     { token; expiration_time; refresh_token; scopes }
 
   let to_bearer_token t = "Bearer " ^ t.token
@@ -109,9 +109,8 @@ module RequestAccessToken = struct
         let access_token =
           Access_token.make ~token:res.access_token
             ~expiration_time:(Unix.time () +. res.expires_in)
-            ~refresh_token:(Some res.refresh_token)
-            ~scopes:
-              (Some (Scope.of_string_list @@ String.split_on_char ' ' res.scope))
+            ~refresh_token:res.refresh_token
+            ~scopes:(Scope.of_string_list @@ String.split_on_char ' ' res.scope)
             ()
         in
         Ok access_token
@@ -121,7 +120,7 @@ module RequestAccessToken = struct
             let access_token =
               Access_token.make ~token:res.access_token
                 ~expiration_time:(Unix.time () +. res.expires_in)
-                ~refresh_token:None ~scopes:None ()
+                ()
             in
             Ok access_token
         | Error _ -> Error `Json_parse_error)

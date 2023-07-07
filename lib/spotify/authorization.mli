@@ -8,10 +8,10 @@ module Access_token : sig
   val is_expired : t -> bool
 
   val make :
-    token:string ->
+    ?scopes:Scope.t list ->
+    ?refresh_token:string ->
     expiration_time:float ->
-    ?scopes:Scope.t list option ->
-    ?refresh_token:string option ->
+    token:string ->
     unit ->
     t
 
