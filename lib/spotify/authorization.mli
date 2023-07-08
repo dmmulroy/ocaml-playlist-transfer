@@ -27,9 +27,9 @@ type error =
 
 val make_authorization_url : authorization_parameters -> Http.Uri.t
 
-(* val request_access_token : grant -> (Client.Access_token.t, error) result Promise.t *)
+(* val request_access_token : grant -> (Access_token.t, error) result Promise.t *)
 val request_access_token :
   client:Client.t ->
   ?options:unit ->
   grant ->
-  (Client.Access_token.t, error) result Promise.t
+  (Access_token.t, error) result Promise.t
