@@ -1,23 +1,3 @@
-module Access_token = struct
-  type t = {
-    expiration_time : float;
-    refresh_token : string option;
-    scopes : Scope.t list option;
-    token : string;
-  }
-
-  let get_expiration_time t = t.expiration_time
-  let get_refresh_token t = t.refresh_token
-  let get_scopes t = t.scopes
-  let get_token t = t.token
-  let is_expired t = Unix.time () > t.expiration_time
-
-  let make ?scopes ?refresh_token ~expiration_time ~token () =
-    { token; expiration_time; refresh_token; scopes }
-
-  let to_bearer_token t = "Bearer " ^ t.token
-end
-
 type authorization_parameters = {
   client_id : string;
   client_secret : string;
@@ -87,7 +67,7 @@ module RequestAccessToken = Spotify_request.Make (struct
     | `Client_credentials of client_credentials_grant ]
 
   type options = unit
-  type output = Access_token.t
+  type output = Client.Access_token.t
 
   type error =
     [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
@@ -112,7 +92,7 @@ module RequestAccessToken = Spotify_request.Make (struct
     match authorization_code_grant_response_of_yojson json with
     | Ok res ->
         let access_token =
-          Access_token.make ~token:res.access_token
+          Client.Access_token.make ~token:res.access_token
             ~expiration_time:(Unix.time () +. res.expires_in)
             ~refresh_token:res.refresh_token
             ~scopes:(Scope.of_string_list @@ String.split_on_char ' ' res.scope)
@@ -123,7 +103,7 @@ module RequestAccessToken = Spotify_request.Make (struct
         match client_credentials_grant_response_of_yojson json with
         | Ok res ->
             let access_token =
-              Access_token.make ~token:res.access_token
+              Client.Access_token.make ~token:res.access_token
                 ~expiration_time:(Unix.time () +. res.expires_in)
                 ()
             in

@@ -1,25 +1,5 @@
 open Async
 
-module Access_token : sig
-  type t
-
-  val get_expiration_time : t -> float
-  val get_refresh_token : t -> string option
-  val get_scopes : t -> Scope.t list option
-  val get_token : t -> string
-  val is_expired : t -> bool
-
-  val make :
-    ?scopes:Scope.t list ->
-    ?refresh_token:string ->
-    expiration_time:float ->
-    token:string ->
-    unit ->
-    t
-
-  val to_bearer_token : t -> string
-end
-
 type authorization_parameters = {
   client_id : string;
   client_secret : string;
@@ -47,9 +27,9 @@ type error =
 
 val make_authorization_url : authorization_parameters -> Http.Uri.t
 
-(* val request_access_token : grant -> (Access_token.t, error) result Promise.t *)
+(* val request_access_token : grant -> (Client.Access_token.t, error) result Promise.t *)
 val request_access_token :
   client:Client.t ->
   ?options:unit ->
   grant ->
-  (Access_token.t, error) result Promise.t
+  (Client.Access_token.t, error) result Promise.t
