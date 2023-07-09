@@ -18,7 +18,6 @@ module Header = struct
   include Header
 
   let empty = Header.init ()
-  (* let set key value =  *)
 end
 
 module Response = struct

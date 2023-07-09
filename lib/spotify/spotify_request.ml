@@ -48,10 +48,7 @@ module Make (M : S) = struct
       | None -> M.to_http input
     in
     let headers =
-      match Http.Header.mem headers' "Content-Type" with
-      | true -> headers'
-      | false ->
-          Http.Header.add_list headers' [ ("Content-Type", "application/json") ]
+      Http.Header.add_unless_exists headers' "Content-Type" "application/json"
     in
     let%lwt response =
       match method' with
