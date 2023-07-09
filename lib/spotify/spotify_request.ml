@@ -18,13 +18,13 @@ end
 module Make (M : S) = struct
   let request ~(client : Client.t) ?options (input : M.input) :
       (M.output, M.error) result Promise.t =
-    let method', headers, endpoint, body =
+    let method', headers', endpoint, body =
       match options with
       | Some options -> M.to_http ~options input
       | None -> M.to_http input
     in
     let headers =
-      Http.Header.add_list headers
+      Http.Header.add_list_unless_exists headers'
         [
           ("Authorization", Client.get_bearer_token client);
           ("Content-Type", "application/json");

@@ -18,6 +18,12 @@ module Header = struct
   include Header
 
   let empty = Header.init ()
+
+  let add_list_unless_exists headers new_headers =
+    List.fold_left
+      (fun headers (key, value) ->
+        if Header.mem headers key then headers else Header.add headers key value)
+      headers new_headers
 end
 
 module Response = struct
