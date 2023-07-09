@@ -39,4 +39,27 @@ module Make (M : S) = struct
       | _ -> failwith "Not implemented"
     in
     M.of_http response
+
+  let unauthenticated_request ?options (input : M.input) :
+      (M.output, M.error) result Promise.t =
+    let method', headers', endpoint, body =
+      match options with
+      | Some options -> M.to_http ~options input
+      | None -> M.to_http input
+    in
+    let headers =
+      match Http.Header.mem headers' "Content-Type" with
+      | true -> headers'
+      | false ->
+          Http.Header.add_list headers' [ ("Content-Type", "application/json") ]
+    in
+    let%lwt response =
+      match method' with
+      | `GET -> Http.Client.get ~headers endpoint
+      | `POST -> Http.Client.post ~headers ~body endpoint
+      | `PUT -> Http.Client.put ~headers ~body endpoint
+      | `DELETE -> Http.Client.delete ~headers ~body endpoint
+      | _ -> failwith "Not implemented"
+    in
+    M.of_http response
 end

@@ -67,7 +67,7 @@ module RequestAccessToken = Spotify_request.Make (struct
     | `Client_credentials of client_credentials_grant ]
 
   type options = unit
-  type output = Client.Access_token.t
+  type output = Access_token.t
 
   type error =
     [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
@@ -92,7 +92,7 @@ module RequestAccessToken = Spotify_request.Make (struct
     match authorization_code_grant_response_of_yojson json with
     | Ok res ->
         let access_token =
-          Client.Access_token.make ~token:res.access_token
+          Access_token.make ~token:res.access_token
             ~expiration_time:(Unix.time () +. res.expires_in)
             ~refresh_token:res.refresh_token
             ~scopes:(Scope.of_string_list @@ String.split_on_char ' ' res.scope)
@@ -103,7 +103,7 @@ module RequestAccessToken = Spotify_request.Make (struct
         match client_credentials_grant_response_of_yojson json with
         | Ok res ->
             let access_token =
-              Client.Access_token.make ~token:res.access_token
+              Access_token.make ~token:res.access_token
                 ~expiration_time:(Unix.time () +. res.expires_in)
                 ()
             in
@@ -139,8 +139,10 @@ module RequestAccessToken = Spotify_request.Make (struct
         | Error err -> Lwt.return_error err)
     | res, body ->
         let%lwt json = Http.Body.to_string body in
+        print_endline @@ json;
         let status_code = Http.Response.status res in
         Lwt.return_error (`Request_error (status_code, json))
 end)
 
-let request_access_token = RequestAccessToken.request
+let request_access_token =
+  RequestAccessToken.unauthenticated_request ~options:()
