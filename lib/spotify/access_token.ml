@@ -5,10 +5,6 @@ type t = {
   token : string;
 }
 
-exception Expired
-exception Unauthenticated
-exception Unauthorized
-
 let get_expiration_time t = t.expiration_time
 let get_refresh_token t = t.refresh_token
 let get_scopes t = t.scopes

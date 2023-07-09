@@ -1,9 +1,5 @@
 type t
 
-exception Expired
-exception Unauthenticated
-exception Unauthorized
-
 val get_expiration_time : t -> float
 val get_refresh_token : t -> string option
 val get_scopes : t -> Scope.t list option
