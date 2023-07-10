@@ -21,8 +21,7 @@ module Header = struct
 
   let add_list_unless_exists headers new_headers =
     List.fold_left
-      (fun headers (key, value) ->
-        if Header.mem headers key then headers else Header.add headers key value)
+      (fun headers' (key, value) -> Header.add_unless_exists headers' key value)
       headers new_headers
 end
 
