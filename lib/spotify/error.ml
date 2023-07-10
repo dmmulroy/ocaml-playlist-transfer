@@ -6,5 +6,5 @@ let to_string (err : [< error ]) =
       Printf.sprintf "Request error: %d %s"
         (Http.Code.code_of_status @@ status_code)
         msg
-  | `Json_parse_error -> Printf.sprintf "Error parsing JSON response"
-  | `Unknown_error -> Printf.sprintf "Unknown error"
+  | `Json_parse_error -> "Error parsing JSON response"
+  | `Unknown_error -> "Unknown error"
