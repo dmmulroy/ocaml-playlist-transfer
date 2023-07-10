@@ -7,4 +7,7 @@ let to_string (err : [< error ]) =
         (Http.Code.code_of_status @@ status_code)
         msg
   | `Json_parse_error -> "Error parsing JSON response"
+  | `Invalid_refresh_token -> "Invalid refresh token"
+  | `No_refresh_token -> "No refresh token"
   | `Unknown_error -> "Unknown error"
+  | #error -> .

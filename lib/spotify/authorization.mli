@@ -1,13 +1,13 @@
 open Async
 
-type authorization_parameters = {
-  client_id : string;
-  client_secret : string;
-  redirect_uri : Http.Uri.t;
-  state : string;
-  scopes : Scope.t list option;
-  show_dialog : bool;
-}
+val make_authorization_url :
+  client_id:string ->
+  client_secret:string ->
+  redirect_uri:Http.Uri.t ->
+  ?show_dialog:bool ->
+  ?scopes:Scope.t list ->
+  unit ->
+  Http.Uri.t
 
 type authorization_code_grant = {
   client_id : string;
@@ -18,12 +18,22 @@ type authorization_code_grant = {
 
 type client_credentials_grant = { client_id : string; client_secret : string }
 
-type grant =
-  [ `Authorization_code of authorization_code_grant
-  | `Client_credentials of client_credentials_grant ]
-
 type error =
-  [ `Request_error of Http.Code.status_code * string | `Json_parse_error ]
+  [ `Request_error of
+    Http.Code.status_code
+    * string (* TODO: Move to spotify_request.ml or error.ml *)
+  | `Json_parse_error (* TODO: Move to common.ml or error.ml*)
+  | `No_refresh_token
+  | `Invalid_refresh_token ]
 
-val make_authorization_url : authorization_parameters -> Http.Uri.t
-val request_access_token : grant -> (Access_token.t, error) result Promise.t
+val request_access_token :
+  [ `Authorization_code of authorization_code_grant
+  | `Client_credentials of client_credentials_grant ] ->
+  (Access_token.t, error) result Promise.t
+
+val refresh_access_token :
+  client:Client.t ->
+  ?options:unit ->
+  unit ->
+  (Access_token.t, [< `No_refresh_token | `Invalid_refresh_token ]) result
+  Promise.t
