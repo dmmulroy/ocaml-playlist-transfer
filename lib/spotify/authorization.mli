@@ -2,10 +2,10 @@ open Async
 
 val make_authorization_url :
   client_id:string ->
-  client_secret:string ->
   redirect_uri:Http.Uri.t ->
+  state:string ->
+  ?scopes:[< Scope.t ] list ->
   ?show_dialog:bool ->
-  ?scopes:Scope.t list ->
   unit ->
   Http.Uri.t
 
@@ -31,9 +31,9 @@ val request_access_token :
   | `Client_credentials of client_credentials_grant ] ->
   (Access_token.t, error) result Promise.t
 
-val refresh_access_token :
-  client:Client.t ->
-  ?options:unit ->
-  unit ->
-  (Access_token.t, [< `No_refresh_token | `Invalid_refresh_token ]) result
-  Promise.t
+(* val refresh_access_token : *)
+(*   client:Client.t -> *)
+(*   ?options:unit -> *)
+(*   unit -> *)
+(*   (Access_token.t, [< `No_refresh_token | `Invalid_refresh_token ]) result *)
+(*   Promise.t *)

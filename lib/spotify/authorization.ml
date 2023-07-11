@@ -1,7 +1,7 @@
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
 
-let make_authorization_url ~client_id ~redirect_uri ?scopes
-    ?(show_dialog = true) ~state () =
+let make_authorization_url ~client_id ~redirect_uri ~state ?scopes
+    ?(show_dialog = true) () =
   let query_params =
     [
       ("client_id", client_id);
@@ -14,7 +14,7 @@ let make_authorization_url ~client_id ~redirect_uri ?scopes
   let scope =
     Option.map
       (fun scope_list ->
-        String.concat " " @@ List.map Scope.to_string scope_list)
+        List.map Scope.to_string scope_list |> String.concat " ")
       scopes
   in
   Http.Uri.with_query' authorize_uri
@@ -52,9 +52,7 @@ type client_credentials_grant_response = {
 }
 [@@deriving yojson]
 
-let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
-
-module RequestAccessToken = struct
+module RequestAccessToken = Spotify_request.Make (struct
   type input =
     [ `Authorization_code of authorization_code_grant
     | `Client_credentials of client_credentials_grant ]
@@ -113,30 +111,45 @@ module RequestAccessToken = struct
     | res, body when Http.Response.is_success res -> (
         let%lwt json = Http.Body.to_yojson body in
         match response_of_yojson json with
-        | Ok (`Authorization_code _res) -> Lwt.return_ok ()
-        | Ok (`Client_credentials _res) -> Lwt.return_ok ()
+        | Ok (`Authorization_code res) ->
+            let access_token =
+              Access_token.make ~token:res.access_token
+                ~expiration_time:(Unix.time () +. res.expires_in)
+                ~refresh_token:res.refresh_token
+                ~scopes:
+                  (Scope.of_string_list @@ String.split_on_char ' ' res.scope)
+                ()
+            in
+            Lwt.return_ok access_token
+        | Ok (`Client_credentials res) ->
+            let access_token =
+              Access_token.make ~token:res.access_token
+                ~expiration_time:(Unix.time () +. res.expires_in)
+                ()
+            in
+            Lwt.return_ok access_token
         | Error err -> Lwt.return_error err)
     | res, body ->
         let%lwt json = Http.Body.to_string body in
         print_endline @@ json;
         let status_code = Http.Response.status res in
         Lwt.return_error (`Request_error (status_code, json))
-end
+end)
 
-(* let request_access_token = *)
-(*   RequestAccessToken.unauthenticated_request ~options:() *)
+let request_access_token =
+  RequestAccessToken.unauthenticated_request ~options:()
 
-module RefreshAccessToken = struct
-  type input = Access_token.t
-  type options = unit
-  type output = Access_token.t
-  type nonrec error = error
-
-  let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
-
-  let to_http ?_options access_token =
-    let _client_id, _client_secret =
-      Access_token.get_client_credentials access_token
-    in
-    ()
-end
+(* module RefreshAccessToken = struct *)
+(*   type input = { *)
+(*     client_id : string; *)
+(*     client_secret : string; *)
+(*     refresh_token : string; *)
+(*   } *)
+(***)
+(*   type options = unit *)
+(*   type output = Access_token.t *)
+(*   type nonrec error = error *)
+(***)
+(*   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token" *)
+(*   let to_http ?_options _input = () *)
+(* end *)

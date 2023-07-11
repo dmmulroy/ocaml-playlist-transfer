@@ -8,21 +8,15 @@ let () =
     let redirect_server = Http.Redirect_server.make ~state ~redirect_uri in
     let%lwt _ = Http.Redirect_server.run redirect_server () in
     let authorization_uri =
-      Spotify.Authorization.make_authorization_url
-        {
-          client_id;
-          client_secret;
-          redirect_uri;
-          state;
-          scopes =
-            Some
-              [
-                `Playlist_read_private;
-                `Playlist_modify_public;
-                `Playlist_modify_private;
-              ];
-          show_dialog = false;
-        }
+      Spotify.Authorization.make_authorization_url ~client_id ~redirect_uri
+        ~state
+        ~scopes:
+          [
+            `Playlist_read_private;
+            `Playlist_modify_public;
+            `Playlist_modify_private;
+          ]
+        ~show_dialog:false ()
     in
     let cmd =
       Filename.quote_command "open" [ Uri.to_string authorization_uri ]
