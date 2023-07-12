@@ -1,3 +1,5 @@
+[@@@warning "-34-32"]
+
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
 
 let make_authorization_url ~client_id ~redirect_uri ~state ?scopes
@@ -28,15 +30,6 @@ type authorization_code_grant = {
   code : string;
 }
 
-type authorization_code_grant_response = {
-  access_token : string;
-  expires_in : float;
-  scope : string;
-  token_type : string;
-  refresh_token : string;
-}
-[@@deriving yojson]
-
 type client_credentials_grant = { client_id : string; client_secret : string }
 
 type error =
@@ -52,6 +45,31 @@ type client_credentials_grant_response = {
 }
 [@@deriving yojson]
 
+type authorization_code_grant_response = {
+  access_token : string;
+  expires_in : float;
+  scope : string;
+  token_type : string;
+  refresh_token : string;
+}
+[@@deriving yojson]
+
+type refresh_token_response = {
+  access_token : string;
+  expires_in : float;
+  scope : string;
+  token_type : string;
+}
+[@@deriving yojson]
+
+let make_headers ~client_id ~client_secret =
+  Http.Header.of_list
+    [
+      ("Content-Type", "application/x-www-form-urlencoded");
+      ( "Authorization",
+        "Basic " ^ Base64.encode_string (client_id ^ ":" ^ client_secret) );
+    ]
+
 module RequestAccessToken = Spotify_request.Make (struct
   type input =
     [ `Authorization_code of authorization_code_grant
@@ -60,21 +78,6 @@ module RequestAccessToken = Spotify_request.Make (struct
   type options = unit
   type output = Access_token.t
   type nonrec error = error
-
-  let make_headers grant =
-    let client_id, client_secret =
-      match grant with
-      | `Authorization_code
-          ({ client_id; client_secret; _ } : authorization_code_grant)
-      | `Client_credentials { client_id; client_secret } ->
-          (client_id, client_secret)
-    in
-    Http.Header.of_list
-      [
-        ("Content-Type", "application/x-www-form-urlencoded");
-        ( "Authorization",
-          "Basic " ^ Base64.encode_string (client_id ^ ":" ^ client_secret) );
-      ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
@@ -92,7 +95,8 @@ module RequestAccessToken = Spotify_request.Make (struct
         match input with
         | `Authorization_code (grant : authorization_code_grant) ->
             ( `POST,
-              make_headers (`Authorization_code grant),
+              make_headers ~client_id:grant.client_id
+                ~client_secret:grant.client_secret,
               endpoint,
               Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
                 [
@@ -102,7 +106,8 @@ module RequestAccessToken = Spotify_request.Make (struct
                 ] )
         | `Client_credentials (grant : client_credentials_grant) ->
             ( `POST,
-              make_headers (`Client_credentials grant),
+              make_headers ~client_id:grant.client_id
+                ~client_secret:grant.client_secret,
               endpoint,
               Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
                 [ ("grant_type", [ "client_credentials" ]) ] ))
@@ -131,7 +136,6 @@ module RequestAccessToken = Spotify_request.Make (struct
         | Error err -> Lwt.return_error err)
     | res, body ->
         let%lwt json = Http.Body.to_string body in
-        print_endline @@ json;
         let status_code = Http.Response.status res in
         Lwt.return_error (`Request_error (status_code, json))
 end)
@@ -139,17 +143,48 @@ end)
 let request_access_token =
   RequestAccessToken.unauthenticated_request ~options:()
 
-module RefreshAccessToken = struct
-  type input = {
-    client_id : string;
-    client_secret : string;
-    refresh_token : string;
-  }
+type refresh_token_input = {
+  client_id : string;
+  client_secret : string;
+  refresh_token : string;
+}
 
+module RefreshAccessToken = struct
+  type input = refresh_token_input
   type options = unit
   type output = Access_token.t
   type nonrec error = error
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
-  let to_http ?_options _input = ()
+
+  let to_http ?options { client_id; client_secret; refresh_token } =
+    match options with
+    | _ ->
+        ( `POST,
+          make_headers ~client_id ~client_secret,
+          endpoint,
+          Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+            [
+              ("grant_type", [ "refresh_token" ]);
+              ("refresh_token", [ refresh_token ]);
+            ] )
+
+  let of_http = function
+    | res, body when Http.Response.is_success res -> (
+        let%lwt json = Http.Body.to_yojson body in
+        match refresh_token_response_of_yojson json with
+        | Ok res ->
+            let access_token =
+              Access_token.make ~token:res.access_token
+                ~expiration_time:(Unix.time () +. res.expires_in)
+                ~scopes:
+                  (Scope.of_string_list @@ String.split_on_char ' ' res.scope)
+                ()
+            in
+            Lwt.return_ok access_token
+        | Error _ -> Lwt.return_error `Json_parse_error)
+    | res, body ->
+        let%lwt json = Http.Body.to_string body in
+        let status_code = Http.Response.status res in
+        Lwt.return_error (`Request_error (status_code, json))
 end

@@ -37,9 +37,7 @@ type refresh_token_input = {
   refresh_token : string;
 }
 
-val refresh_access_token :
-  client:Client.t ->
-  ?options:unit ->
-  refresh_token_input ->
-  (Access_token.t, [< `No_refresh_token | `Invalid_refresh_token ]) result
-  Promise.t
+(* val refresh_access_token : *)
+(*   client:Client.t -> *)
+(*   (Access_token.t, [< `No_refresh_token | `Invalid_refresh_token ]) result *)
+(*   Promise.t *)
