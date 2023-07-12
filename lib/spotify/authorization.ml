@@ -139,17 +139,17 @@ end)
 let request_access_token =
   RequestAccessToken.unauthenticated_request ~options:()
 
-(* module RefreshAccessToken = struct *)
-(*   type input = { *)
-(*     client_id : string; *)
-(*     client_secret : string; *)
-(*     refresh_token : string; *)
-(*   } *)
-(***)
-(*   type options = unit *)
-(*   type output = Access_token.t *)
-(*   type nonrec error = error *)
-(***)
-(*   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token" *)
-(*   let to_http ?_options _input = () *)
-(* end *)
+module RefreshAccessToken = struct
+  type input = {
+    client_id : string;
+    client_secret : string;
+    refresh_token : string;
+  }
+
+  type options = unit
+  type output = Access_token.t
+  type nonrec error = error
+
+  let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
+  let to_http ?_options _input = ()
+end

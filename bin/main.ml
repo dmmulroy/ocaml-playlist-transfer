@@ -24,16 +24,15 @@ let () =
     let _ = Unix.system cmd in
     let%lwt code = Http.Redirect_server.get_code redirect_server in
     let%lwt access_token =
+      let open Spotify.Authorization in
       match%lwt
         Spotify.Authorization.request_access_token
-          (`Authorization_code
-            Spotify.Authorization.
-              { client_secret; client_id; code; redirect_uri })
+          (`Authorization_code { client_secret; client_id; code; redirect_uri })
       with
       | Ok access_token -> Lwt.return access_token
       | Error err -> Lwt.fail_with @@ Spotify.Error.to_string err
     in
-    let client = Spotify.Client.make access_token in
+    let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
     let options =
       Spotify.Playlist.{ fields = None; market = None; additional_types = None }
     in
