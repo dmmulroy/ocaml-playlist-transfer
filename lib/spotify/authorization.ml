@@ -34,7 +34,7 @@ type error =
   [ `Request_error of Http.Code.status_code * string
   | `Json_parse_error
   | `No_refresh_token
-  | `Invalid_refresh_token ]
+  | `Invalid_grant_type ]
 
 type client_credentials_grant_response = {
   access_token : string;
@@ -173,17 +173,20 @@ end)
 let refresh_access_token ~client =
   let client_id, client_secret = Client.get_client_credentials client in
   let access_token = Client.get_access_token client in
-  let refresh_token = Access_token.get_refresh_token access_token in
-  match refresh_token with
-  | None -> Lwt.return_error `No_refresh_token
-  | Some refresh_token ->
-      let open Lwt_result.Syntax in
-      let* { expires_in; _ } =
-        RefreshAccessToken.unauthenticated_request ~options:()
-          (client_id, client_secret, refresh_token)
-      in
-      let refreshed_access_token =
-        Access_token.set_expiration_time access_token
-          (Unix.time () +. expires_in)
-      in
-      Lwt.return_ok refreshed_access_token
+  if Access_token.get_grant_type access_token <> `Authorization_code then
+    Lwt.return_error `Invalid_grant_type
+  else
+    let refresh_token = Access_token.get_refresh_token access_token in
+    match refresh_token with
+    | None -> Lwt.return_error `No_refresh_token
+    | Some refresh_token ->
+        let open Lwt_result.Syntax in
+        let* { expires_in; _ } =
+          RefreshAccessToken.unauthenticated_request ~options:()
+            (client_id, client_secret, refresh_token)
+        in
+        let refreshed_access_token =
+          Access_token.set_expiration_time access_token
+            (Unix.time () +. expires_in)
+        in
+        Lwt.return_ok refreshed_access_token

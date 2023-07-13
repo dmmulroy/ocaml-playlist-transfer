@@ -24,7 +24,7 @@ type error =
     * string (* TODO: Move to spotify_request.ml or error.ml *)
   | `Json_parse_error (* TODO: Move to common.ml or error.ml*)
   | `No_refresh_token
-  | `Invalid_refresh_token ]
+  | `Invalid_grant_type ]
 
 val request_access_token :
   [ `Authorization_code of authorization_code_grant
