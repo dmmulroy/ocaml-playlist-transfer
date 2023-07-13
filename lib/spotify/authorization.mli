@@ -31,13 +31,5 @@ val request_access_token :
   | `Client_credentials of client_credentials_grant ] ->
   (Access_token.t, error) result Promise.t
 
-type refresh_token_input = {
-  client_id : string;
-  client_secret : string;
-  refresh_token : string;
-}
-
-(* val refresh_access_token : *)
-(*   client:Client.t -> *)
-(*   (Access_token.t, [< `No_refresh_token | `Invalid_refresh_token ]) result *)
-(*   Promise.t *)
+val refresh_access_token :
+  client:Client.t -> (Access_token.t, error) result Promise.t
