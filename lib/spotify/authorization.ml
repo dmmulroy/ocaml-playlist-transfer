@@ -115,7 +115,7 @@ module RequestAccessToken = Spotify_request.Make (struct
             let access_token =
               Access_token.make ~token:res.access_token
                 ~expiration_time:(Unix.time () +. res.expires_in)
-                ~refresh_token:res.refresh_token
+                ~grant_type:`Authorization_code ~refresh_token:res.refresh_token
                 ~scopes:
                   (Scope.of_string_list @@ String.split_on_char ' ' res.scope)
                 ()
@@ -125,7 +125,7 @@ module RequestAccessToken = Spotify_request.Make (struct
             let access_token =
               Access_token.make ~token:res.access_token
                 ~expiration_time:(Unix.time () +. res.expires_in)
-                ()
+                ~grant_type:`Client_credentials ()
             in
             Lwt.return_ok access_token
         | Error err -> Lwt.return_error err)
@@ -172,20 +172,18 @@ end)
 
 let refresh_access_token ~client =
   let client_id, client_secret = Client.get_client_credentials client in
-  let refresh_token =
-    Access_token.get_refresh_token @@ Client.get_access_token client
-  in
+  let access_token = Client.get_access_token client in
+  let refresh_token = Access_token.get_refresh_token access_token in
   match refresh_token with
   | None -> Lwt.return_error `No_refresh_token
   | Some refresh_token ->
       let open Lwt_result.Syntax in
-      let* response =
+      let* { expires_in; _ } =
         RefreshAccessToken.unauthenticated_request ~options:()
           (client_id, client_secret, refresh_token)
       in
-      let access_token =
-        Access_token.make ~token:response.access_token
-          ~expiration_time:(Unix.time () +. response.expires_in)
-          ~refresh_token ()
+      let refreshed_access_token =
+        Access_token.set_expiration_time access_token
+          (Unix.time () +. expires_in)
       in
-      Lwt.return_ok access_token
+      Lwt.return_ok refreshed_access_token
