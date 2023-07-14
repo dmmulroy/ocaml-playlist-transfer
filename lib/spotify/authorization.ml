@@ -29,12 +29,11 @@ type authorization_code_grant = {
 }
 
 type client_credentials_grant = { client_id : string; client_secret : string }
+type error = [ `No_refresh_token | `Invalid_grant_type ]
 
-type error =
-  [ `Request_error of Http.Code.status_code * string
-  | `Json_parse_error
-  | `No_refresh_token
-  | `Invalid_grant_type ]
+let error_to_string = function
+  | `No_refresh_token -> "No refresh token"
+  | `Invalid_grant_type -> "Invalid grant type"
 
 type client_credentials_grant_response = {
   access_token : string;
@@ -75,7 +74,7 @@ module RequestAccessToken = Spotify_request.Make (struct
 
   type options = unit
   type output = Access_token.t
-  type nonrec error = error
+  type nonrec error = [ error | Spotify_request.error | Common.error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
@@ -144,7 +143,7 @@ module RefreshAccessToken = Spotify_request.Make (struct
 
   type options = unit
   type output = refresh_token_response
-  type nonrec error = error
+  type nonrec error = [ error | Spotify_request.error | Common.error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 

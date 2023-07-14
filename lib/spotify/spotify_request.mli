@@ -1,5 +1,9 @@
 open Async
 
+type error = [ `Request_error of Http.Code.status_code * string ]
+
+val error_to_string : error -> string
+
 module type S = sig
   type input
   type options

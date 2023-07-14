@@ -17,19 +17,17 @@ type authorization_code_grant = {
 }
 
 type client_credentials_grant = { client_id : string; client_secret : string }
+type error = [ `No_refresh_token | `Invalid_grant_type ]
 
-type error =
-  [ `Request_error of
-    Http.Code.status_code
-    * string (* TODO: Move to spotify_request.ml or error.ml *)
-  | `Json_parse_error (* TODO: Move to common.ml or error.ml*)
-  | `No_refresh_token
-  | `Invalid_grant_type ]
+val error_to_string : error -> string
 
 val request_access_token :
   [ `Authorization_code of authorization_code_grant
   | `Client_credentials of client_credentials_grant ] ->
-  (Access_token.t, error) result Promise.t
+  (Access_token.t, [ error | Spotify_request.error | Common.error ]) result
+  Promise.t
 
 val refresh_access_token :
-  client:Client.t -> (Access_token.t, error) result Promise.t
+  client:Client.t ->
+  (Access_token.t, [ error | Spotify_request.error | Common.error ]) result
+  Promise.t

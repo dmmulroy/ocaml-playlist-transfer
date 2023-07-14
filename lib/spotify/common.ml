@@ -9,6 +9,11 @@ let copyright_to_yojson = function
   | `C s -> `Assoc [ ("text", `String s); ("type", `String "C") ]
   | `P s -> `Assoc [ ("text", `String s); ("type", `String "P") ]
 
+type error = [ `Json_parse_error ]
+
+let error_to_string = function
+  | `Json_parse_error -> "Error parsing JSON response"
+
 type external_ids = {
   ean : string option; [@default None]
   isrc : string option; [@default None]

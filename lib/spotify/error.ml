@@ -1,13 +1,10 @@
-type error = [ Authorization.error | `Unknown_error ]
+type error =
+  [ Authorization.error | Common.error | Spotify_request.error | `Unknown_error ]
 
 let to_string (err : [< error ]) =
   match err with
-  | `Request_error (status_code, msg) ->
-      Printf.sprintf "Request error: %d: %s"
-        (Http.Code.code_of_status status_code)
-        msg
-  | `Json_parse_error -> "Error parsing JSON response"
-  | `Invalid_grant_type -> "Invalid grant type"
-  | `No_refresh_token -> "No refresh token"
+  | #Common.error as err -> Common.error_to_string err
+  | #Spotify_request.error as err -> Spotify_request.error_to_string err
+  | #Authorization.error as err -> Authorization.error_to_string err
   | `Unknown_error -> "Unknown error"
   | #error -> .
