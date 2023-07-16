@@ -67,7 +67,7 @@ let make_headers ~client_id ~client_secret =
         "Basic " ^ Base64.encode_string (client_id ^ ":" ^ client_secret) );
     ]
 
-module RequestAccessToken = Spotify_request.Make_unauthenticated (struct
+module RequestAccessToken = Spotify_request.MakeUnauthenticated (struct
   type input =
     [ `Authorization_code of authorization_code_grant
     | `Client_credentials of client_credentials_grant ]
@@ -136,7 +136,7 @@ end)
 
 let request_access_token = RequestAccessToken.request ~options:()
 
-module RefreshAccessToken = Spotify_request.Make_unauthenticated (struct
+module RefreshAccessToken = Spotify_request.MakeUnauthenticated (struct
   type input = client_id * client_secret * refresh_token
   and client_id = string
   and client_secret = string

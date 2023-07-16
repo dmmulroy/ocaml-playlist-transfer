@@ -46,7 +46,7 @@ module Make (M : S) = struct
     M.of_http response
 end
 
-module Make_unauthenticated (M : S) = struct
+module MakeUnauthenticated (M : S) = struct
   let request ?(options : M.options option) (input : M.input) :
       (M.output, M.error) result Promise.t =
     let method', headers', endpoint, body = M.to_http ?options input in
