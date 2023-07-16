@@ -1,6 +1,3 @@
-type get_current_users_playlists_response = Simple_playlist.t Page.t
-[@@deriving yojson]
-
 type get_current_users_playlists_options = {
   limit : int option;
   offset : int option;
@@ -29,16 +26,6 @@ module GetCurrentUsersPlaylists = Spotify_request.Make (struct
     let query_params = query_params_of_request_options options in
     Http.Uri.add_query_params' base_endpoint query_params
 
-  let query_params_of_request_options = function
-    | Some options ->
-        List.filter_map
-          (fun (key, value) -> Option.map (fun value -> (key, value)) value)
-          [
-            ("limit", Option.map string_of_int options.limit);
-            ("offset", Option.map string_of_int options.offset);
-          ]
-    | _ -> []
-
   let to_http ?options _input =
     (`GET, Http.Header.empty, make_endpoint options, Http.Body.empty)
 
@@ -54,4 +41,4 @@ module GetCurrentUsersPlaylists = Spotify_request.Make (struct
         Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
 end)
 
-let get_all = GetCurrentUsersPlaylists.request
+let get_playlists = GetCurrentUsersPlaylists.request
