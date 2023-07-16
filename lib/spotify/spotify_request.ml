@@ -4,7 +4,7 @@ type error = [ `Request_error of Http.Code.status_code * string ]
 
 let error_to_string = function
   | `Request_error (status_code, msg) ->
-      Printf.sprintf "Request error: %d: %s"
+      Printf.sprintf "Request error: [%d]: %s"
         (Http.Code.code_of_status status_code)
         msg
 

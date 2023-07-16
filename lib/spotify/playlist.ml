@@ -1,5 +1,3 @@
-type video_thumbnail = { url : Http.Uri.t option } [@@deriving yojson]
-
 type playlist_track = {
   added_at : string;
   added_by : User.t;
@@ -9,6 +7,8 @@ type playlist_track = {
   video_thumbnail : video_thumbnail option; [@default None]
 }
 [@@deriving yojson]
+
+and video_thumbnail = { url : Http.Uri.t option } [@@deriving yojson]
 
 type t = {
   collaborative : bool;
@@ -52,10 +52,7 @@ let query_params_of_request_options = function
           ("market", options.market);
           ( "additional_types",
             Option.map
-              (fun resource_type ->
-                match resource_type with
-                | `Track -> "track"
-                | `Episode -> "episode")
+              (fun resource_type -> Resource.to_string resource_type)
               options.additional_types );
         ]
   | `Get_featured_playlists (Some options) ->
@@ -89,10 +86,9 @@ module CreatePlaylist = Spotify_request.Make (struct
     Http.Uri.of_string @@ "https://api.spotify.com/v1/users/" ^ user_id
     ^ "/playlists"
 
-  let to_http ?options input =
+  let to_http ?options:_ input =
     let body = Http.Body.of_yojson @@ input_to_yojson input in
-    match options with
-    | _ -> (`POST, Http.Header.empty, make_endpoint input.user_id, body)
+    (`POST, Http.Header.empty, make_endpoint input.user_id, body)
 
   let of_http = function
     | res, body when Http.Response.is_success res -> (
