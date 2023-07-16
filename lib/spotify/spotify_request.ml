@@ -8,6 +8,14 @@ let error_to_string = function
         (Http.Code.code_of_status status_code)
         msg
 
+let execute_request ~headers ~body ~endpoint ~method' =
+  match method' with
+  | `GET -> Http.Client.get ~headers endpoint
+  | `POST -> Http.Client.post ~headers ~body endpoint
+  | `PUT -> Http.Client.put ~headers ~body endpoint
+  | `DELETE -> Http.Client.delete ~headers ~body endpoint
+  | _ -> failwith "Not implemented"
+
 module type S = sig
   type input
   type options
@@ -23,14 +31,6 @@ module type S = sig
     Http.Response.t * Http.Body.t -> (output, error) result Promise.t
 end
 
-let execute_request ~headers ~body ~endpoint ~method' =
-  match method' with
-  | `GET -> Http.Client.get ~headers endpoint
-  | `POST -> Http.Client.post ~headers ~body endpoint
-  | `PUT -> Http.Client.put ~headers ~body endpoint
-  | `DELETE -> Http.Client.delete ~headers ~body endpoint
-  | _ -> failwith "Not implemented"
-
 module Make (M : S) = struct
   let request ~(client : Client.t) ?(options : M.options option)
       (input : M.input) : (M.output, M.error) result Promise.t =
@@ -44,8 +44,10 @@ module Make (M : S) = struct
     in
     let%lwt response = execute_request ~headers ~body ~endpoint ~method' in
     M.of_http response
+end
 
-  let unauthenticated_request ?(options : M.options option) (input : M.input) :
+module Make_unauthenticated (M : S) = struct
+  let request ?(options : M.options option) (input : M.input) :
       (M.output, M.error) result Promise.t =
     let method', headers', endpoint, body = M.to_http ?options input in
     let headers =

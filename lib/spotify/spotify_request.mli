@@ -25,7 +25,9 @@ module Make (M : S) : sig
     ?options:M.options ->
     M.input ->
     (M.output, M.error) result Promise.t
+end
 
-  val unauthenticated_request :
+module Make_unauthenticated (M : S) : sig
+  val request :
     ?options:M.options -> M.input -> (M.output, M.error) result Promise.t
 end

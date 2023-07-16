@@ -67,7 +67,7 @@ let make_headers ~client_id ~client_secret =
         "Basic " ^ Base64.encode_string (client_id ^ ":" ^ client_secret) );
     ]
 
-module RequestAccessToken = Spotify_request.Make (struct
+module RequestAccessToken = Spotify_request.Make_unauthenticated (struct
   type input =
     [ `Authorization_code of authorization_code_grant
     | `Client_credentials of client_credentials_grant ]
@@ -134,12 +134,13 @@ module RequestAccessToken = Spotify_request.Make (struct
         Lwt.return_error (`Request_error (status_code, json))
 end)
 
-let request_access_token =
-  RequestAccessToken.unauthenticated_request ~options:()
+let request_access_token = RequestAccessToken.request ~options:()
 
-module RefreshAccessToken = Spotify_request.Make (struct
-  type input = string * string * string
-  (** client_id * client_secret * refresh_token *)
+module RefreshAccessToken = Spotify_request.Make_unauthenticated (struct
+  type input = client_id * client_secret * refresh_token
+  and client_id = string
+  and client_secret = string
+  and refresh_token = string
 
   type options = unit
   type output = refresh_token_response
@@ -181,7 +182,7 @@ let refresh_access_token ~client =
     | Some refresh_token ->
         let open Lwt_result.Syntax in
         let* { expires_in; _ } =
-          RefreshAccessToken.unauthenticated_request ~options:()
+          RefreshAccessToken.request ~options:()
             (client_id, client_secret, refresh_token)
         in
         let refreshed_access_token =
