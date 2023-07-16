@@ -1,11 +1,8 @@
-type get_current_users_playlists_options = {
-  limit : int option;
-  offset : int option;
-}
+type get_playlists_options = { limit : int option; offset : int option }
 
 module GetCurrentUsersPlaylists = Spotify_request.Make (struct
   type input = unit
-  type options = get_current_users_playlists_options
+  type options = get_playlists_options
   type output = Simple_playlist.t Page.t [@@deriving yojson]
   type error = [ `Msg of string ]
 
