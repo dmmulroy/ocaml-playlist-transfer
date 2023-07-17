@@ -1,9 +1,27 @@
 type get_playlists_options = { limit : int option; offset : int option }
 
+module GetCurrentUserPlaylistsInput = struct
+  type t = { limit : int option; offset : int option } [@@deriving show, yojson]
+
+  let make ?limit ?offset () = { limit; offset }
+
+  let to_query_params t =
+    List.filter_map
+      (fun (key, value) -> Option.map (fun value -> (key, value)) value)
+      [
+        ("limit", Option.map string_of_int t.limit);
+        ("offset", Option.map string_of_int t.offset);
+      ]
+end
+
+module GetCurrentUserPlaylistsOutput = struct
+  type t = Simple_playlist.t Page.t [@@deriving yojson]
+end
+
 module GetCurrentUsersPlaylists = Spotify_request.Make (struct
-  type input = unit
-  type options = get_playlists_options
-  type output = Simple_playlist.t Page.t [@@deriving yojson]
+  type input = GetCurrentUserPlaylistsInput.t
+  type options = unit
+  type output = GetCurrentUserPlaylistsOutput.t
   type error = [ `Msg of string ]
 
   let query_params_of_request_options = function
@@ -16,20 +34,20 @@ module GetCurrentUsersPlaylists = Spotify_request.Make (struct
           ]
     | _ -> []
 
-  let make_endpoint options =
+  let make_endpoint input =
     let base_endpoint =
       Http.Uri.of_string "https://api.spotify.com/v1/me/playlists"
     in
-    let query_params = query_params_of_request_options options in
+    let query_params = GetCurrentUserPlaylistsInput.to_query_params input in
     Http.Uri.add_query_params' base_endpoint query_params
 
-  let to_http ?options _input =
-    (`GET, Http.Header.empty, make_endpoint options, Http.Body.empty)
+  let to_http ?options:_ input =
+    (`GET, Http.Header.empty, make_endpoint input, Http.Body.empty)
 
   let of_http = function
     | res, body when Http.Response.is_success res -> (
         let%lwt json = Http.Body.to_yojson body in
-        match output_of_yojson json with
+        match GetCurrentUserPlaylistsOutput.of_yojson json with
         | Ok response -> Lwt.return_ok response
         | Error err -> Lwt.return_error (`Msg err))
     | res, body ->
