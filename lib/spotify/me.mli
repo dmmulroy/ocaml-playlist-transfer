@@ -1,17 +1,14 @@
-type get_playlists_options = { limit : int option; offset : int option }
-
-val get_playlists :
-  client:Client.t ->
-  ?options:get_playlists_options ->
-  unit ->
-  (Simple_playlist.t Page.t, [ `Msg of string ]) result Lwt.t
-
-module GetCurrentUserPlaylistsInput : sig
+module Get_playlists_input : sig
   type t = { limit : int option; offset : int option } [@@deriving show, yojson]
 
   val make : ?limit:int -> ?offset:int -> unit -> t
 end
 
-module GetCurrentUserPlaylistsOutput : sig
+module Get_playlists_output : sig
   type t = Simple_playlist.t Page.t [@@deriving yojson]
 end
+
+val get_playlists :
+  client:Client.t ->
+  Get_playlists_input.t ->
+  (Get_playlists_output.t, [ `Msg of string ]) result Lwt.t

@@ -54,18 +54,31 @@ val create :
   create_playlist_input ->
   (t, [ `Msg of string ]) result Promise.t
 
-type get_playlist_by_id_options = {
-  fields : string option;
-  market : string option;
-  additional_types : [ `Track | `Episode ] option;
-}
+module Get_by_id_input : sig
+  type t = {
+    id : string;
+    additional_types : [ `Track | `Episode ] option;
+    fields : string option;
+    market : string option;
+  }
+
+  val make :
+    ?additional_types:[ `Track | `Episode ] list ->
+    ?fields:string ->
+    ?market:string ->
+    string ->
+    t
+end
+
+module Get_by_id_output : sig
+  type nonrec t = t
+end
 
 (* Spotify.Playlist.get_by_id *)
 val get_by_id :
   client:Client.t ->
-  ?options:get_playlist_by_id_options ->
-  string ->
-  (t, [ `Msg of string ]) result Promise.t
+  Get_by_id_input.t ->
+  (Get_by_id_output.t, [ `Msg of string ]) result Promise.t
 
 type get_featured_response = {
   message : string;

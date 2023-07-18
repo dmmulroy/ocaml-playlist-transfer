@@ -6,14 +6,11 @@ val error_to_string : error -> string
 
 module type S = sig
   type input
-  type options
   type output
   type error
 
   val to_http :
-    ?options:options ->
-    input ->
-    Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
+    input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
 
   val of_http :
     Http.Response.t * Http.Body.t -> (output, error) result Promise.t
@@ -21,13 +18,9 @@ end
 
 module Make (M : S) : sig
   val request :
-    client:Client.t ->
-    ?options:M.options ->
-    M.input ->
-    (M.output, M.error) result Promise.t
+    client:Client.t -> M.input -> (M.output, M.error) result Promise.t
 end
 
-module MakeUnauthenticated (M : S) : sig
-  val request :
-    ?options:M.options -> M.input -> (M.output, M.error) result Promise.t
+module Make_unauthenticated (M : S) : sig
+  val request : M.input -> (M.output, M.error) result Promise.t
 end

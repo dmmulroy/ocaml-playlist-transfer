@@ -18,23 +18,20 @@ let execute_request ~headers ~body ~endpoint ~method' =
 
 module type S = sig
   type input
-  type options
   type output
   type error
 
   val to_http :
-    ?options:options ->
-    input ->
-    Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
+    input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
 
   val of_http :
     Http.Response.t * Http.Body.t -> (output, error) result Promise.t
 end
 
 module Make (M : S) = struct
-  let request ~(client : Client.t) ?(options : M.options option)
-      (input : M.input) : (M.output, M.error) result Promise.t =
-    let method', headers', endpoint, body = M.to_http ?options input in
+  let request ~(client : Client.t) (input : M.input) :
+      (M.output, M.error) result Promise.t =
+    let method', headers', endpoint, body = M.to_http input in
     let headers =
       Http.Header.add_list_unless_exists headers'
         [
@@ -46,10 +43,9 @@ module Make (M : S) = struct
     M.of_http response
 end
 
-module MakeUnauthenticated (M : S) = struct
-  let request ?(options : M.options option) (input : M.input) :
-      (M.output, M.error) result Promise.t =
-    let method', headers', endpoint, body = M.to_http ?options input in
+module Make_unauthenticated (M : S) = struct
+  let request (input : M.input) : (M.output, M.error) result Promise.t =
+    let method', headers', endpoint, body = M.to_http input in
     let headers =
       Http.Header.add_unless_exists headers' "Content-Type" "application/json"
     in

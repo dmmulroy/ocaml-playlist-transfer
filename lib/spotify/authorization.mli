@@ -9,25 +9,54 @@ val make_authorization_url :
   unit ->
   Http.Uri.t
 
-type authorization_code_grant = {
-  client_id : string;
-  client_secret : string;
-  redirect_uri : Http.Uri.t;
-  code : string;
-}
-
-type client_credentials_grant = { client_id : string; client_secret : string }
 type error = [ `No_refresh_token | `Invalid_grant_type ]
 
 val error_to_string : error -> string
 
+module Request_access_token_input : sig
+  type authorization_code_grant = {
+    client_id : string;
+    client_secret : string;
+    redirect_uri : Http.Uri.t;
+    code : string;
+  }
+
+  type client_credentials_grant = { client_id : string; client_secret : string }
+
+  type t =
+    [ `Authorization_code of authorization_code_grant
+    | `Client_credentials of client_credentials_grant ]
+
+  val make_authorization_code_grant :
+    client_id:string ->
+    client_secret:string ->
+    redirect_uri:Http.Uri.t ->
+    code:string ->
+    t
+
+  val make_client_credentials_grant :
+    client_id:string -> client_secret:string -> t
+end
+
+module Request_access_token_output : sig
+  type t = Access_token.t
+end
+
 val request_access_token :
-  [ `Authorization_code of authorization_code_grant
-  | `Client_credentials of client_credentials_grant ] ->
-  (Access_token.t, [ error | Spotify_request.error | Common.error ]) result
+  Request_access_token_input.t ->
+  ( Request_access_token_output.t,
+    [ error | Spotify_request.error | Common.error ] )
+  (* TODO: Figure out better error pattern *)
+  result
   Promise.t
+
+module Refresh_access_token_output : sig
+  type t = Access_token.t
+end
 
 val refresh_access_token :
   client:Client.t ->
-  (Access_token.t, [ error | Spotify_request.error | Common.error ]) result
+  ( Refresh_access_token_output.t,
+    [ error | Spotify_request.error | Common.error ] )
+  result
   Promise.t
