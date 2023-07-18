@@ -31,28 +31,34 @@ type t = {
 }
 [@@deriving yojson]
 
-type get_featured_playlists_options = {
-  country : string option;
-  locale : string option;
-  timestamp : string option;
-  limit : int option;
-  offset : int option;
-}
+module Create_input : sig
+  type t = {
+    collaborative : bool option;
+    description : string option;
+    name : string;
+    public : bool option;
+    user_id : string;
+  }
 
-type create_playlist_input = {
-  collaborative : bool option;
-  description : string option;
-  name : string;
-  public : bool option;
-  user_id : string;
-}
+  val make :
+    ?collaborative:bool ->
+    ?description:string ->
+    ?public:bool ->
+    name:string ->
+    user_id:string ->
+    unit ->
+    t
+end
+
+module Create_output : sig
+  type nonrec t = t
+end
 
 (* Spotify.Playlist.create*)
 val create :
   client:Client.t ->
-  ?options:unit ->
-  create_playlist_input ->
-  (t, [ `Msg of string ]) result Promise.t
+  Create_input.t ->
+  (Create_output.t, [ `Msg of string ]) result Promise.t
 
 module Get_by_id_input : sig
   type t = {
@@ -63,10 +69,11 @@ module Get_by_id_input : sig
   }
 
   val make :
-    ?additional_types:[ `Track | `Episode ] list ->
+    ?additional_types:[ `Track | `Episode ] ->
     ?fields:string ->
     ?market:string ->
-    string ->
+    id:string ->
+    unit ->
     t
 end
 
@@ -80,15 +87,32 @@ val get_by_id :
   Get_by_id_input.t ->
   (Get_by_id_output.t, [ `Msg of string ]) result Promise.t
 
-type get_featured_response = {
-  message : string;
-  playlists : Simple_playlist.t Page.t;
-}
-[@@deriving yojson]
+module Get_featured_input : sig
+  type t = {
+    country : string option;
+    locale : string option;
+    timestamp : string option;
+    limit : int option;
+    offset : int option;
+  }
+
+  val make :
+    ?country:string ->
+    ?locale:string ->
+    ?timestamp:string ->
+    ?limit:int ->
+    ?offset:int ->
+    unit ->
+    t
+end
+
+module Get_featured_output : sig
+  type t = { message : string; playlists : Simple_playlist.t Page.t }
+  [@@deriving yojson]
+end
 
 (* Spotify.Playlist.get_featured  *)
 val get_featured :
   client:Client.t ->
-  ?options:get_featured_playlists_options ->
-  unit ->
-  (get_featured_response, [ `Msg of string ]) result Promise.t
+  Get_featured_input.t ->
+  (Get_featured_output.t, [ `Msg of string ]) result Promise.t

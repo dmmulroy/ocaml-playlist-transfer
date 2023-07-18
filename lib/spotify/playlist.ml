@@ -29,27 +29,36 @@ type t = {
 }
 [@@deriving yojson]
 
-type create_playlist_input = {
-  collaborative : bool option;
-  description : string option;
-  name : string;
-  public : bool option;
-  user_id : string;
-}
-[@@deriving yojson]
+module Create_input = struct
+  (* TODO: Check if there are any query params*)
+  type t = {
+    collaborative : bool option;
+    description : string option;
+    name : string;
+    public : bool option;
+    user_id : string;
+  }
+  [@@deriving yojson]
+
+  let make ?collaborative ?description ?public ~name ~user_id () =
+    { collaborative; description; name; public; user_id }
+end
+
+module Create_output = struct
+  type nonrec t = t
+end
 
 module CreatePlaylist = Spotify_request.Make (struct
-  type input = create_playlist_input [@@deriving yojson]
-  type options = unit
-  type output = t
+  type input = Create_input.t
+  type output = Create_output.t
   type error = [ `Msg of string ]
 
   let make_endpoint (user_id : string) =
     Http.Uri.of_string @@ "https://api.spotify.com/v1/users/" ^ user_id
     ^ "/playlists"
 
-  let to_http ?options:_ input =
-    let body = Http.Body.of_yojson @@ input_to_yojson input in
+  let to_http input =
+    let body = Http.Body.of_yojson @@ Create_input.to_yojson input in
     (`POST, Http.Header.empty, make_endpoint input.user_id, body)
 
   let of_http = function
@@ -145,7 +154,7 @@ module Get_by_id_input = struct
             additional_types );
       ]
 
-  let make ?additional_types ?fields ?market id =
+  let make ?additional_types ?fields ?market ~id () =
     { id; additional_types; fields; market }
 end
 

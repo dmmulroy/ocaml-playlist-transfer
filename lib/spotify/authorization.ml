@@ -51,7 +51,7 @@ let make_headers ~client_id ~client_secret =
         "Basic " ^ Base64.encode_string (client_id ^ ":" ^ client_secret) );
     ]
 
-module Request_access_token_inputInput = struct
+module Request_access_token_input = struct
   type authorization_code_grant = {
     client_id : string;
     client_secret : string;
@@ -77,8 +77,8 @@ module Request_access_token_output = struct
   type t = Access_token.t
 end
 
-module Request_access_token_input = Spotify_request.Make_unauthenticated (struct
-  type input = Request_access_token_inputInput.t
+module Request_access_token = Spotify_request.Make_unauthenticated (struct
+  type input = Request_access_token_input.t
   type output = Request_access_token_output.t
   type nonrec error = [ error | Spotify_request.error | Common.error ]
 
@@ -94,7 +94,7 @@ module Request_access_token_input = Spotify_request.Make_unauthenticated (struct
 
   let to_http = function
     | `Authorization_code
-        (grant : Request_access_token_inputInput.authorization_code_grant) ->
+        (grant : Request_access_token_input.authorization_code_grant) ->
         ( `POST,
           make_headers ~client_id:grant.client_id
             ~client_secret:grant.client_secret,
@@ -106,7 +106,7 @@ module Request_access_token_input = Spotify_request.Make_unauthenticated (struct
               ("grant_type", [ "authorization_code" ]);
             ] )
     | `Client_credentials
-        (grant : Request_access_token_inputInput.client_credentials_grant) ->
+        (grant : Request_access_token_input.client_credentials_grant) ->
         ( `POST,
           make_headers ~client_id:grant.client_id
             ~client_secret:grant.client_secret,
@@ -142,32 +142,32 @@ module Request_access_token_input = Spotify_request.Make_unauthenticated (struct
         Lwt.return_error (`Request_error (status_code, json))
 end)
 
-let request_access_token = Request_access_token_input.request
+let request_access_token = Request_access_token.request
 
 module Refresh_access_token_output = struct
   type t = Access_token.t
 end
 
+module Internal_refresh_access_token_input = struct
+  type t = client_id * client_secret * refresh_token
+  and client_id = string
+  and client_secret = string
+  and refresh_token = string
+end
+
+module Internal_refresh_access_token_output = struct
+  type t = {
+    access_token : string;
+    expires_in : float;
+    scope : string;
+    token_type : string;
+  }
+  [@@deriving yojson]
+end
+
 module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
-  module Input = struct
-    type t = client_id * client_secret * refresh_token
-    and client_id = string
-    and client_secret = string
-    and refresh_token = string
-  end
-
-  module Output = struct
-    type t = {
-      access_token : string;
-      expires_in : float;
-      scope : string;
-      token_type : string;
-    }
-    [@@deriving yojson]
-  end
-
-  type input = Input.t
-  type output = Output.t
+  type input = Internal_refresh_access_token_input.t
+  type output = Internal_refresh_access_token_output.t
   type nonrec error = [ error | Spotify_request.error | Common.error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
@@ -185,7 +185,7 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
   let of_http = function
     | res, body when Http.Response.is_success res -> (
         let%lwt json = Http.Body.to_yojson body in
-        match Output.of_yojson json with
+        match Internal_refresh_access_token_output.of_yojson json with
         | Ok res -> Lwt.return_ok res
         | Error _ -> Lwt.return_error `Json_parse_error)
     | res, body ->
