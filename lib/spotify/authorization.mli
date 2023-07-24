@@ -46,7 +46,6 @@ val request_access_token :
   Request_access_token_input.t ->
   ( Request_access_token_output.t,
     [ error | Spotify_request.error | Common.error ] )
-  (* TODO: Figure out better error pattern *)
   result
   Promise.t
 

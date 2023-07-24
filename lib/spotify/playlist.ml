@@ -30,7 +30,6 @@ type t = {
 [@@deriving yojson]
 
 module Create_input = struct
-  (* TODO: Check if there are any query params*)
   type t = {
     collaborative : bool option;
     description : string option;
@@ -136,8 +135,7 @@ let get_featured = Get_featured.request
 module Get_by_id_input = struct
   type t = {
     id : string;
-    additional_types : [ `Track | `Episode ] option;
-        (* TODO: Figure out if this is a list *)
+    additional_types : [ `Track | `Episode ] list option;
     fields : string option;
     market : string option;
   }
@@ -150,7 +148,8 @@ module Get_by_id_input = struct
         ("market", market);
         ( "additional_types",
           Option.map
-            (fun resource_type -> Resource.to_string resource_type)
+            (fun additional_types' ->
+              String.concat "," @@ List.map Resource.to_string additional_types')
             additional_types );
       ]
 

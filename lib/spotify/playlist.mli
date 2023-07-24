@@ -63,13 +63,13 @@ val create :
 module Get_by_id_input : sig
   type t = {
     id : string;
-    additional_types : [ `Track | `Episode ] option;
+    additional_types : [ `Track | `Episode ] list option;
     fields : string option;
     market : string option;
   }
 
   val make :
-    ?additional_types:[ `Track | `Episode ] ->
+    ?additional_types:[ `Track | `Episode ] list ->
     ?fields:string ->
     ?market:string ->
     id:string ->
