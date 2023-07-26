@@ -80,7 +80,7 @@ end
 module Request_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Request_access_token_input.t
   type output = Request_access_token_output.t
-  type nonrec error = [ error | Spotify_request.error | Common.error ]
+  type nonrec error = [ error | Common.error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
@@ -168,7 +168,7 @@ end
 module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Internal_refresh_access_token_input.t
   type output = Internal_refresh_access_token_output.t
-  type nonrec error = [ error | Spotify_request.error | Common.error ]
+  type nonrec error = [ error | Common.error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 

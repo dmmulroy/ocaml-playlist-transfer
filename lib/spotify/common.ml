@@ -9,10 +9,11 @@ let copyright_to_yojson = function
   | `C s -> `Assoc [ ("text", `String s); ("type", `String "C") ]
   | `P s -> `Assoc [ ("text", `String s); ("type", `String "P") ]
 
-type error = [ `Json_parse_error ]
+type error = [ `Json_parse_error | Http.Api_request.error ]
 
 let error_to_string = function
   | `Json_parse_error -> "Error parsing JSON response"
+  | #Http.Api_request.error as str -> Http.Api_request.error_to_string str
 
 type external_ids = {
   ean : string option; [@default None]

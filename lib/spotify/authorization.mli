@@ -44,10 +44,7 @@ end
 
 val request_access_token :
   Request_access_token_input.t ->
-  ( Request_access_token_output.t,
-    [ error | Spotify_request.error | Common.error ] )
-  result
-  Promise.t
+  (Request_access_token_output.t, [ error | Common.error ]) result Promise.t
 
 module Refresh_access_token_output : sig
   type t = Access_token.t
@@ -55,7 +52,4 @@ end
 
 val refresh_access_token :
   client:Client.t ->
-  ( Refresh_access_token_output.t,
-    [ error | Spotify_request.error | Common.error ] )
-  result
-  Promise.t
+  (Refresh_access_token_output.t, [ error | Common.error ]) result Promise.t

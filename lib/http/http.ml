@@ -41,3 +41,32 @@ module Uri = struct
     | `String s -> Ok (Uri.of_string s)
     | _ -> Error "Error parsing Uri.t with yojson"
 end
+
+module Api_request = struct
+  open Async
+
+  module type S = sig
+    type input
+    type output
+    type error
+
+    val to_http : input -> Code.meth * Header.t * Uri.t * Body.t
+    val of_http : Response.t * Body.t -> (output, error) result Promise.t
+  end
+
+  type error = [ `Request_error of Code.status_code * string ]
+
+  let error_to_string = function
+    | `Request_error (status_code, msg) ->
+        Printf.sprintf "Request error: [%d]: %s"
+          (Code.code_of_status status_code)
+          msg
+
+  let execute ~headers ~body ~endpoint ~method' =
+    match method' with
+    | `GET -> Client.get ~headers endpoint
+    | `POST -> Client.post ~headers ~body endpoint
+    | `PUT -> Client.put ~headers ~body endpoint
+    | `DELETE -> Client.delete ~headers ~body endpoint
+    | _ -> failwith "Not implemented"
+end
