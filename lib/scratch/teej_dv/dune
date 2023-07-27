@@ -1,5 +1,5 @@
 (library
- (name services)
+ (name teej_dv)
  (libraries cohttp-lwt-unix ppx_deriving_yojson.runtime caqti caqti-lwt petrol)
  (preprocess (pps lwt_ppx ppx_deriving_yojson )))
 

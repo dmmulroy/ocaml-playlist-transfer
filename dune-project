@@ -21,11 +21,14 @@
  (description
   "Seamlessly transfer playlists between music streaming services")
  (depends
+  caqti
+  caqti-lwt
   cohttp-lwt-unix
   dune
   lwt_ppx
   lwt_ssl
   ocaml
+  petrol
   ppx_deriving
   ppx_yojson_conv
   yojson)
