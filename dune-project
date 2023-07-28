@@ -25,6 +25,7 @@
   caqti-lwt
   cohttp-lwt-unix
   dune
+  jose
   lwt_ppx
   lwt_ssl
   ocaml

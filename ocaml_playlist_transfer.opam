@@ -14,6 +14,7 @@ depends: [
   "caqti-lwt"
   "cohttp-lwt-unix"
   "dune" {>= "3.7"}
+  "jose"
   "lwt_ppx"
   "lwt_ssl"
   "ocaml"
