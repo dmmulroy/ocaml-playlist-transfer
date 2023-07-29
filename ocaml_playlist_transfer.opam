@@ -21,6 +21,7 @@ depends: [
   "petrol"
   "ppx_deriving"
   "ppx_yojson_conv"
+  "ptime"
   "yojson"
   "odoc" {with-doc}
 ]

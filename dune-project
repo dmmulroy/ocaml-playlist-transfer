@@ -32,6 +32,7 @@
   petrol
   ppx_deriving
   ppx_yojson_conv
+  ptime
   yojson)
  (tags
   (music, ocaml, cli, learning, spotify, apple-music)))
