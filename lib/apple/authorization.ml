@@ -30,8 +30,41 @@ module Jwt = struct
     let* jwt = Jwt.sign ~header ~payload key in
     Ok { key; jwt }
 
+  let to_bearer_token t = "Bearer " ^ Jwt.to_string t.jwt
   let to_string t = Jwt.to_string t.jwt
 
   let validate t =
     Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt >|= fun _ -> t
 end
+
+module Test_authorization_input = struct
+  type t = Jwt.t
+end
+
+module Test_authorization_output = struct
+  type t = unit
+end
+
+module Test_authorization = Apple_request.Make_unauthenticated (struct
+  type input = Test_authorization_input.t
+  type output = Test_authorization_output.t
+  type error = Http.Api_request.error
+
+  let to_http jwt =
+    let headers =
+      Http.Header.add Http.Header.empty "Authorization" (Jwt.to_string jwt)
+    in
+    ( `GET,
+      headers,
+      Uri.of_string "https://api.music.apple.com/v1/test",
+      Http.Body.empty )
+
+  let of_http = function
+    | res, _ when Http.Response.is_success res -> Lwt.return_ok ()
+    | res, body ->
+        let%lwt json = Http.Body.to_string body in
+        let status_code = Http.Response.status res in
+        Lwt.return_error (`Request_error (status_code, json))
+end)
+
+let test_authorization = Test_authorization.request
