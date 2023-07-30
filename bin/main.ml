@@ -1,4 +1,6 @@
-let () =
+let ( let* ) = Result.bind
+
+let _test_spotify () =
   print_newline ();
   let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
   let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
@@ -51,3 +53,17 @@ let () =
     | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
   in
   Lwt_main.run main
+
+let test_apple () =
+  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
+  let team_id = Sys.getenv "APPLE_TEAM_ID" in
+  let key_id = Sys.getenv "APPLE_KEY_ID" in
+  let* jwt =
+    Apple.Authorization.Jwt.make ~expiration:(Float.of_int 86400) ~private_pem
+      ~team_id ~key_id ()
+  in
+  print_endline (Apple.Authorization.Jwt.to_string jwt) |> Result.ok
+
+let () =
+  let _ = test_apple () in
+  ()

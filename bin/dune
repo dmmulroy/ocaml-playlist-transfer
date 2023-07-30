@@ -1,5 +1,5 @@
 (executable
  (public_name ocaml_playlist_transfer)
  (name main)
- (libraries ocaml_playlist_transfer services spotify)
+ (libraries ocaml_playlist_transfer services spotify apple)
  (preprocess (pps lwt_ppx)))
