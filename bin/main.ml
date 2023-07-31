@@ -67,5 +67,5 @@ let test_apple () =
   | Error _err -> failwith "failed making jwt"
 
 let () =
-  let _ = test_apple () in
+  let () = Lwt_main.run @@ test_apple () in
   ()
