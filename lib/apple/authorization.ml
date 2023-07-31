@@ -1,4 +1,5 @@
-open Common.Syntax.Let
+open Common.Syntax
+open Let
 
 module Jwt = struct
   module Header = Jose.Header
@@ -7,7 +8,6 @@ module Jwt = struct
 
   type t = { key : Jwk.priv Jwk.t; jwt : Jwt.t }
 
-  let ( >|= ) r f = Result.map f r
   let six_months_sec = 15777000
 
   let is_expired t =
@@ -35,7 +35,8 @@ module Jwt = struct
   let to_string t = Jwt.to_string t.jwt
 
   let validate t =
-    Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt >|= fun _ -> t
+    Infix.Result.(
+      Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt >|= fun _ -> t)
 end
 
 module Test_authorization_input = struct
