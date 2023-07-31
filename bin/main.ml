@@ -62,10 +62,13 @@ let test_apple () =
     Apple.Authorization.Jwt.make ~expiration:86400 ~private_pem ~team_id ~key_id
       ()
   in
+  (* [ `Expired | `Invalid_signature | `Msg of string ] *)
   let res = Apple.Authorization.Jwt.validate jwt in
   let _ =
     match res with
-    | Error _ -> print_endline "nah dawg"
+    | Error `Expired -> print_endline "shits expired"
+    | Error `Invalid_signature -> print_endline "shits invalid"
+    | Error (`Msg err) -> print_endline ("shits an err: " ^ err)
     | Ok _ -> print_endline "yah dawg"
   in
   Ok ()
