@@ -31,7 +31,7 @@
   ocaml
   petrol
   ppx_deriving
-  ppx_yojson_conv
+  ppx_deriving_yojson
   ptime
   yojson)
  (tags
