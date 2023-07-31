@@ -61,6 +61,7 @@ let test_apple () =
   let jwt_res = Apple.Authorization.Jwt.make ~private_pem ~team_id ~key_id () in
   match jwt_res with
   | Ok jwt -> (
+      print_endline @@ Apple.Authorization.Jwt.to_string jwt;
       match%lwt Apple.Authorization.test_authorization jwt with
       | Ok _ -> Lwt.return_unit
       | Error _err -> failwith "failed test auth")
