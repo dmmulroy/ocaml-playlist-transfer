@@ -58,10 +58,7 @@ let test_apple () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
   let team_id = Sys.getenv "APPLE_TEAM_ID" in
   let key_id = Sys.getenv "APPLE_KEY_ID" in
-  let* jwt =
-    Apple.Authorization.Jwt.make ~expiration:86400 ~private_pem ~team_id ~key_id
-      ()
-  in
+  let* jwt = Apple.Authorization.Jwt.make ~private_pem ~team_id ~key_id () in
   (* [ `Expired | `Invalid_signature | `Msg of string ] *)
   let res = Apple.Authorization.Jwt.validate jwt in
   let _ =
