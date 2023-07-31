@@ -62,7 +62,13 @@ let test_apple () =
     Apple.Authorization.Jwt.make ~expiration:(Float.of_int 86400) ~private_pem
       ~team_id ~key_id ()
   in
-  print_endline (Apple.Authorization.Jwt.to_string jwt) |> Result.ok
+  let res = Apple.Authorization.Jwt.validate jwt in
+  let _ =
+    match res with
+    | Error _ -> print_endline "nah dawg"
+    | Ok _ -> print_endline "yah dawg"
+  in
+  Ok ()
 
 let () =
   let _ = test_apple () in
