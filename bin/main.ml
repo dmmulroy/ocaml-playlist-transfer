@@ -64,9 +64,8 @@ let test_apple () =
       print_endline @@ Apple.Authorization.Jwt.to_string jwt;
       match%lwt Apple.Authorization.test_authorization jwt with
       | Ok _ -> Lwt.return_unit
-      | Error _err -> failwith "failed test auth")
+      | Error err ->
+          failwith @@ Apple.Apple_request.Api_request.error_to_string err)
   | Error _err -> failwith "failed making jwt"
 
-let () =
-  let () = Lwt_main.run @@ test_apple () in
-  ()
+let () = Lwt_main.run @@ test_apple ()
