@@ -4,37 +4,47 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <script
-      src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"
-      data-web-components
-      async
-    ></script>
+    <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"></script>
 
     <script>
       document.addEventListener("musickitloaded", async function () {
         // Call configure() to configure an instance of MusicKit on the Web.
         try {
+          const searchParams = new URL(window.location).searchParams;
           await MusicKit.configure({
-            developerToken: "DEVELOPER-TOKEN",
+            developerToken: searchParams.get("developer_token"),
             app: {
-              name: "My Cool Web App",
-              build: "1978.4.1",
+              name: "ocaml-playlist-transfer",
+              build: "0.0.1",
             },
           });
         } catch (err) {
-          console.error("error: ", err);
           // Handle configuration error
+          console.error("error: ", err);
         }
 
-        // MusicKit instance is available
-        const music = MusicKit.getInstance();
         console.log("success");
       });
+    </script>
+    <script>
+      function onSignInClick() {
+        MusicKit.getInstance()
+          .authorize()
+          .then((token) => {
+            console.log("authorized: ", token);
+            // TODO: Send token to server
+          })
+          .catch(console.error);
+      }
     </script>
     <title>ocaml-playlist-transfer</title>
   </head>
 
   <body>
-    <h1>Hello, World!</h1>
+    <h1>ocaml-playlist-transfer</h1>
+    <h2>Please click below to authenticate with Apple Music</h2>
+    <button id="apple-music-authorize" onclick="onSignInClick()">
+      Sign In
+    </button>
   </body>
 </html>
