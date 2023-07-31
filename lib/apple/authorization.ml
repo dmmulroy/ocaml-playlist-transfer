@@ -52,7 +52,8 @@ module Test_authorization = Apple_request.Make_unauthenticated (struct
 
   let to_http jwt =
     let headers =
-      Http.Header.add Http.Header.empty "Authorization" (Jwt.to_string jwt)
+      Http.Header.add Http.Header.empty "Authorization"
+        (Jwt.to_bearer_token jwt)
     in
     ( `GET,
       headers,
