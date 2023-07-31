@@ -7,7 +7,7 @@ module Jwt = struct
 
   let ( let* ) = Result.bind
   let ( >|= ) r f = Result.map f r
-  let six_months_sec = Float.of_int 15777000
+  let six_months_sec = 15777000
 
   let is_expired t =
     let expiration_result =
@@ -19,13 +19,13 @@ module Jwt = struct
     let* key = Jwk.of_priv_pem private_pem in
     let kid = ("kid", `String key_id) in
     let header = Header.make_header ~typ:"JWT" ~alg:`ES256 ~extra:[ kid ] key in
-    let time = Unix.time () in
-    let exp = Option.value ~default:(time +. six_months_sec) expiration in
+    let time = Int.of_float @@ Unix.time () in
+    let exp = Option.value ~default:(time + six_months_sec) expiration in
     let payload =
       Jwt.empty_payload
       |> Jwt.add_claim "iss" (`String team_id)
-      |> Jwt.add_claim "iat" (`Float time)
-      |> Jwt.add_claim "exp" (`Float exp)
+      |> Jwt.add_claim "iat" (`Int time)
+      |> Jwt.add_claim "exp" (`Int exp)
     in
     let* jwt = Jwt.sign ~header ~payload key in
     Ok { key; jwt }
