@@ -1,3 +1,5 @@
+open Common.Syntax.Let
+
 module Jwt = struct
   module Header = Jose.Header
   module Jwt = Jose.Jwt
@@ -5,7 +7,6 @@ module Jwt = struct
 
   type t = { key : Jwk.priv Jwk.t; jwt : Jwt.t }
 
-  let ( let* ) = Result.bind
   let ( >|= ) r f = Result.map f r
   let six_months_sec = 15777000
 
@@ -16,7 +17,7 @@ module Jwt = struct
     match expiration_result with Ok _ -> false | Error _ -> true
 
   let make ?expiration ~private_pem ~key_id ~team_id () =
-    let* key = Jwk.of_priv_pem private_pem in
+    let@ key = Jwk.of_priv_pem private_pem in
     let kid = ("kid", `String key_id) in
     let header = Header.make_header ~typ:"JWT" ~alg:`ES256 ~extra:[ kid ] key in
     let time = Int.of_float @@ Unix.time () in
@@ -27,7 +28,7 @@ module Jwt = struct
       |> Jwt.add_claim "iat" (`Int time)
       |> Jwt.add_claim "exp" (`Int exp)
     in
-    let* jwt = Jwt.sign ~header ~payload key in
+    let@ jwt = Jwt.sign ~header ~payload key in
     Ok { key; jwt }
 
   let to_bearer_token t = "Bearer " ^ Jwt.to_string t.jwt
