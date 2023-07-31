@@ -1,4 +1,4 @@
-let ( let* ) = Result.bind
+(* let ( let* ) = Result.bind *)
 
 let _test_spotify () =
   print_newline ();
@@ -58,17 +58,13 @@ let test_apple () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
   let team_id = Sys.getenv "APPLE_TEAM_ID" in
   let key_id = Sys.getenv "APPLE_KEY_ID" in
-  let* jwt = Apple.Authorization.Jwt.make ~private_pem ~team_id ~key_id () in
-  (* [ `Expired | `Invalid_signature | `Msg of string ] *)
-  let res = Apple.Authorization.Jwt.validate jwt in
-  let _ =
-    match res with
-    | Error `Expired -> print_endline "shits expired"
-    | Error `Invalid_signature -> print_endline "shits invalid"
-    | Error (`Msg err) -> print_endline ("shits an err: " ^ err)
-    | Ok _ -> print_endline "yah dawg"
-  in
-  Ok ()
+  let jwt_res = Apple.Authorization.Jwt.make ~private_pem ~team_id ~key_id () in
+  match jwt_res with
+  | Ok jwt -> (
+      match%lwt Apple.Authorization.test_authorization jwt with
+      | Ok _ -> Lwt.return_unit
+      | Error _err -> failwith "failed test auth")
+  | Error _err -> failwith "failed making jwt"
 
 let () =
   let _ = test_apple () in
