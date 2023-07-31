@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <script
+      src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"
+      data-web-components
+      async
+    ></script>
+
+    <script>
+      document.addEventListener("musickitloaded", async function () {
+        // Call configure() to configure an instance of MusicKit on the Web.
+        try {
+          await MusicKit.configure({
+            developerToken: "DEVELOPER-TOKEN",
+            app: {
+              name: "My Cool Web App",
+              build: "1978.4.1",
+            },
+          });
+        } catch (err) {
+          console.error("error: ", err);
+          // Handle configuration error
+        }
+
+        // MusicKit instance is available
+        const music = MusicKit.getInstance();
+        console.log("success");
+      });
+    </script>
+    <title>ocaml-playlist-transfer</title>
+  </head>
+
+  <body>
+    <h1>Hello, World!</h1>
+  </body>
+</html>
