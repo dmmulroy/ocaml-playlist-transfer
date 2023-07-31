@@ -4,7 +4,7 @@ module Jwt : sig
   val is_expired : t -> bool
 
   val make :
-    ?expiration:float ->
+    ?expiration:int ->
     private_pem:string ->
     key_id:string ->
     team_id:string ->
