@@ -31,10 +31,10 @@ module Syntax = struct
     let ( let@ ) = Result.bind
 
     (** [let+ var = promise] binds [var] to [v] when Lwt promise [promise] resolves to [v] *)
-    let ( let+ ) = Lwt.bind
+    let ( let* ) = Lwt.bind
 
     (** [let* var = promise] binds [var] to [v] when Lwt promise [promise] resolves to [Ok v] *)
-    let ( let* ) = Lwt_result.bind
+    let ( let+ ) = Lwt_result.bind
 
     (** [let| var = res] lifts a [('ok, 'err) result] [res] to a [('ok, 'err) Lwt_result.t], removing
       the need to add [Lwt.return]s. *)
