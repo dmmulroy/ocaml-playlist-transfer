@@ -25,11 +25,9 @@ module Json_parse_error = Make (struct
 end)
 
 module Song_error = Make (struct
-  type t = [ `Song_not_found | Http_error.t ]
+  type t = [ `Song_not_found ]
 
-  let to_string = function
-    | `Song_not_found -> "Song not found"
-    | #Http_error.t as err -> Http_error.to_string err
+  let to_string = function `Song_not_found -> "Song not found"
 end)
 
 module Authorization_error = Make (struct
