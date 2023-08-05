@@ -50,7 +50,7 @@ end
 module Test_authorization = Apple_request.Make_unauthenticated (struct
   type input = Test_authorization_input.t
   type output = Test_authorization_output.t
-  type error = Http.Api_request.error
+  type error = Error.t
 
   let to_http jwt =
     let headers =
@@ -67,7 +67,8 @@ module Test_authorization = Apple_request.Make_unauthenticated (struct
     | res, body ->
         let%lwt json = Http.Body.to_string body in
         let status_code = Http.Response.status res in
-        Lwt.return_error (`Request_error (status_code, json))
+        Lwt.return_error
+          (`Http_error (Http.Code.code_of_status status_code, json))
 end)
 
 let test_authorization = Test_authorization.request

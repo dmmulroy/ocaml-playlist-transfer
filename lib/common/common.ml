@@ -10,6 +10,8 @@ module Syntax = struct
       (** [<$>] is an infix right-to-left [Option.map]. *)
       let ( <$> ) = Option.map
     end
+    (* [>>=?] is an infix operator for passing [Ok] values through
+       or applying [f] to [Error] values. *)
 
     module Result = struct
       (** [>>=] is an infix [Result.bind]. *)
@@ -20,6 +22,28 @@ module Syntax = struct
 
       (** [<$>] is an infix right-to-left [Result.map]. *)
       let ( <$> ) = Result.map
+    end
+
+    module Lwt = struct
+      (** [>>=] is an infix [Lwt.bind]. *)
+      let ( >>= ) = Lwt.bind
+
+      (** 
+      * [>>=?] is an infix operator for passing [Ok] values through 
+      * or applying [f] to [Error] values. 
+      *)
+      let ( >>=? ) v f =
+        let ( let* ) = Lwt.bind in
+        let* v' = v in
+        match v' with
+        | Ok value -> Lwt.return_ok value
+        | Error err -> Lwt.return_error @@ f err
+
+      (** [>|=] is an infix left-to-right [Lwt.map]. *)
+      let ( >|= ) v f = Lwt.map f v
+
+      (** [<$>] is an infix right-to-left [Lwt.map]. *)
+      let ( <$> ) = Lwt.map
     end
   end
 
