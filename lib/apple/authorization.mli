@@ -28,4 +28,4 @@ end
 
 val test_authorization :
   Test_authorization_input.t ->
-  (Test_authorization_output.t, [< Apple_request.error ]) result Lwt.t
+  (Test_authorization_output.t, Error.t) result Lwt.t

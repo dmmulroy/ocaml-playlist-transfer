@@ -50,7 +50,6 @@ end
 module Test_authorization = Apple_request.Make_unauthenticated (struct
   type input = Test_authorization_input.t
   type output = Test_authorization_output.t
-  type error = Error.t
 
   let to_http jwt =
     let headers =

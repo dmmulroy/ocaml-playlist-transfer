@@ -11,7 +11,6 @@ end
 module Get_song_by_id = Apple_request.Make_unauthenticated (struct
   type input = Get_song_by_id_input.t
   type output = Get_song_by_id_output.t
-  type error = Error.Song_error.t
 
   let to_http id =
     ( `GET,
