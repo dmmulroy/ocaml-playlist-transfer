@@ -1,8 +1,10 @@
 type t =
+  (* Common errors *)
   [ `Json_parse_error of string
-  | `No_refresh_token
-  | `Invalid_grant_type
-  | `Http_error of int * string ]
+  | `Http_error of int * string
+  | (* Authorization errors *)
+    `No_refresh_token
+  | `Invalid_grant_type ]
 
 let to_string (err : [< t ]) =
   match err with
