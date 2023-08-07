@@ -11,4 +11,4 @@ end
 val get_playlists :
   client:Client.t ->
   Get_playlists_input.t ->
-  (Get_playlists_output.t, [ `Msg of string ]) result Lwt.t
+  (Get_playlists_output.t, Error.t) result Lwt.t

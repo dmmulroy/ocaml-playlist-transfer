@@ -1,11 +1,17 @@
-open Async
-module Api_request = Http.Api_request
+module type S = sig
+  type input
+  type output
 
-module Make (M : Api_request.S) : sig
-  val request :
-    client:Client.t -> M.input -> (M.output, M.error) result Promise.t
+  val to_http :
+    input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
+
+  val of_http : Http.Response.t * Http.Body.t -> (output, Error.t) Lwt_result.t
 end
 
-module Make_unauthenticated (M : Api_request.S) : sig
-  val request : M.input -> (M.output, M.error) result Promise.t
+module Make (M : S) : sig
+  val request : client:Client.t -> M.input -> (M.output, Error.t) Lwt_result.t
+end
+
+module Make_unauthenticated (M : S) : sig
+  val request : M.input -> (M.output, Error.t) Lwt_result.t
 end

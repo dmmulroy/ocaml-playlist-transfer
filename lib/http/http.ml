@@ -54,10 +54,10 @@ module Api_request = struct
     val of_http : Response.t * Body.t -> (output, error) result Promise.t
   end
 
-  type error = [ `Request_error of Code.status_code * string ]
+  type error = [ `Http_error of Code.status_code * string ]
 
   let error_to_string = function
-    | `Request_error (status_code, msg) ->
+    | `Http_error (status_code, msg) ->
         Printf.sprintf "Request error: [%d]: %s"
           (Code.code_of_status status_code)
           msg

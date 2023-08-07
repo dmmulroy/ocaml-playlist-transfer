@@ -1,5 +1,3 @@
-open Async
-
 val make_authorization_url :
   client_id:string ->
   redirect_uri:Http.Uri.t ->
@@ -8,10 +6,6 @@ val make_authorization_url :
   ?show_dialog:bool ->
   unit ->
   Http.Uri.t
-
-type error = [ `No_refresh_token | `Invalid_grant_type ]
-
-val error_to_string : error -> string
 
 module Request_access_token_input : sig
   type authorization_code_grant = {
@@ -44,12 +38,11 @@ end
 
 val request_access_token :
   Request_access_token_input.t ->
-  (Request_access_token_output.t, [ error | Common.error ]) result Promise.t
+  (Request_access_token_output.t, Error.t) Lwt_result.t
 
 module Refresh_access_token_output : sig
   type t = Access_token.t
 end
 
 val refresh_access_token :
-  client:Client.t ->
-  (Refresh_access_token_output.t, [ error | Common.error ]) result Promise.t
+  client:Client.t -> (Refresh_access_token_output.t, Error.t) Lwt_result.t

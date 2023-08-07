@@ -21,12 +21,6 @@ let make_authorization_url ~client_id ~redirect_uri ~state ?scopes
     (query_params
     @ match scope with Some scope -> [ ("scope", scope) ] | None -> [])
 
-type error = [ `No_refresh_token | `Invalid_grant_type ]
-
-let error_to_string = function
-  | `No_refresh_token -> "No refresh token"
-  | `Invalid_grant_type -> "Invalid grant type"
-
 type client_credentials_grant_response = {
   access_token : string;
   expires_in : float;
@@ -80,7 +74,6 @@ end
 module Request_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Request_access_token_input.t
   type output = Request_access_token_output.t
-  type nonrec error = [ error | Common.error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
@@ -90,7 +83,7 @@ module Request_access_token = Spotify_request.Make_unauthenticated (struct
     | Error _ -> (
         match client_credentials_grant_response_of_yojson json with
         | Ok res -> Ok (`Client_credentials res)
-        | Error _ -> Error `Json_parse_error)
+        | Error msg -> Error (`Json_parse_error msg))
 
   let to_http = function
     | `Authorization_code
@@ -138,8 +131,10 @@ module Request_access_token = Spotify_request.Make_unauthenticated (struct
         | Error err -> Lwt.return_error err)
     | res, body ->
         let%lwt json = Http.Body.to_string body in
-        let status_code = Http.Response.status res in
-        Lwt.return_error (`Request_error (status_code, json))
+        let status_code =
+          Http.Code.code_of_status @@ Http.Response.status res
+        in
+        Lwt.return_error (`Http_error (status_code, json))
 end)
 
 let request_access_token = Request_access_token.request
@@ -168,7 +163,6 @@ end
 module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Internal_refresh_access_token_input.t
   type output = Internal_refresh_access_token_output.t
-  type nonrec error = [ error | Common.error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
@@ -187,11 +181,12 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
         let%lwt json = Http.Body.to_yojson body in
         match Internal_refresh_access_token_output.of_yojson json with
         | Ok res -> Lwt.return_ok res
-        | Error _ -> Lwt.return_error `Json_parse_error)
+        | Error msg -> Lwt.return_error (`Json_parse_error msg))
     | res, body ->
         let%lwt json = Http.Body.to_string body in
         let status_code = Http.Response.status res in
-        Lwt.return_error (`Request_error (status_code, json))
+        Lwt.return_error
+          (`Http_error (Http.Code.code_of_status status_code, json))
 end)
 
 let refresh_access_token ~client =

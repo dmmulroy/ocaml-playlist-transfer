@@ -19,7 +19,6 @@ end
 module Get_playlists = Spotify_request.Make (struct
   type input = Get_playlists_input.t
   type output = Get_playlists_output.t
-  type error = [ `Msg of string ]
 
   let make_endpoint input =
     let base_endpoint =
@@ -36,11 +35,13 @@ module Get_playlists = Spotify_request.Make (struct
         let%lwt json = Http.Body.to_yojson body in
         match Get_playlists_output.of_yojson json with
         | Ok response -> Lwt.return_ok response
-        | Error err -> Lwt.return_error (`Msg err))
+        | Error err -> Lwt.return_error (`Json_parse_error err))
     | res, body ->
         let%lwt json = Http.Body.to_string body in
-        let status_code = Http.Response.status res in
-        Lwt.return_error (`Msg (Http.Code.string_of_status status_code ^ json))
+        let status_code =
+          Http.Code.code_of_status @@ Http.Response.status res
+        in
+        Lwt.return_error (`Http_error (status_code, json))
 end)
 
 let get_playlists = Get_playlists.request

@@ -4,7 +4,6 @@ open Let
 module type S = sig
   type input
   type output
-  (* type error = private [> `Http_error of int * string ] *)
 
   val to_http :
     input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
