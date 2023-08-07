@@ -29,15 +29,10 @@ module Syntax = struct
       let ( >>= ) = Lwt.bind
 
       (** 
-      * [>>=?] is an infix operator for passing [Ok] values through 
+      * [>|?] is an infix operator for passing [Ok] values through 
       * or applying [f] to [Error] values. 
       *)
-      let ( >>=? ) v f =
-        let ( let* ) = Lwt.bind in
-        let* v' = v in
-        match v' with
-        | Ok value -> Lwt.return_ok value
-        | Error err -> Lwt.return_error @@ f err
+      let ( >|? ) v f = Lwt_result.map_error f v
 
       (** [>|=] is an infix left-to-right [Lwt.map]. *)
       let ( >|= ) v f = Lwt.map f v
