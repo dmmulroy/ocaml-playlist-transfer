@@ -43,7 +43,8 @@ let _test_spotify () =
           playlist.tracks.items
       in
       Lwt.return_unit
-  | Error (`Msg err) -> Lwt.return @@ print_endline ("err: " ^ err)
+  | Error err ->
+      Lwt.return @@ print_endline ("err: " ^ Spotify.Error.to_string err)
 
 let test_apple () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
