@@ -4,11 +4,12 @@ open Let
 module type S = sig
   type input
   type output
+  type error = private [> `Http_error of int * string ]
 
   val to_http :
     input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
 
-  val of_http : Http.Response.t * Http.Body.t -> (output, Error.t) Lwt_result.t
+  val of_http : Http.Response.t * Http.Body.t -> (output, error) Lwt_result.t
 end
 
 let execute ~headers ~body ~endpoint ~method' =
@@ -20,7 +21,7 @@ let execute ~headers ~body ~endpoint ~method' =
   | _ -> failwith "Not implemented"
 
 module Make_unauthenticated (M : S) = struct
-  let request (input : M.input) : (M.output, Error.t) Lwt_result.t =
+  let request (input : M.input) : (M.output, M.error) Lwt_result.t =
     let method', headers', endpoint, body = M.to_http input in
     let headers =
       Http.Header.add_unless_exists headers' "Content-Type" "application/json"

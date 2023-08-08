@@ -1,5 +1,10 @@
 type t =
-  [ `Http_error of int * string | `Json_parse_error of string | `Song_not_found ]
+  [ `Http_error of int * string
+  | `Json_parse_error of string
+  | `Song_not_found
+  | `Unsupported_kty
+  | `Expired
+  | `Invalid_signature ]
 
 let to_string (err : [< t ]) =
   match err with

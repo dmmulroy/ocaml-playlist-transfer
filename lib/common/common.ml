@@ -20,6 +20,12 @@ module Syntax = struct
       (** [>|=] is an infix left-to-right [Result.map]. *)
       let ( >|= ) res_a f = Result.map f res_a
 
+      (** 
+      * [>|?] is an infix operator for passing [Ok] values through 
+      * or applying [f] to [Error] values. 
+      *)
+      let ( >|? ) v f = Result.map_error f v
+
       (** [<$>] is an infix right-to-left [Result.map]. *)
       let ( <$> ) = Result.map
     end
