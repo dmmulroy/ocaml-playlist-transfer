@@ -1,4 +1,7 @@
 type t = string
+type error = [ `Song_not_found ]
+
+let error_to_string = function `Song_not_found -> "Song not found"
 
 module Get_song_by_id_input = struct
   type t = string
@@ -11,6 +14,7 @@ end
 module Get_song_by_id = Apple_request.Make_unauthenticated (struct
   type input = Get_song_by_id_input.t
   type output = Get_song_by_id_output.t
+  type nonrec error = [ `Http_error of int * string ]
 
   let to_http id =
     ( `GET,

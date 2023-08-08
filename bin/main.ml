@@ -51,6 +51,6 @@ let test_apple () =
   Lwt.return_ok ()
 
 (* let () = Lwt_main.run @@ test_apple () *)
-let _ =
-  let res = Lwt_main.run @@ test_apple ()  in
+let () =
+  let res = Lwt_main.run @@ test_apple () in
   

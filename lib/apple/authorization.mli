@@ -1,3 +1,12 @@
+type error =
+  [ `Expired
+  | `Private_key_error of string
+  | `Token_signing_error of string
+  | `Unsupported_kty
+  | `Validation_error of string ]
+
+val error_to_string : error -> string
+
 module Jwt : sig
   type t
 
@@ -9,13 +18,18 @@ module Jwt : sig
     key_id:string ->
     team_id:string ->
     unit ->
-    (t, [ `Msg of string | `Unsupported_kty ]) result
+    ( t,
+      [ `Private_key_error of string
+      | `Token_signing_error of string
+      | `Unsupported_kty ] )
+    result
 
   val to_bearer_token : t -> string
   val to_string : t -> string
 
   val validate :
-    t -> (t, [ `Expired | `Invalid_signature | `Msg of string ]) result
+    t ->
+    (t, [ `Expired | `Invalid_signature | `Validation_error of string ]) result
 end
 
 module Test_authorization_input : sig
