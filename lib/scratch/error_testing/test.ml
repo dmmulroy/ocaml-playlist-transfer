@@ -1,2 +1,5 @@
-type 'a error = { error : 'a }
-type http_error = [ `Http_error of int * string ] error
+module type S = sig
+  type input
+  type output
+  type error
+end
