@@ -54,7 +54,11 @@ end
 
 (* Spotify.Playlist.create*)
 val create :
-  client:Client.t -> Create_input.t -> (Create_output.t, Error.t) Lwt_result.t
+  client:Client.t ->
+  Create_input.t ->
+  ( Create_output.t,
+    [ `Http_error of int * string | `Json_parse_error of string ] )
+  Lwt_result.t
 
 module Get_by_id_input : sig
   type t = {
@@ -81,7 +85,9 @@ end
 val get_by_id :
   client:Client.t ->
   Get_by_id_input.t ->
-  (Get_by_id_output.t, Error.t) Lwt_result.t
+  ( Get_by_id_output.t,
+    [ `Http_error of int * string | `Json_parse_error of string ] )
+  Lwt_result.t
 
 module Get_featured_input : sig
   type t = {
@@ -111,4 +117,6 @@ end
 val get_featured :
   client:Client.t ->
   Get_featured_input.t ->
-  (Get_featured_output.t, Error.t) Lwt_result.t
+  ( Get_featured_output.t,
+    [ `Http_error of int * string | `Json_parse_error of string ] )
+  Lwt_result.t

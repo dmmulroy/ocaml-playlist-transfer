@@ -1,3 +1,9 @@
+type error = [ `Invalid_grant_type | `No_refresh_token ]
+
+let error_to_string = function
+  | `Invalid_grant_type -> "Invalid grant type"
+  | `No_refresh_token -> "No refresh token"
+
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
 
 let make_authorization_url ~client_id ~redirect_uri ~state ?scopes
@@ -74,6 +80,7 @@ end
 module Request_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Request_access_token_input.t
   type output = Request_access_token_output.t
+  type error = [ `Http_error of int * string | `Json_parse_error of string ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
@@ -163,6 +170,9 @@ end
 module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Internal_refresh_access_token_input.t
   type output = Internal_refresh_access_token_output.t
+
+  type nonrec error =
+    [ `Http_error of int * string | `Json_parse_error of string | error ]
 
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 

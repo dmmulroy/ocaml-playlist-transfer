@@ -19,6 +19,7 @@ end
 module Get_playlists = Spotify_request.Make (struct
   type input = Get_playlists_input.t
   type output = Get_playlists_output.t
+  type error = [ `Http_error of int * string | `Json_parse_error of string ]
 
   let make_endpoint input =
     let base_endpoint =

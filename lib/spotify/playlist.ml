@@ -50,6 +50,7 @@ end
 module CreatePlaylist = Spotify_request.Make (struct
   type input = Create_input.t
   type output = Create_output.t
+  type error = [ `Http_error of int * string | `Json_parse_error of string ]
 
   let make_endpoint (user_id : string) =
     Http.Uri.of_string @@ "https://api.spotify.com/v1/users/" ^ user_id
@@ -107,6 +108,7 @@ end
 module Get_featured = Spotify_request.Make (struct
   type input = Get_featured_input.t
   type output = Get_featured_output.t
+  type error = [ `Http_error of int * string | `Json_parse_error of string ]
 
   let base_endpoint =
     Http.Uri.of_string "https://api.spotify.com/v1/browse/featured-playlists"
@@ -166,6 +168,7 @@ end
 module Get_playlist_by_id = Spotify_request.Make (struct
   type input = Get_by_id_input.t
   type output = Get_by_id_output.t
+  type error = [ `Http_error of int * string | `Json_parse_error of string ]
 
   let make_endpoint (input : input) =
     let base_endpoint =
