@@ -1,5 +1,4 @@
-open Syntax
-open Let
+open Syntax.Let
 
 module type S = sig
   type input
