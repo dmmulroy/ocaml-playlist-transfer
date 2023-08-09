@@ -1,9 +1,12 @@
-open Syntax.Let
+open Syntax
+open Let
+
+type 'a apple_error = [ `Apple_error of 'a ]
 
 module type S = sig
   type input
   type output
-  type error = private [> `Http_error of int * string ]
+  type error
 
   val to_http :
     input -> Http.Code.meth * Http.Header.t * Http.Uri.t * Http.Body.t
@@ -19,12 +22,14 @@ let execute ~headers ~body ~endpoint ~method' =
   | `DELETE -> Http.Client.delete ~headers ~body endpoint
   | _ -> failwith "Not implemented"
 
+let wrap_error error = `Apple_error error
+
 module Make_unauthenticated (M : S) = struct
-  let request (input : M.input) : (M.output, M.error) Lwt_result.t =
+  let request (input : M.input) : (M.output, M.error apple_error) Lwt_result.t =
     let method', headers', endpoint, body = M.to_http input in
     let headers =
       Http.Header.add_unless_exists headers' "Content-Type" "application/json"
     in
     let* response = execute ~headers ~body ~endpoint ~method' in
-    M.of_http response
+    Infix.Lwt.(M.of_http response >|? wrap_error)
 end
