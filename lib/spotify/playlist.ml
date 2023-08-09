@@ -197,7 +197,7 @@ end)
 (* A hacky way to expand/open the polymorphic variant *)
 let get_by_id ~client input =
   let open Syntax.Infix.Lwt in
-  Get_playlist_by_id.request ~client input >|? fun err -> err
-(* match err with *)
-(* | `Http_error (code, body) -> `Http_error (code, body) *)
-(* | `Json_parse_error err -> `Json_parse_error err *)
+  Get_playlist_by_id.request ~client input >|? fun err ->
+  match err with
+  | `Http_error (code, body) -> `Http_error (code, body)
+  | `Json_parse_error err -> `Json_parse_error err
