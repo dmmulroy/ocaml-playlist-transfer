@@ -1,4 +1,4 @@
-open Common.Syntax
+open Syntax
 open Let
 
 module type S = sig

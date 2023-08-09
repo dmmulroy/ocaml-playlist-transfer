@@ -86,7 +86,7 @@ val get_by_id :
   client:Client.t ->
   Get_by_id_input.t ->
   ( Get_by_id_output.t,
-    [ `Http_error of int * string | `Json_parse_error of string ] )
+    [> `Http_error of int * string | `Json_parse_error of string ] )
   Lwt_result.t
 
 module Get_featured_input : sig

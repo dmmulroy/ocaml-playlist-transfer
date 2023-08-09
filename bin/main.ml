@@ -1,4 +1,4 @@
-open Common.Syntax
+open Syntax
 open Let
 
 let _test_spotify () =
@@ -53,3 +53,17 @@ let test_apple () =
 let () =
   let _ = Lwt_main.run @@ test_apple () in
   ()
+
+let get_odd_int_res : unit -> (int, [> `Not_odd ]) result =
+ fun () ->
+  let num = Random.int 100 in
+  if num mod 2 = 0 then Error `Not_odd else Ok num
+
+let maybe_error () =
+  let num = Random.float 1.0 in
+  if num > 0.5 then Error (`Msg "error dawg") else Ok ()
+
+let _ =
+  let@ _ = maybe_error () in
+  let@ _ = get_odd_int_res () in
+  Ok ()

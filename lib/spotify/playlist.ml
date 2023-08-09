@@ -194,4 +194,10 @@ module Get_playlist_by_id = Spotify_request.Make (struct
         Lwt.return_error (`Http_error (status_code, json))
 end)
 
-let get_by_id = Get_playlist_by_id.request
+(* A hacky way to expand/open the polymorphic variant *)
+let get_by_id ~client input =
+  let open Syntax.Infix.Lwt in
+  Get_playlist_by_id.request ~client input >|? fun err ->
+  match err with
+  | `Http_error (code, body) -> `Http_error (code, body)
+  | `Json_parse_error err -> `Json_parse_error err
