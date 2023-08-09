@@ -50,7 +50,6 @@ let test_apple () =
   print_endline "success";
   Lwt.return_ok ()
 
-(* let () = Lwt_main.run @@ test_apple () *)
 let () =
-  let res = Lwt_main.run @@ test_apple () in
-  
+  let _ = Lwt_main.run @@ test_apple () in
+  ()
