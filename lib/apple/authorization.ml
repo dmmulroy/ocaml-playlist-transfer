@@ -1,14 +1,15 @@
 open Syntax
 open Let
 
-type error =
+type internal_error =
   [ `Expired
   | `Private_key_error of string
   | `Token_signing_error of string
   | `Unsupported_kty
   | `Validation_error of string ]
 
-let error_to_string = function
+(* TODO: Improve these error messags for new Error.t type *)
+let internal_error_to_string = function
   | `Expired -> "The token is expired"
   | `Private_key_error str ->
       "An error occured while parsing private key PEM: " ^ str
@@ -17,6 +18,17 @@ let error_to_string = function
   | `Unsupported_kty -> "The private key is not an ES256 key"
   | `Validation_error str ->
       "An error occurred while validating the token: " ^ str
+
+let internal_error_to_error err =
+  Error.make ~source:`Authorization ~message:(internal_error_to_string err) ()
+
+let internal_error_identity = function
+  | `Expired -> `Expired
+  | `Private_key_error str -> `Private_key_error str
+  | `Token_signing_error str -> `Token_signing_error str
+  | `Unsupported_kty -> `Unsupported_kty
+  | `Validation_error str -> `Validation_error str
+  | _ -> assert false
 
 module Jwt = struct
   module Header = Jose.Header
@@ -36,10 +48,12 @@ module Jwt = struct
   let make ?expiration ~private_pem ~key_id ~team_id () =
     let open Infix.Result in
     let@ key =
-      Jwk.of_priv_pem private_pem >|? fun err ->
-      match err with
-      | `Msg str -> `Private_key_error str
-      | `Unsupported_kty as err -> err
+      Jwk.of_priv_pem private_pem
+      >|? (fun err ->
+            match err with
+            | `Msg str -> `Private_key_error str
+            | _ as err -> internal_error_identity err)
+      >|? internal_error_to_error
     in
     let kid = ("kid", `String key_id) in
     let header = Header.make_header ~typ:"JWT" ~alg:`ES256 ~extra:[ kid ] key in
@@ -52,8 +66,9 @@ module Jwt = struct
       |> Jwt.add_claim "exp" (`Int exp)
     in
     let@ jwt =
-      Jwt.sign ~header ~payload key >|? fun (`Msg str) ->
-      `Token_signing_error str
+      Jwt.sign ~header ~payload key
+      >|? (fun (`Msg str) -> `Token_signing_error str)
+      >|? internal_error_to_error
     in
     Ok { key; jwt }
 
@@ -63,11 +78,12 @@ module Jwt = struct
   let validate t =
     let open Infix.Result in
     let@ validated_jwt =
-      Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt >|? fun err ->
-      match err with
-      | `Msg str -> `Validation_error str
-      | `Expired -> `Expired
-      | `Invalid_signature -> `Invalid_signature
+      Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt
+      >|? (fun err ->
+            match err with
+            | `Msg str -> `Validation_error str
+            | _ as err -> internal_error_identity err)
+      >|? internal_error_to_error
     in
     Ok { t with jwt = validated_jwt }
 end
@@ -83,7 +99,6 @@ end
 module Test_authorization = Apple_request.Make_unauthenticated (struct
   type input = Test_authorization_input.t
   type output = Test_authorization_output.t
-  type error = [ `Http_error of int * string ]
 
   let to_http jwt =
     let headers =
@@ -97,11 +112,7 @@ module Test_authorization = Apple_request.Make_unauthenticated (struct
 
   let of_http = function
     | res, _ when Http.Response.is_success res -> Lwt.return_ok ()
-    | res, body ->
-        let* json = Http.Body.to_string body in
-        let status_code = Http.Response.status res in
-        Lwt.return_error
-          (`Http_error (Http.Code.code_of_status status_code, json))
+    | res, body -> Infix.Lwt.(Error.of_http (res, body) >>= Lwt.return_error)
 end)
 
 let test_authorization = Test_authorization.request
