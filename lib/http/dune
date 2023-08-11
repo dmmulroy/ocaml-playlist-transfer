@@ -1,5 +1,5 @@
 (library
  (name http)
- (libraries cohttp-lwt-unix yojson async)
+ (libraries cohttp-lwt-unix yojson syntax)
  (preprocess
   (pps lwt_ppx)))

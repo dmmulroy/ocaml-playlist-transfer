@@ -1,3 +1,5 @@
+open Syntax
+open Let
 include Cohttp
 include Cohttp_lwt
 include Cohttp_lwt_unix
@@ -7,9 +9,12 @@ module Body = struct
   include Body
 
   let to_yojson body =
-    let%lwt body = Body.to_string body in
-    let json = Yojson.Safe.from_string body in
-    Lwt.return json
+    let* body' = Body.to_string body in
+    let| json =
+      try Ok (Yojson.Safe.from_string body')
+      with Yojson.Json_error msg -> Error (`Json_error msg)
+    in
+    Lwt.return_ok json
 
   let of_yojson json = Body.of_string @@ Yojson.Safe.to_string json
 end
@@ -43,24 +48,14 @@ module Uri = struct
 end
 
 module Api_request = struct
-  open Async
-
   module type S = sig
     type input
     type output
     type error
 
     val to_http : input -> Code.meth * Header.t * Uri.t * Body.t
-    val of_http : Response.t * Body.t -> (output, error) result Promise.t
+    val of_http : Response.t * Body.t -> (output, error) Lwt_result.t
   end
-
-  type error = [ `Http_error of Code.status_code * string ]
-
-  let error_to_string = function
-    | `Http_error (status_code, msg) ->
-        Printf.sprintf "Request error: [%d]: %s"
-          (Code.code_of_status status_code)
-          msg
 
   let execute ~headers ~body ~endpoint ~method' =
     match method' with

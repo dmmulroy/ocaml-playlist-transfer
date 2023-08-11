@@ -1,5 +1,5 @@
 (library
  (name apple)
- (libraries async syntax http jose ppx_deriving_yojson.runtime ptime ptime.clock.os)
+ (libraries syntax http jose ppx_deriving_yojson.runtime ptime ptime.clock.os)
  (preprocess
   (pps lwt_ppx ppx_deriving.show ppx_deriving_yojson)))

@@ -44,26 +44,10 @@ let test_apple () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
   let team_id = Sys.getenv "APPLE_TEAM_ID" in
   let key_id = Sys.getenv "APPLE_KEY_ID" in
-  let| _jwt_res =
-    Apple.Authorization.Jwt.make ~private_pem ~team_id ~key_id ()
-  in
+  let jwt_res = Apple.Authorization.Jwt.make ~private_pem ~team_id ~key_id () in
   print_endline "success";
   Lwt.return_ok ()
 
 let () =
   let _ = Lwt_main.run @@ test_apple () in
   ()
-
-let get_odd_int_res : unit -> (int, [> `Not_odd ]) result =
- fun () ->
-  let num = Random.int 100 in
-  if num mod 2 = 0 then Error `Not_odd else Ok num
-
-let maybe_error () =
-  let num = Random.float 1.0 in
-  if num > 0.5 then Error (`Msg "error dawg") else Ok ()
-
-let _ =
-  let@ _ = maybe_error () in
-  let@ _ = get_odd_int_res () in
-  Ok ()

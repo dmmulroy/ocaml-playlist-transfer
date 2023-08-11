@@ -7,10 +7,10 @@ open Let
 type t = {
   cause : t option;
   code : Http.Code.status_code option;
-  source : [ `Authorization | `Http | `None | `Playlist | `Song ];
+  source : [ `Auth | `Http | `None | `Resource of Resource.t ];
   field : string option;
   message : string;
-  raw : [ `Json of Yojson.Basic.t | `None | `Raw of string ];
+  raw : [ `Json of Yojson.Safe.t | `None | `Raw of string ];
   timestamp : Ptime.t;
 }
 
@@ -22,27 +22,18 @@ let of_http ?cause (response, body) =
   let message =
     Http.Code.reason_phrase_of_code @@ Http.Code.code_of_status code
   in
-  (* TODO: Attempt to parse json and fallback to `Raw *)
-  let* raw = Infix.Lwt.(Http.Body.to_string body >|= fun x -> `Raw x) in
+  let* json_res = Http.Body.to_yojson body in
+  let* raw =
+    match json_res with
+    | Error _ -> Infix.Lwt.(Http.Body.to_string body >|= fun x -> `Raw x)
+    | Ok json -> Lwt.return @@ `Json json
+  in
   Lwt.return @@ make ?cause ~code ~source:`Http ~message ~raw ()
-
-let source_to_string = function
-  | `Authorization -> "authorization"
-  | `Http -> "http"
-  | `None -> "none"
-  | `Playlist -> "playlist"
-  | `Song -> "song"
-
-let raw_to_string = function
-  | `Json json -> Yojson.Basic.to_string json
-  | `None -> "none"
-  | `Raw raw -> raw
 
 (* TODO: Make this better, figure out how to recursively print the cause *)
 let to_string err =
   match err.source with
-  | `Authorization -> err.message
+  | `Auth -> err.message
   | `Http -> err.message
   | `None -> err.message
-  | `Playlist -> err.message
-  | `Song -> err.message
+  | `Resource _ -> err.message

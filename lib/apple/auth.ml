@@ -5,30 +5,28 @@ type internal_error =
   [ `Expired
   | `Private_key_error of string
   | `Token_signing_error of string
+  | `Unhandled_error of string
   | `Unsupported_kty
   | `Validation_error of string ]
 
-(* TODO: Improve these error messags for new Error.t type *)
-let internal_error_to_string = function
+let internal_error_to_string : [> internal_error ] -> string = function
   | `Expired -> "The token is expired"
   | `Private_key_error str ->
       "An error occured while parsing private key PEM: " ^ str
   | `Token_signing_error str ->
       "An error occurred while signing the token: " ^ str
   | `Unsupported_kty -> "The private key is not an ES256 key"
+  | `Unhandled_error str -> "An unhandled error occurred: " ^ str
   | `Validation_error str ->
       "An error occurred while validating the token: " ^ str
+  | _ -> "An unhandled error occurred"
 
-let internal_error_to_error err =
-  Error.make ~source:`Authorization ~message:(internal_error_to_string err) ()
-
-let internal_error_identity = function
-  | `Expired -> `Expired
-  | `Private_key_error str -> `Private_key_error str
-  | `Token_signing_error str -> `Token_signing_error str
-  | `Unsupported_kty -> `Unsupported_kty
-  | `Validation_error str -> `Validation_error str
-  | _ -> assert false
+let internal_error_to_error ?(map_msg = fun str -> `Unhandled_error str) err =
+  let message =
+    (match err with `Msg str -> map_msg str | _ as err -> err)
+    |> internal_error_to_string
+  in
+  Error.make ~source:`Auth ~message ()
 
 module Jwt = struct
   module Header = Jose.Header
@@ -49,11 +47,7 @@ module Jwt = struct
     let open Infix.Result in
     let@ key =
       Jwk.of_priv_pem private_pem
-      >|? (fun err ->
-            match err with
-            | `Msg str -> `Private_key_error str
-            | _ as err -> internal_error_identity err)
-      >|? internal_error_to_error
+      >|? internal_error_to_error ~map_msg:(fun msg -> `Private_key_error msg)
     in
     let kid = ("kid", `String key_id) in
     let header = Header.make_header ~typ:"JWT" ~alg:`ES256 ~extra:[ kid ] key in
@@ -67,8 +61,7 @@ module Jwt = struct
     in
     let@ jwt =
       Jwt.sign ~header ~payload key
-      >|? (fun (`Msg str) -> `Token_signing_error str)
-      >|? internal_error_to_error
+      >|? internal_error_to_error ~map_msg:(fun msg -> `Token_signing_error msg)
     in
     Ok { key; jwt }
 
@@ -79,31 +72,26 @@ module Jwt = struct
     let open Infix.Result in
     let@ validated_jwt =
       Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt
-      >|? (fun err ->
-            match err with
-            | `Msg str -> `Validation_error str
-            | _ as err -> internal_error_identity err)
-      >|? internal_error_to_error
+      >|? internal_error_to_error ~map_msg:(fun msg -> `Validation_error msg)
     in
     Ok { t with jwt = validated_jwt }
 end
 
-module Test_authorization_input = struct
+module Test_auth_input = struct
   type t = Jwt.t
 end
 
-module Test_authorization_output = struct
+module Test_auth_output = struct
   type t = unit
 end
 
-module Test_authorization = Apple_request.Make_unauthenticated (struct
-  type input = Test_authorization_input.t
-  type output = Test_authorization_output.t
+module Test_auth = Apple_request.Make_unauthenticated (struct
+  type input = Test_auth_input.t
+  type output = Test_auth_output.t
 
   let to_http jwt =
     let headers =
-      Http.Header.add Http.Header.empty "Authorization"
-        (Jwt.to_bearer_token jwt)
+      Http.Header.add Http.Header.empty "Auth" (Jwt.to_bearer_token jwt)
     in
     ( `GET,
       headers,
@@ -112,7 +100,7 @@ module Test_authorization = Apple_request.Make_unauthenticated (struct
 
   let of_http = function
     | res, _ when Http.Response.is_success res -> Lwt.return_ok ()
-    | res, body -> Infix.Lwt.(Error.of_http (res, body) >>= Lwt.return_error)
+    | res -> Infix.Lwt.(Error.of_http res >>= Lwt.return_error)
 end)
 
-let test_authorization = Test_authorization.request
+let test_auth = Test_auth.request

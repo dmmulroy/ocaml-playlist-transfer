@@ -1,10 +1,10 @@
 type t = {
   cause : t option;
   code : Http.Code.status_code option;
-  source : [ `Auth | `Http | `None | `Resource of Resource.t ];
+  source : [ `Authorization | `Http | `None | `Playlist | `Song ];
   field : string option;
   message : string;
-  raw : [ `Json of Yojson.Safe.t | `None | `Raw of string ];
+  raw : [ `Json of Yojson.Basic.t | `None | `Raw of string ];
   timestamp : Ptime.t;
 }
 
@@ -12,8 +12,8 @@ val make :
   ?cause:t ->
   ?code:Http.Code.status_code ->
   ?field:string ->
-  ?raw:[ `Json of Yojson.Safe.t | `None | `Raw of string ] ->
-  source:[ `Auth | `Http | `None | `Resource of Resource.t ] ->
+  ?raw:[ `Json of Yojson.Basic.t | `None | `Raw of string ] ->
+  source:[ `Authorization | `Http | `None | `Playlist | `Song ] ->
   message:string ->
   unit ->
   t
