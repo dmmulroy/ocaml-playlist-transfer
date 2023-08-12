@@ -1,7 +1,3 @@
-type error = [ `Invalid_grant_type | `No_refresh_token ]
-
-val error_to_string : error -> string
-
 val make_authorization_url :
   client_id:string ->
   redirect_uri:Http.Uri.t ->
@@ -42,16 +38,11 @@ end
 
 val request_access_token :
   Request_access_token_input.t ->
-  ( Request_access_token_output.t,
-    [ `Http_error of int * string | `Json_parse_error of string ] )
-  Lwt_result.t
+  (Request_access_token_output.t, Error.t) Lwt_result.t
 
 module Refresh_access_token_output : sig
   type t = Access_token.t
 end
 
 val refresh_access_token :
-  client:Client.t ->
-  ( Refresh_access_token_output.t,
-    [ `Http_error of int * string | `Json_parse_error of string | error ] )
-  Lwt_result.t
+  client:Client.t -> (Refresh_access_token_output.t, Error.t) Lwt_result.t

@@ -1,7 +1,7 @@
 type t = {
   cause : t option;
   code : Http.Code.status_code option;
-  source : [ `Authorization | `Http | `None | `Playlist | `Song ];
+  source : [ `Authorization | `Http | `None | `Resource of Resource.t ];
   field : string option;
   message : string;
   raw : [ `Json of Yojson.Basic.t | `None | `Raw of string ];

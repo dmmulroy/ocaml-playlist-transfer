@@ -22,8 +22,10 @@ module Get_song_by_id = Apple_request.Make_unauthenticated (struct
       Http.Body.empty )
 
   let of_http = function
-    | res, _ when Http.Response.is_success res -> Lwt.return_ok "song name"
-    | res -> Error.of_http res >>= Lwt.return_error
+    | _, response when Http.Response.is_success response ->
+        Lwt.return_ok "song name"
+    | request, response ->
+        Error.of_http ~domain:`Apple (request, response) >>= Lwt.return_error
 end)
 
 let get_song_by_id = Get_song_by_id.request

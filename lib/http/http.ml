@@ -19,6 +19,13 @@ module Body = struct
   let of_yojson json = Body.of_string @@ Yojson.Safe.to_string json
 end
 
+module Code = struct
+  include Code
+
+  let pp_status_code ppf code =
+    Format.fprintf ppf "%d" @@ Code.code_of_status code
+end
+
 module Header = struct
   include Header
 
@@ -28,40 +35,52 @@ module Header = struct
     List.fold_left
       (fun headers' (key, value) -> Header.add_unless_exists headers' key value)
       headers new_headers
+
+  let of_request (_, headers, _, _) = headers
+end
+
+module Request = struct
+  (* TODO: Make this types opaque via .mli *)
+  type t = {
+    headers : Header.t;
+    body : Body.t;
+    meth : [ `GET | `POST | `PUT | `DELETE ];
+    uri : Uri.t;
+  }
+
+  let headers { headers; _ } = headers
+  let body { body; _ } = body
+  let method' { meth; _ } = meth
+
+  let make ?(headers = Header.empty) ?(body = Body.empty) ~meth ~uri () =
+    { headers; body; meth; uri }
 end
 
 module Response = struct
-  include Response
+  (* TODO: Make this types opaque via .mli *)
+  type t = { headers : Header.t; status : Code.status_code; body : Body.t }
+
+  let body { body; _ } = body
+  let headers { headers; _ } = headers
+  let status { status; _ } = status
 
   let is_success res =
     res |> Response.status |> Code.code_of_status |> Code.is_success
+
+  let is_error res =
+    res |> Response.status |> Code.code_of_status |> Code.is_error
+
+  let make ?(headers = Header.empty) ?(body = Body.empty) ~status () =
+    { headers; status; body }
 end
 
 module Uri = struct
   include Uri
 
+  let of_request (_, _, uri, _) = uri
   let to_yojson uri = `String (Uri.to_string uri)
 
   let of_yojson = function
     | `String s -> Ok (Uri.of_string s)
     | _ -> Error "Error parsing Uri.t with yojson"
-end
-
-module Api_request = struct
-  module type S = sig
-    type input
-    type output
-    type error
-
-    val to_http : input -> Code.meth * Header.t * Uri.t * Body.t
-    val of_http : Response.t * Body.t -> (output, error) Lwt_result.t
-  end
-
-  let execute ~headers ~body ~endpoint ~method' =
-    match method' with
-    | `GET -> Client.get ~headers endpoint
-    | `POST -> Client.post ~headers ~body endpoint
-    | `PUT -> Client.put ~headers ~body endpoint
-    | `DELETE -> Client.delete ~headers ~body endpoint
-    | _ -> failwith "Not implemented"
 end
