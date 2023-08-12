@@ -63,12 +63,8 @@ module Response = struct
   let body { body; _ } = body
   let headers { headers; _ } = headers
   let status { status; _ } = status
-
-  let is_success res =
-    res |> Response.status |> Code.code_of_status |> Code.is_success
-
-  let is_error res =
-    res |> Response.status |> Code.code_of_status |> Code.is_error
+  let is_success res = res |> status |> Code.code_of_status |> Code.is_success
+  let is_error res = res |> status |> Code.code_of_status |> Code.is_error
 
   let make ?(headers = Header.empty) ?(body = Body.empty) ~status () =
     { headers; status; body }

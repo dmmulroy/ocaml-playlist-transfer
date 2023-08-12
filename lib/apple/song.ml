@@ -16,10 +16,11 @@ module Get_song_by_id = Apple_request.Make_unauthenticated (struct
   type output = Get_song_by_id_output.t
 
   let to_http id =
-    ( `GET,
-      Http.Header.empty,
-      Http.Uri.of_string @@ "https://api.music.apple.com/v1/test/songs/" ^ id,
-      Http.Body.empty )
+    Http.Request.make ~meth:`GET ~headers:Http.Header.empty
+      ~body:Http.Body.empty
+      ~uri:
+        (Http.Uri.of_string @@ "https://api.music.apple.com/v1/test/songs/" ^ id)
+      ()
 
   let of_http = function
     | _, response when Http.Response.is_success response ->

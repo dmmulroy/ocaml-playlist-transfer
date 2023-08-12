@@ -1,32 +1,33 @@
 open Syntax
 open Let
 
-type internal_error =
-  [ `Expired
-  | `Private_key_error of string
-  | `Token_signing_error of string
-  | `Unhandled_error of string
-  | `Unsupported_kty
-  | `Validation_error of string ]
+module Internal_error = struct
+  type t =
+    [ `Expired
+    | `Private_key_error of string
+    | `Token_signing_error of string
+    | `Unhandled_error of string
+    | `Unsupported_kty
+    | `Validation_error of string ]
 
-let internal_error_to_string : [> internal_error ] -> string = function
-  | `Expired -> "The token is expired"
-  | `Private_key_error str ->
-      "An error occured while parsing private key PEM: " ^ str
-  | `Token_signing_error str ->
-      "An error occurred while signing the token: " ^ str
-  | `Unsupported_kty -> "The private key is not an ES256 key"
-  | `Unhandled_error str -> "An unhandled error occurred: " ^ str
-  | `Validation_error str ->
-      "An error occurred while validating the token: " ^ str
-  | _ -> "An unhandled error occurred"
+  let to_string : [> t ] -> string = function
+    | `Expired -> "The token is expired"
+    | `Private_key_error str ->
+        "An error occured while parsing private key PEM: " ^ str
+    | `Token_signing_error str ->
+        "An error occurred while signing the token: " ^ str
+    | `Unsupported_kty -> "The private key is not an ES256 key"
+    | `Unhandled_error str -> "An unhandled error occurred: " ^ str
+    | `Validation_error str ->
+        "An error occurred while validating the token: " ^ str
+    | _ -> "An unhandled error occurred"
 
-let internal_error_to_error ?(map_msg = fun str -> `Unhandled_error str) err =
-  let message =
-    (match err with `Msg str -> map_msg str | _ as err -> err)
-    |> internal_error_to_string
-  in
-  Error.make ~source:`Auth ~message ()
+  let to_error ?(map_msg = fun str -> `Unhandled_error str) err =
+    let message =
+      (match err with `Msg str -> map_msg str | _ as err -> err) |> to_string
+    in
+    Error.make ~source:`Auth ~message ()
+end
 
 module Jwt = struct
   module Header = Jose.Header
@@ -47,7 +48,7 @@ module Jwt = struct
     let open Infix.Result in
     let@ key =
       Jwk.of_priv_pem private_pem
-      >|? internal_error_to_error ~map_msg:(fun msg -> `Private_key_error msg)
+      >|? Internal_error.to_error ~map_msg:(fun msg -> `Private_key_error msg)
     in
     let kid = ("kid", `String key_id) in
     let header = Header.make_header ~typ:"JWT" ~alg:`ES256 ~extra:[ kid ] key in
@@ -61,7 +62,7 @@ module Jwt = struct
     in
     let@ jwt =
       Jwt.sign ~header ~payload key
-      >|? internal_error_to_error ~map_msg:(fun msg -> `Token_signing_error msg)
+      >|? Internal_error.to_error ~map_msg:(fun msg -> `Token_signing_error msg)
     in
     Ok { key; jwt }
 
@@ -72,7 +73,7 @@ module Jwt = struct
     let open Infix.Result in
     let@ validated_jwt =
       Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt
-      >|? internal_error_to_error ~map_msg:(fun msg -> `Validation_error msg)
+      >|? Internal_error.to_error ~map_msg:(fun msg -> `Validation_error msg)
     in
     Ok { t with jwt = validated_jwt }
 end
@@ -90,17 +91,19 @@ module Test_auth = Apple_request.Make_unauthenticated (struct
   type output = Test_auth_output.t
 
   let to_http jwt =
+    let meth = `GET in
     let headers =
       Http.Header.add Http.Header.empty "Auth" (Jwt.to_bearer_token jwt)
     in
-    ( `GET,
-      headers,
-      Uri.of_string "https://api.music.apple.com/v1/test",
-      Http.Body.empty )
+    let uri = Uri.of_string "https://api.music.apple.com/v1/test" in
+    let body = Http.Body.empty in
+    Http.Request.make ~meth ~headers ~uri ~body ()
 
   let of_http = function
-    | res, _ when Http.Response.is_success res -> Lwt.return_ok ()
-    | res -> Infix.Lwt.(Error.of_http res >>= Lwt.return_error)
+    | _, response when Http.Response.is_success response -> Lwt.return_ok ()
+    | request, response ->
+        Infix.Lwt.(
+          Error.of_http ~domain:`Apple (request, response) >>= Lwt.return_error)
 end)
 
 let test_auth = Test_auth.request
