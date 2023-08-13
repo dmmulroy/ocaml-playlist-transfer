@@ -10,7 +10,7 @@ module Internal_error = struct
     | `Unsupported_kty
     | `Validation_error of string ]
 
-  let to_string = function
+  let to_string : [> t ] -> string = function
     | `Expired -> "The token is expired"
     | `Private_key_error str ->
         "An error occured while parsing private key PEM: " ^ str
@@ -27,7 +27,7 @@ module Internal_error = struct
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
     in
-    Error.make ~source:`Auth ~message ()
+    Error.make ~domain:`Apple ~source:`Auth ~message ()
 end
 
 module Jwt = struct
