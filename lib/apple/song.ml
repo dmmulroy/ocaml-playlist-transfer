@@ -1,4 +1,5 @@
 open Syntax
+open Let
 open Infix.Lwt
 
 type t = string
@@ -26,7 +27,22 @@ module Get_song_by_id = Apple_request.Make_unauthenticated (struct
     | _, response when Http.Response.is_success response ->
         Lwt.return_ok "song name"
     | request, response ->
-        Error.of_http ~domain:`Apple (request, response) >>= Lwt.return_error
+        let message =
+          Http.Code.reason_phrase_of_code
+          @@ Http.Code.code_of_status response.status
+        in
+        let* json_res = Http.Body.to_yojson response.body in
+        let* raw =
+          match json_res with
+          | Error _ ->
+              Infix.Lwt.(
+                Http.Body.to_string response.body >|= fun x -> `String x)
+          | Ok json -> Lwt.return @@ `Json json
+        in
+        Lwt.return_error
+        @@ Error.make ~domain:`Apple
+             ~source:(`Http (response.status, Http.Request.(request.uri)))
+             ~raw message
 end)
 
 let get_song_by_id = Get_song_by_id.request

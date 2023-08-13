@@ -33,6 +33,17 @@ module Infix = struct
     (** [>>=] is an infix [Lwt.bind]. *)
     let ( >>= ) = Lwt.bind
 
+    (** [>|=] is an infix left-to-right [Lwt.map]. *)
+    let ( >|= ) v f = Lwt.map f v
+
+    (** [<$>] is an infix right-to-left [Lwt.map]. *)
+    let ( <$> ) = Lwt.map
+  end
+
+  module Lwt_result = struct
+    (** [>>=] is an infix [Lwt.bind]. *)
+    let ( >>= ) = Lwt_result.bind
+
     (** 
       * [>|?] is an infix operator for passing [Ok] values through 
       * or applying [f] to [Error] values. 
@@ -40,10 +51,10 @@ module Infix = struct
     let ( >|? ) v f = Lwt_result.map_error f v
 
     (** [>|=] is an infix left-to-right [Lwt.map]. *)
-    let ( >|= ) v f = Lwt.map f v
+    let ( >|= ) v f = Lwt_result.map f v
 
     (** [<$>] is an infix right-to-left [Lwt.map]. *)
-    let ( <$> ) = Lwt.map
+    let ( <$> ) = Lwt_result.map
   end
 end
 

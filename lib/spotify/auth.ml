@@ -1,13 +1,25 @@
 open Syntax
 open Let
 
-type internal_error =
-  [ `Invalid_grant_type | `No_refresh_token | `Json_error of string ]
+module Internal_error = struct
+  type t =
+    [ `Invalid_grant_type | `No_refresh_token | `Unhandled_error of string ]
 
-let internal_error_to_string = function
-  | `Invalid_grant_type -> "Invalid grant type"
-  | `Json_error msg -> "Json error: " ^ msg
-  | `No_refresh_token -> "No refresh token"
+  let to_string = function
+    | `Invalid_grant_type -> "Invalid grant type"
+    | `No_refresh_token -> "No refresh token"
+    | `Unhandled_error str -> "An unhandled error occurred: " ^ str
+    | #t -> .
+    | _ -> "An unhandled error occurred"
+
+  let to_error ?(map_msg = fun str -> `Unhandled_error str) ?(source = `Auth)
+      ?raw err =
+    let message =
+      (match err with `Msg str -> map_msg str | _ as err' -> err')
+      |> to_string
+    in
+    Error.make ~domain:`Spotify ~source ?raw message
+end
 
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
 
@@ -95,33 +107,38 @@ module Request_access_token = struct
     | Error _ -> (
         match client_credentials_grant_response_of_yojson json with
         | Ok res -> Ok (`Client_credentials res)
-        | Error msg -> Error (`Json_error msg))
+        | Error msg -> Error (Error.make ~domain:`Spotify ~source:`Json msg))
 
   let to_http = function
     | `Authorization_code
         (grant : Request_access_token_input.authorization_code_grant) ->
-        ( `POST,
-          make_headers ~client_id:grant.client_id
-            ~client_secret:grant.client_secret,
-          endpoint,
-          Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-            [
-              ("code", [ grant.code ]);
-              ("redirect_uri", [ Http.Uri.to_string grant.redirect_uri ]);
-              ("grant_type", [ "authorization_code" ]);
-            ] )
+        Http.Request.make ~meth:`POST
+          ~headers:
+            (make_headers ~client_id:grant.client_id
+               ~client_secret:grant.client_secret)
+          ~body:
+            (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+               [
+                 ("code", [ grant.code ]);
+                 ("redirect_uri", [ Http.Uri.to_string grant.redirect_uri ]);
+                 ("grant_type", [ "authorization_code" ]);
+               ])
+          ~uri:endpoint ()
     | `Client_credentials
         (grant : Request_access_token_input.client_credentials_grant) ->
-        ( `POST,
-          make_headers ~client_id:grant.client_id
-            ~client_secret:grant.client_secret,
-          endpoint,
-          Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-            [ ("grant_type", [ "client_credentials" ]) ] )
+        Http.Request.make ~meth:`POST
+          ~headers:
+            (make_headers ~client_id:grant.client_id
+               ~client_secret:grant.client_secret)
+          ~body:
+            (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+               [ ("grant_type", [ "client_credentials" ]) ])
+          ~uri:endpoint ()
 
+  (* TODO: Handle json errors better and clean this up *)
   let of_http = function
-    | res, body when Http.Response.is_success res -> (
-        let+ json = Infix.Lwt.(Http.Body.to_yojson body) in
+    | req, res when Http.Response.is_success res -> (
+        let json = Http.Body.to_yojson res.body in
         match response_of_yojson json with
         | Ok (`Authorization_code res) ->
             let access_token =
@@ -140,13 +157,13 @@ module Request_access_token = struct
                 ~grant_type:`Client_credentials ()
             in
             Lwt.return_ok access_token
-        | Error err -> Lwt.return_error err)
-    | res, body ->
-        let%lwt json = Http.Body.to_string body in
-        let status_code =
-          Http.Code.code_of_status @@ Http.Response.status res
-        in
-        Lwt.return_error (`Http_error (status_code, json))
+        | Error err ->
+            Infix.Lwt.(
+              Error.of_http ~cause:err ~domain:`Spotify (req, res)
+              >>= Lwt.return_error))
+    | req, res ->
+        Infix.Lwt.(
+          Error.of_http ~domain:`Spotify (req, res) >>= Lwt.return_error)
 end
 
 let request_access_token = Request_access_token.request

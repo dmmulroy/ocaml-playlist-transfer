@@ -1,5 +1,5 @@
 (library
  (name spotify)
- (libraries async http ppx_deriving_yojson.runtime syntax ptime ptime.clock.os)
+ (libraries async http ppx_deriving_yojson.runtime syntax ptime ptime.clock.os error)
  (preprocess
   (pps lwt_ppx ppx_deriving.show ppx_deriving_yojson)))

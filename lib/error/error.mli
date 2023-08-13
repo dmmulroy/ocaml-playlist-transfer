@@ -1,34 +1,37 @@
 type t = {
   cause : t option;
-  domain : [ `Apple | `Spotify | `None ];
+  domain : [ `Apple | `Spotify ];
   source :
     [ `Auth
     | `Http of Http.Code.status_code * Http.Uri.t
     | `Json
-    | `None
     | `Source of string ];
   message : string;
-  raw : [ `Json of Yojson.Safe.t | `None | `Raw of string ];
   timestamp : Ptime.t;
 }
 
 val make :
   ?cause:t ->
-  ?raw:[ `Json of Yojson.Safe.t | `None | `Raw of string ] ->
-  domain:[ `Apple | `Spotify | `None ] ->
+  domain:[ `Apple | `Spotify ] ->
   source:
     [ `Auth
     | `Http of Http.Code.status_code * Http.Uri.t
     | `Json
-    | `None
     | `Source of string ] ->
   string ->
   t
 
 val of_http :
   ?cause:t ->
-  domain:[ `Apple | `Spotify | `None ] ->
+  domain:[ `Apple | `Spotify ] ->
   Http.Request.t * Http.Response.t ->
+  t Lwt.t
+
+val of_json :
+  ?cause:t ->
+  ?json_str:string ->
+  domain:[ `Apple | `Spotify ] ->
+  string ->
   t Lwt.t
 
 val to_string : t -> string
