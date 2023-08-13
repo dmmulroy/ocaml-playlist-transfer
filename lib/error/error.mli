@@ -22,8 +22,7 @@ val make :
     | `Json
     | `None
     | `Source of string ] ->
-  message:string ->
-  unit ->
+  string ->
   t
 
 val of_http :

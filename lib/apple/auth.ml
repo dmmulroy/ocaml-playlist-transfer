@@ -28,7 +28,7 @@ module Internal_error = struct
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
     in
-    Error.make ~domain:`Apple ~source:`Auth ~message ()
+    Error.make ~domain:`Apple ~source:`Auth message
 end
 
 module Jwt = struct

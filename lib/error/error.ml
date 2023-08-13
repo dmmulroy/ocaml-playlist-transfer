@@ -16,7 +16,7 @@ type t = {
 }
 [@@deriving show]
 
-let make ?cause ?(raw = `None) ~domain ~source ~message () =
+let make ?cause ?(raw = `None) ~domain ~source message =
   { cause; domain; source; message; raw; timestamp = Ptime_clock.now () }
 
 let of_http ?cause ~domain
@@ -34,6 +34,6 @@ let of_http ?cause ~domain
   Lwt.return
   @@ make ?cause ~domain
        ~source:(`Http (response.status, request.uri))
-       ~message ~raw ()
+       ~raw message
 
 let to_string = show
