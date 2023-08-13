@@ -10,7 +10,7 @@ module Internal_error = struct
     | `Unsupported_kty
     | `Validation_error of string ]
 
-  let to_string : [> t ] -> string = function
+  let to_string = function
     | `Expired -> "The token is expired"
     | `Private_key_error str ->
         "An error occured while parsing private key PEM: " ^ str
@@ -20,6 +20,7 @@ module Internal_error = struct
     | `Unhandled_error str -> "An unhandled error occurred: " ^ str
     | `Validation_error str ->
         "An error occurred while validating the token: " ^ str
+    | #t -> .
     | _ -> "An unhandled error occurred"
 
   let to_error ?(map_msg = fun str -> `Unhandled_error str) err =
