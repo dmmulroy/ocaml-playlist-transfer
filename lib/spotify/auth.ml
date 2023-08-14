@@ -258,6 +258,7 @@ let refresh_access_token ~client =
     match refresh_token with
     | None -> Lwt.return_error @@ Internal_error.to_error `No_refresh_token
     | Some refresh_token ->
+        (* TODO: Wrap error w/ cause field*)
         let+ { expires_in; _ } =
           Refresh_access_token.request (client_id, client_secret, refresh_token)
         in
