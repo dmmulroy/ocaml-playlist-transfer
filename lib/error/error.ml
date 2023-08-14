@@ -1,6 +1,3 @@
-open Syntax
-open Let
-
 type t = {
   cause : t option;
   domain : [ `Apple | `Spotify ];

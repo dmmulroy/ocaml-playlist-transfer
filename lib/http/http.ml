@@ -24,6 +24,9 @@ end
 module Code = struct
   include Code
 
+  let reason_phrase_of_status_code status_code =
+    Code.code_of_status status_code |> Code.reason_phrase_of_code
+
   let pp_status_code ppf code =
     Format.fprintf ppf "%d" @@ Code.code_of_status code
 end
@@ -53,6 +56,7 @@ module Request = struct
   let headers { headers; _ } = headers
   let body { body; _ } = body
   let method' { meth; _ } = meth
+  let uri { uri; _ } = uri
 
   let make ?(headers = Header.empty) ?(body = Body.empty) ~meth ~uri () =
     { headers; body; meth; uri }

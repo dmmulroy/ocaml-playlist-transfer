@@ -21,17 +21,4 @@ val make :
   string ->
   t
 
-val of_http :
-  ?cause:t ->
-  domain:[ `Apple | `Spotify ] ->
-  Http.Request.t * Http.Response.t ->
-  t Lwt.t
-
-val of_json :
-  ?cause:t ->
-  ?json_str:string ->
-  domain:[ `Apple | `Spotify ] ->
-  string ->
-  t Lwt.t
-
 val to_string : t -> string

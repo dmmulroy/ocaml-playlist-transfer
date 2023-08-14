@@ -104,8 +104,13 @@ module Test_auth = Apple_request.Make_unauthenticated (struct
   let of_http = function
     | _, response when Http.Response.is_success response -> Lwt.return_ok ()
     | request, response ->
-        Infix.Lwt.(
-          Error.of_http ~domain:`Apple (request, response) >>= Lwt.return_error)
+        let response_status = Http.Response.status response in
+        let request_uri = Http.Request.uri request in
+        let message = Http.Code.reason_phrase_of_status_code response_status in
+        Lwt.return_error
+        @@ Error.make ~domain:`Apple
+             ~source:(`Http (response_status, request_uri))
+             message
 end)
 
 let test_auth = Test_auth.request
