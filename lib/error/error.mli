@@ -4,7 +4,7 @@ type t = {
   source :
     [ `Auth
     | `Http of Http.Code.status_code * Http.Uri.t
-    | `Json
+    | `Serialization of [ `Json of Yojson.Safe.t | `Raw of string ]
     | `Source of string ];
   message : string;
   timestamp : Ptime.t;
@@ -16,7 +16,7 @@ val make :
   source:
     [ `Auth
     | `Http of Http.Code.status_code * Http.Uri.t
-    | `Json
+    | `Serialization of [ `Json of Yojson.Safe.t | `Raw of string ]
     | `Source of string ] ->
   string ->
   t

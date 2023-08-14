@@ -13,12 +13,12 @@ module Internal_error = struct
     | _ -> "An unhandled error occurred"
 
   let to_error ?(map_msg = fun str -> `Unhandled_error str) ?(source = `Auth)
-      ?raw err =
+      err =
     let message =
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
     in
-    Error.make ~domain:`Spotify ~source ?raw message
+    Error.make ~domain:`Spotify ~source message
 end
 
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
@@ -94,8 +94,7 @@ module Request_access_token_output = struct
   type t = Access_token.t
 end
 
-(* module Request_access_token = Spotify_request.Make_unauthenticated (struct *)
-module Request_access_token = struct
+module Request_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Request_access_token_input.t
   type output = Request_access_token_output.t
 
@@ -107,7 +106,11 @@ module Request_access_token = struct
     | Error _ -> (
         match client_credentials_grant_response_of_yojson json with
         | Ok res -> Ok (`Client_credentials res)
-        | Error msg -> Error (Error.make ~domain:`Spotify ~source:`Json msg))
+        | Error msg ->
+            Error
+              (Error.make ~domain:`Spotify
+                 ~source:(`Serialization (`Json json))
+                 msg))
 
   let to_http = function
     | `Authorization_code
@@ -135,36 +138,46 @@ module Request_access_token = struct
                [ ("grant_type", [ "client_credentials" ]) ])
           ~uri:endpoint ()
 
-  (* TODO: Handle json errors better and clean this up *)
   let of_http = function
-    | req, res when Http.Response.is_success res -> (
-        let json = Http.Body.to_yojson res.body in
+    | _, response when Http.Response.is_success response -> (
+        let+ json =
+          Http.Response.body response |> Http.Body.to_yojson |> fun res ->
+          Lwt_result.bind_lwt_error res (fun (`Msg msg) ->
+              let* json_str =
+                Http.Body.to_string @@ Http.Response.body response
+              in
+              let source = `Serialization (`Raw json_str) in
+              Lwt.return @@ Error.make ~domain:`Spotify ~source msg)
+        in
         match response_of_yojson json with
-        | Ok (`Authorization_code res) ->
+        | Ok (`Authorization_code grant) ->
             let access_token =
-              Access_token.make ~token:res.access_token
-                ~expiration_time:(Unix.time () +. res.expires_in)
-                ~grant_type:`Authorization_code ~refresh_token:res.refresh_token
+              Access_token.make ~token:grant.access_token
+                ~expiration_time:(Unix.time () +. grant.expires_in)
+                ~grant_type:`Authorization_code
+                ~refresh_token:grant.refresh_token
                 ~scopes:
-                  (Scope.of_string_list @@ String.split_on_char ' ' res.scope)
+                  (Scope.of_string_list @@ String.split_on_char ' ' grant.scope)
                 ()
             in
             Lwt.return_ok access_token
-        | Ok (`Client_credentials res) ->
+        | Ok (`Client_credentials grant) ->
             let access_token =
-              Access_token.make ~token:res.access_token
-                ~expiration_time:(Unix.time () +. res.expires_in)
+              Access_token.make ~token:grant.access_token
+                ~expiration_time:(Unix.time () +. grant.expires_in)
                 ~grant_type:`Client_credentials ()
             in
             Lwt.return_ok access_token
-        | Error err ->
-            Infix.Lwt.(
-              Error.of_http ~cause:err ~domain:`Spotify (req, res)
-              >>= Lwt.return_error))
-    | req, res ->
-        Infix.Lwt.(
-          Error.of_http ~domain:`Spotify (req, res) >>= Lwt.return_error)
-end
+        | Error err -> Lwt.return_error err)
+    | request, response ->
+        let response_status = Http.Response.status response in
+        let request_uri = Http.Request.uri request in
+        let message = Http.Code.reason_phrase_of_status_code response_status in
+        Lwt.return_error
+        @@ Error.make ~domain:`Apple
+             ~source:(`Http (response_status, request_uri))
+             message
+end)
 
 let request_access_token = Request_access_token.request
 
@@ -193,48 +206,59 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Internal_refresh_access_token_input.t
   type output = Internal_refresh_access_token_output.t
 
-  type nonrec error =
-    [ `Http_error of int * string
-    | `Json_parse_error of string
-    | internal_error ]
-
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
   let to_http (client_id, client_secret, refresh_token) =
-    ( `POST,
-      make_headers ~client_id ~client_secret,
-      endpoint,
-      Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-        [
-          ("grant_type", [ "refresh_token" ]);
-          ("refresh_token", [ refresh_token ]);
-        ] )
+    Http.Request.make ~meth:`POST
+      ~headers:(make_headers ~client_id ~client_secret)
+      ~body:
+        (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+           [
+             ("grant_type", [ "refresh_token" ]);
+             ("refresh_token", [ refresh_token ]);
+           ])
+      ~uri:endpoint ()
 
   let of_http = function
-    | res, body when Http.Response.is_success res -> (
-        let%lwt json = Http.Body.to_yojson body in
+    | _, response when Http.Response.is_success response -> (
+        (* TODO: Add Syntax helpers to simplify this *)
+        let+ json =
+          Http.Response.body response |> Http.Body.to_yojson |> fun res ->
+          Lwt_result.bind_lwt_error res (fun (`Msg msg) ->
+              let* json_str =
+                Http.Body.to_string @@ Http.Response.body response
+              in
+              let source = `Serialization (`Raw json_str) in
+              Lwt.return @@ Error.make ~domain:`Spotify ~source msg)
+        in
         match Internal_refresh_access_token_output.of_yojson json with
         | Ok res -> Lwt.return_ok res
-        | Error msg -> Lwt.return_error (`Json_parse_error msg))
-    | res, body ->
-        let%lwt json = Http.Body.to_string body in
-        let status_code = Http.Response.status res in
+        | Error msg ->
+            Lwt.return_error
+            @@ Error.make ~domain:`Spotify
+                 ~source:(`Serialization (`Json json))
+                 msg)
+    | request, response ->
+        let response_status = Http.Response.status response in
+        let request_uri = Http.Request.uri request in
+        let message = Http.Code.reason_phrase_of_status_code response_status in
         Lwt.return_error
-          (`Http_error (Http.Code.code_of_status status_code, json))
+        @@ Error.make ~domain:`Apple
+             ~source:(`Http (response_status, request_uri))
+             message
 end)
 
 let refresh_access_token ~client =
   let client_id, client_secret = Client.get_client_credentials client in
   let access_token = Client.get_access_token client in
   if Access_token.get_grant_type access_token <> `Authorization_code then
-    Lwt.return_error `Invalid_grant_type
+    Lwt.return_error @@ Internal_error.to_error `Invalid_grant_type
   else
     let refresh_token = Access_token.get_refresh_token access_token in
     match refresh_token with
-    | None -> Lwt.return_error `No_refresh_token
+    | None -> Lwt.return_error @@ Internal_error.to_error `No_refresh_token
     | Some refresh_token ->
-        let open Lwt_result.Syntax in
-        let* { expires_in; _ } =
+        let+ { expires_in; _ } =
           Refresh_access_token.request (client_id, client_secret, refresh_token)
         in
         let refreshed_access_token =
