@@ -237,4 +237,5 @@ module Get_playlist_by_id = Spotify_request.Make (struct
              message
 end)
 
+(* TODO: Figure out way to wrap request errors with Source errors *)
 let get_by_id = Get_playlist_by_id.request
