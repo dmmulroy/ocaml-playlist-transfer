@@ -11,6 +11,4 @@ end
 val get_playlists :
   client:Client.t ->
   Get_playlists_input.t ->
-  ( Get_playlists_output.t,
-    [ `Http_error of int * string | `Json_parse_error of string ] )
-  Lwt_result.t
+  (Get_playlists_output.t, Error.t) Lwt_result.t

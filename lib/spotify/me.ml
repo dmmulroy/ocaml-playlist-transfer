@@ -1,3 +1,6 @@
+open Syntax
+open Let
+
 module Get_playlists_input = struct
   type t = { limit : int option; offset : int option } [@@deriving show, yojson]
 
@@ -19,7 +22,6 @@ end
 module Get_playlists = Spotify_request.Make (struct
   type input = Get_playlists_input.t
   type output = Get_playlists_output.t
-  type error = [ `Http_error of int * string | `Json_parse_error of string ]
 
   let make_endpoint input =
     let base_endpoint =
@@ -29,20 +31,34 @@ module Get_playlists = Spotify_request.Make (struct
     Http.Uri.add_query_params' base_endpoint query_params
 
   let to_http input =
-    (`GET, Http.Header.empty, make_endpoint input, Http.Body.empty)
+    Http.Request.make ~meth:`GET ~headers:Http.Header.empty
+      ~body:Http.Body.empty ~uri:(make_endpoint input) ()
 
   let of_http = function
-    | res, body when Http.Response.is_success res -> (
-        let%lwt json = Http.Body.to_yojson body in
+    | _, response when Http.Response.is_success response -> (
+        let open Infix.Lwt_result in
+        let+ json =
+          Http.Response.body response |> Http.Body.to_yojson
+          >|?* fun (`Msg msg) ->
+          let* json_str = Http.Body.to_string @@ Http.Response.body response in
+          let source = `Serialization (`Raw json_str) in
+          Lwt.return @@ Error.make ~domain:`Spotify ~source msg
+        in
         match Get_playlists_output.of_yojson json with
         | Ok response -> Lwt.return_ok response
-        | Error err -> Lwt.return_error (`Json_parse_error err))
-    | res, body ->
-        let%lwt json = Http.Body.to_string body in
-        let status_code =
-          Http.Code.code_of_status @@ Http.Response.status res
-        in
-        Lwt.return_error (`Http_error (status_code, json))
+        | Error msg ->
+            Lwt.return_error
+            @@ Error.make ~domain:`Spotify
+                 ~source:(`Serialization (`Json json))
+                 msg)
+    | request, response ->
+        let response_status = Http.Response.status response in
+        let request_uri = Http.Request.uri request in
+        let message = Http.Code.reason_phrase_of_status_code response_status in
+        Lwt.return_error
+        @@ Error.make ~domain:`Spotify
+             ~source:(`Http (response_status, request_uri))
+             message
 end)
 
 let get_playlists = Get_playlists.request

@@ -50,6 +50,12 @@ module Infix = struct
       *)
     let ( >|? ) v f = Lwt_result.map_error f v
 
+    (** 
+      * [>|?*] is an infix operator for passing [Ok] values through 
+      * or applying [f] to [Error Lwt.t] values. 
+      *)
+    let ( >|?* ) = Lwt_result.bind_lwt_error
+
     (** [>|=] is an infix left-to-right [Lwt.map]. *)
     let ( >|= ) v f = Lwt_result.map f v
 

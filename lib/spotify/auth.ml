@@ -221,15 +221,13 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
 
   let of_http = function
     | _, response when Http.Response.is_success response -> (
-        (* TODO: Add Syntax helpers to simplify this *)
+        let open Infix.Lwt_result in
         let+ json =
-          Http.Response.body response |> Http.Body.to_yojson |> fun res ->
-          Lwt_result.bind_lwt_error res (fun (`Msg msg) ->
-              let* json_str =
-                Http.Body.to_string @@ Http.Response.body response
-              in
-              let source = `Serialization (`Raw json_str) in
-              Lwt.return @@ Error.make ~domain:`Spotify ~source msg)
+          Http.Response.body response |> Http.Body.to_yojson
+          >|?* fun (`Msg msg) ->
+          let* json_str = Http.Body.to_string @@ Http.Response.body response in
+          let source = `Serialization (`Raw json_str) in
+          Lwt.return @@ Error.make ~domain:`Spotify ~source msg
         in
         match Internal_refresh_access_token_output.of_yojson json with
         | Ok res -> Lwt.return_ok res
@@ -243,7 +241,7 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
         let request_uri = Http.Request.uri request in
         let message = Http.Code.reason_phrase_of_status_code response_status in
         Lwt.return_error
-        @@ Error.make ~domain:`Apple
+        @@ Error.make ~domain:`Spotify
              ~source:(`Http (response_status, request_uri))
              message
 end)
@@ -258,9 +256,12 @@ let refresh_access_token ~client =
     match refresh_token with
     | None -> Lwt.return_error @@ Internal_error.to_error `No_refresh_token
     | Some refresh_token ->
-        (* TODO: Wrap error w/ cause field*)
+        let open Infix.Lwt_result in
         let+ { expires_in; _ } =
           Refresh_access_token.request (client_id, client_secret, refresh_token)
+          >|? fun err ->
+          Error.make ~cause:err ~domain:`Spotify ~source:`Auth
+            "Error refreshing access token"
         in
         let refreshed_access_token =
           Access_token.set_expiration_time access_token
