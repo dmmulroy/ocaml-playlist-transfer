@@ -38,10 +38,11 @@ let internal_of_http_response (response : Http.Response.t) ~deserialize =
 
 let internal_request ?(client : Client.t option) ~name ~input ~to_http_request
     ~of_http_response () =
-  let request : Http.Request.t = to_http_request input in
+  let request = to_http_request input in
   let base_headers =
-    Http.Header.add_unless_exists request.headers "Content-Type"
-      "application/json"
+    Http.Header.add_unless_exists
+      (Http.Request.headers request)
+      "Content-Type" "application/json"
   in
   let headers' =
     Option.fold ~none:base_headers
