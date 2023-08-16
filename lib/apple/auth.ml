@@ -28,7 +28,7 @@ module Internal_error = struct
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
     in
-    Error.make ~domain:`Apple ~source:`Auth message
+    Error.Apple.make ~source:`Auth message
 end
 
 module Jwt = struct
@@ -108,7 +108,7 @@ module Test_auth = Apple_request.Make_unauthenticated (struct
         let request_uri = Http.Request.uri request in
         let message = Http.Code.reason_phrase_of_status_code response_status in
         Lwt.return_error
-        @@ Error.make ~domain:`Apple
+        @@ Error.Apple.make
              ~source:(`Http (response_status, request_uri))
              message
 end)

@@ -15,3 +15,11 @@ let make ?cause ~domain ~source message =
   { cause; domain; source; message; timestamp = Ptime_clock.now () }
 
 let to_string = show
+
+module Apple = struct
+  let make = make ~domain:`Apple
+end
+
+module Spotify = struct
+  let make = make ~domain:`Spotify
+end

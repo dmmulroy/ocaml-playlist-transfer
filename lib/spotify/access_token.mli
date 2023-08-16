@@ -1,4 +1,4 @@
-type t
+type t [@@deriving yojson]
 
 val get_expiration_time : t -> float
 val get_grant_type : t -> [ `Authorization_code | `Client_credentials ]

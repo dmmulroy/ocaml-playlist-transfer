@@ -23,6 +23,7 @@ type t =
   | `User_manage_entitlements
   | `User_manage_partner
   | `User_create_partner ]
+[@@deriving yojson]
 
 let to_string = function
   | `Ugc_image_upload -> "ugc-image-upload"

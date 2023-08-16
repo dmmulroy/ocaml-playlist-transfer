@@ -18,7 +18,7 @@ module Internal_error = struct
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
     in
-    Error.make ~domain:`Spotify ~source message
+    Error.Spotify.make ~source message
 end
 
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
@@ -91,28 +91,42 @@ module Request_access_token_input = struct
 end
 
 module Request_access_token_output = struct
-  type t = Access_token.t
+  type t = Access_token.t [@@deriving yojson]
 end
 
 module Request_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Request_access_token_input.t
-  type output = Request_access_token_output.t
+  type output = Request_access_token_output.t [@@deriving yojson]
 
+  let name = "Request_access_token"
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
   let response_of_yojson json =
-    match authorization_code_grant_response_of_yojson json with
-    | Ok res -> Ok (`Authorization_code res)
-    | Error _ -> (
-        match client_credentials_grant_response_of_yojson json with
-        | Ok res -> Ok (`Client_credentials res)
-        | Error msg ->
-            Error
-              (Error.make ~domain:`Spotify
-                 ~source:(`Serialization (`Json json))
-                 msg))
+    let@ response =
+      match authorization_code_grant_response_of_yojson json with
+      | Ok res -> Ok (`Authorization_code res)
+      | Error _ -> (
+          match client_credentials_grant_response_of_yojson json with
+          | Ok res -> Ok (`Client_credentials res)
+          | Error msg -> Error msg)
+    in
+    let access_token =
+      match response with
+      | `Authorization_code grant ->
+          Access_token.make ~token:grant.access_token
+            ~expiration_time:(Unix.time () +. grant.expires_in)
+            ~grant_type:`Authorization_code ~refresh_token:grant.refresh_token
+            ~scopes:
+              (Scope.of_string_list @@ String.split_on_char ' ' grant.scope)
+            ()
+      | `Client_credentials grant ->
+          Access_token.make ~token:grant.access_token
+            ~expiration_time:(Unix.time () +. grant.expires_in)
+            ~grant_type:`Client_credentials ()
+    in
+    Ok access_token
 
-  let to_http = function
+  let to_http_request = function
     | `Authorization_code
         (grant : Request_access_token_input.authorization_code_grant) ->
         Http.Request.make ~meth:`POST
@@ -138,45 +152,8 @@ module Request_access_token = Spotify_request.Make_unauthenticated (struct
                [ ("grant_type", [ "client_credentials" ]) ])
           ~uri:endpoint ()
 
-  let of_http = function
-    | _, response when Http.Response.is_success response -> (
-        let+ json =
-          Http.Response.body response |> Http.Body.to_yojson |> fun res ->
-          Lwt_result.bind_lwt_error res (fun (`Msg msg) ->
-              let* json_str =
-                Http.Body.to_string @@ Http.Response.body response
-              in
-              let source = `Serialization (`Raw json_str) in
-              Lwt.return @@ Error.make ~domain:`Spotify ~source msg)
-        in
-        match response_of_yojson json with
-        | Ok (`Authorization_code grant) ->
-            let access_token =
-              Access_token.make ~token:grant.access_token
-                ~expiration_time:(Unix.time () +. grant.expires_in)
-                ~grant_type:`Authorization_code
-                ~refresh_token:grant.refresh_token
-                ~scopes:
-                  (Scope.of_string_list @@ String.split_on_char ' ' grant.scope)
-                ()
-            in
-            Lwt.return_ok access_token
-        | Ok (`Client_credentials grant) ->
-            let access_token =
-              Access_token.make ~token:grant.access_token
-                ~expiration_time:(Unix.time () +. grant.expires_in)
-                ~grant_type:`Client_credentials ()
-            in
-            Lwt.return_ok access_token
-        | Error err -> Lwt.return_error err)
-    | request, response ->
-        let response_status = Http.Response.status response in
-        let request_uri = Http.Request.uri request in
-        let message = Http.Code.reason_phrase_of_status_code response_status in
-        Lwt.return_error
-        @@ Error.make ~domain:`Apple
-             ~source:(`Http (response_status, request_uri))
-             message
+  let of_http_response =
+    Spotify_request.default_of_http_response ~deserialize:response_of_yojson
 end)
 
 let request_access_token = Request_access_token.request
@@ -204,11 +181,12 @@ end
 
 module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
   type input = Internal_refresh_access_token_input.t
-  type output = Internal_refresh_access_token_output.t
+  type output = Internal_refresh_access_token_output.t [@@deriving yojson]
 
+  let name = "Refresh_access_token"
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
-  let to_http (client_id, client_secret, refresh_token) =
+  let to_http_request (client_id, client_secret, refresh_token) =
     Http.Request.make ~meth:`POST
       ~headers:(make_headers ~client_id ~client_secret)
       ~body:
@@ -219,31 +197,8 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
            ])
       ~uri:endpoint ()
 
-  let of_http = function
-    | _, response when Http.Response.is_success response -> (
-        let open Infix.Lwt_result in
-        let+ json =
-          Http.Response.body response |> Http.Body.to_yojson
-          >|?* fun (`Msg msg) ->
-          let* json_str = Http.Body.to_string @@ Http.Response.body response in
-          let source = `Serialization (`Raw json_str) in
-          Lwt.return @@ Error.make ~domain:`Spotify ~source msg
-        in
-        match Internal_refresh_access_token_output.of_yojson json with
-        | Ok res -> Lwt.return_ok res
-        | Error msg ->
-            Lwt.return_error
-            @@ Error.make ~domain:`Spotify
-                 ~source:(`Serialization (`Json json))
-                 msg)
-    | request, response ->
-        let response_status = Http.Response.status response in
-        let request_uri = Http.Request.uri request in
-        let message = Http.Code.reason_phrase_of_status_code response_status in
-        Lwt.return_error
-        @@ Error.make ~domain:`Spotify
-             ~source:(`Http (response_status, request_uri))
-             message
+  let of_http_response =
+    Spotify_request.default_of_http_response ~deserialize:output_of_yojson
 end)
 
 let refresh_access_token ~client =
@@ -260,7 +215,7 @@ let refresh_access_token ~client =
         let+ { expires_in; _ } =
           Refresh_access_token.request (client_id, client_secret, refresh_token)
           >|? fun err ->
-          Error.make ~cause:err ~domain:`Spotify ~source:`Auth
+          Error.Spotify.make ~cause:err ~source:`Auth
             "Error refreshing access token"
         in
         let refreshed_access_token =

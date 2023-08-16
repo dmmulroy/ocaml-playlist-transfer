@@ -5,6 +5,7 @@ type t = {
   scopes : Scope.t list option;
   token : string;
 }
+[@@deriving yojson]
 
 let get_expiration_time t = t.expiration_time
 let get_grant_type t = t.grant_type
