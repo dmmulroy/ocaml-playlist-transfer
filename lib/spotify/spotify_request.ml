@@ -51,24 +51,23 @@ let internal_request ?(client : Client.t option) ~name ~input ~to_http_request
       client
   in
   let* response = execute { request with headers = headers' } in
-  match response with
-  | response' when Http.Response.is_success response' ->
-      let open Infix.Lwt_result in
-      of_http_response response >|? fun err ->
-      Error.Spotify.make ~cause:err ~source:(`Source name)
-      @@ "Error executing request: " ^ name
-  | response' ->
-      let response_status = Http.Response.status response' in
-      let request_uri = Http.Request.uri request in
-      let message = Http.Code.reason_phrase_of_status_code response_status in
-      let http_error =
-        Error.Spotify.make
-          ~source:(`Http (response_status, request_uri))
-          message
-      in
-      Lwt.return_error
-      @@ Error.Spotify.make ~cause:http_error ~source:(`Source name)
-      @@ "Error executing request: " ^ name
+  let result =
+    match response with
+    | response' when Http.Response.is_success response' ->
+        of_http_response response'
+    | response' ->
+        let response_status = Http.Response.status response' in
+        let request_uri = Http.Request.uri request in
+        let message = Http.Code.reason_phrase_of_status_code response_status in
+        Lwt.return_error
+        @@ Error.Spotify.make
+             ~source:(`Http (response_status, request_uri))
+             message
+  in
+  Infix.Lwt_result.(
+    result >|? fun err ->
+    Error.Spotify.make ~cause:err ~source:(`Source name)
+    @@ "Error executing request: " ^ name)
 
 module Make (M : S) = struct
   let request ~client input =
