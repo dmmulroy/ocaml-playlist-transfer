@@ -24,17 +24,20 @@ let execute ({ meth; headers; uri; body } : Http.Request.t) =
 
 let internal_of_http_response (response : Http.Response.t) ~deserialize =
   let open Infix.Lwt_result in
-  let+ json =
-    Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
-    let* json_str = Http.Body.to_string @@ Http.Response.body response in
-    let source = `Serialization (`Raw json_str) in
-    Lwt.return @@ Error.Apple.make ~source msg
-  in
-  match deserialize json with
-  | Ok response -> Lwt.return_ok response
-  | Error msg ->
-      Lwt.return_error
-      @@ Error.Apple.make ~source:(`Serialization (`Json json)) msg
+  let* body_is_empty = Http.Body.is_empty @@ Http.Response.body response in
+  if body_is_empty then Lwt.return_ok ()
+  else
+    let+ json =
+      Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
+      let* json_str = Http.Body.to_string @@ Http.Response.body response in
+      let source = `Serialization (`Raw json_str) in
+      Lwt.return @@ Error.Apple.make ~source msg
+    in
+    match deserialize json with
+    | Ok response -> Lwt.return_ok response
+    | Error msg ->
+        Lwt.return_error
+        @@ Error.Apple.make ~source:(`Serialization (`Json json)) msg
 
 let internal_request ~name ~input ~to_http_request ~of_http_response () =
   let request = to_http_request input in
