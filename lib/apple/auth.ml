@@ -85,14 +85,16 @@ module Test_auth_input = struct
 end
 
 module Test_auth_output = struct
-  type t = unit
+  type t = unit [@@deriving yojson]
 end
 
 module Test_auth = Apple_request.Make_unauthenticated (struct
   type input = Test_auth_input.t
-  type output = Test_auth_output.t
+  type output = Test_auth_output.t [@@deriving yojson]
 
-  let to_http jwt =
+  let name = "Test_auth"
+
+  let to_http_request jwt =
     let meth = `GET in
     let headers =
       Http.Header.add Http.Header.empty "Auth" (Jwt.to_bearer_token jwt)
@@ -101,16 +103,8 @@ module Test_auth = Apple_request.Make_unauthenticated (struct
     let body = Http.Body.empty in
     Http.Request.make ~meth ~headers ~uri ~body ()
 
-  let of_http = function
-    | _, response when Http.Response.is_success response -> Lwt.return_ok ()
-    | request, response ->
-        let response_status = Http.Response.status response in
-        let request_uri = Http.Request.uri request in
-        let message = Http.Code.reason_phrase_of_status_code response_status in
-        Lwt.return_error
-        @@ Error.Apple.make
-             ~source:(`Http (response_status, request_uri))
-             message
+  let of_http_response =
+    Apple_request.default_of_http_response ~deserialize:output_of_yojson
 end)
 
 let test_auth = Test_auth.request
