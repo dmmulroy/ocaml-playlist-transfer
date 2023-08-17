@@ -4,6 +4,7 @@ open Let
 module Internal_error = struct
   type t =
     [ `Expired
+    | `Invalid_signature
     | `Private_key_error of string
     | `Token_signing_error of string
     | `Unhandled_error of string
@@ -12,6 +13,7 @@ module Internal_error = struct
 
   let to_string = function
     | `Expired -> "The token is expired"
+    | `Invalid_signature -> "The token signature is invalid"
     | `Private_key_error str ->
         "An error occured while parsing private key PEM: " ^ str
     | `Token_signing_error str ->
@@ -23,7 +25,8 @@ module Internal_error = struct
     | #t -> .
     | _ -> "An unhandled error occurred"
 
-  let to_error ?(map_msg = fun str -> `Unhandled_error str) err =
+  let to_error ?(map_msg = fun str -> `Unhandled_error str)
+      (err : [< t | `Msg of string ]) =
     let message =
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
@@ -77,6 +80,7 @@ module Jwt = struct
       Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt
       >|? Internal_error.to_error ~map_msg:(fun msg -> `Validation_error msg)
     in
+    print_endline "here 1";
     Ok { t with jwt = validated_jwt }
 end
 
