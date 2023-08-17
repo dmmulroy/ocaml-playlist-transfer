@@ -109,7 +109,7 @@ module Test_auth = Apple_request.Make_unauthenticated (struct
     Http.Request.make ~meth ~headers ~uri ~body ()
 
   let of_http_response =
-    Apple_request.default_of_http_response ~deserialize:output_of_yojson
+    Apple_request.default_of_http_response ~deserialize:(fun _ -> Ok ())
 end)
 
 let test_auth = Test_auth.request
