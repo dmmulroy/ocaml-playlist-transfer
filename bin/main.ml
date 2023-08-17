@@ -60,7 +60,9 @@ let test_apple () =
     | Error err ->
         print_endline @@ Error.to_string err;
         failwith "failed"
-    | Ok _ -> print_endline "successfully validated"
+    | Ok jwt ->
+        print_endline @@ "successfully validated: "
+        ^ Apple.Auth.Jwt.to_string jwt
   in
   let* test_res = Apple.Auth.test_auth jwt in
   let _ =
