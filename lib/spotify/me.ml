@@ -30,8 +30,9 @@ module Get_playlists = Spotify_request.Make (struct
     Http.Uri.add_query_params' base_endpoint query_params
 
   let to_http_request input =
-    Http.Request.make ~meth:`GET ~headers:Http.Header.empty
-      ~body:Http.Body.empty ~uri:(make_endpoint input) ()
+    Lwt.return_ok
+    @@ Http.Request.make ~meth:`GET ~headers:Http.Header.empty
+         ~body:Http.Body.empty ~uri:(make_endpoint input) ()
 
   let of_http_response =
     Spotify_request.default_of_http_response ~deserialize:output_of_yojson

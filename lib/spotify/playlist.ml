@@ -1,3 +1,6 @@
+open Syntax
+open Let
+
 type playlist_track = {
   added_at : string;
   added_by : User.t;
@@ -59,14 +62,14 @@ module CreatePlaylist = Spotify_request.Make (struct
     ^ "/playlists"
 
   let to_http_request input =
-    let body_res = Http.Body.of_yojson @@ Create_input.to_yojson input in
-    match body_res with
-    | Ok body ->
-        Http.Request.make ~meth:`POST ~body
-          ~uri:(make_endpoint input.user_id)
-          ()
-    | Error (`Msg err) ->
-        failwith err (* TODO: Update to_http to return a result *)
+    let open Infix.Result in
+    let input_json = Create_input.to_yojson input in
+    let| body =
+      Http.Body.of_yojson input_json >|? fun (`Msg str) ->
+      Error.Spotify.make ~source:(`Serialization (`Json input_json)) str
+    in
+    Lwt.return_ok
+    @@ Http.Request.make ~meth:`POST ~body ~uri:(make_endpoint input.user_id) ()
 
   let of_http_response =
     Spotify_request.default_of_http_response ~deserialize:output_of_yojson
@@ -117,7 +120,7 @@ module Get_featured = Spotify_request.Make (struct
     @@ Get_featured_input.to_query_params input
 
   let to_http_request input =
-    Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
+    Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =
     Spotify_request.default_of_http_response ~deserialize:output_of_yojson
@@ -169,7 +172,7 @@ module Get_playlist_by_id = Spotify_request.Make (struct
     @@ Get_by_id_input.to_query_params input
 
   let to_http_request input =
-    Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
+    Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =
     Spotify_request.default_of_http_response ~deserialize:output_of_yojson

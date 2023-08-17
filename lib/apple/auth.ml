@@ -106,7 +106,7 @@ module Test_auth = Apple_request.Make_unauthenticated (struct
     in
     let uri = Uri.of_string "https://api.music.apple.com/v1/test" in
     let body = Http.Body.empty in
-    Http.Request.make ~meth ~headers ~uri ~body ()
+    Lwt.return_ok @@ Http.Request.make ~meth ~headers ~uri ~body ()
 
   let of_http_response =
     Apple_request.default_of_http_response ~deserialize:(fun _ -> Ok ())

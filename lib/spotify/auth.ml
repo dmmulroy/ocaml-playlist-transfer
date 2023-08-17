@@ -129,28 +129,30 @@ module Request_access_token = Spotify_request.Make_unauthenticated (struct
   let to_http_request = function
     | `Authorization_code
         (grant : Request_access_token_input.authorization_code_grant) ->
-        Http.Request.make ~meth:`POST
-          ~headers:
-            (make_headers ~client_id:grant.client_id
-               ~client_secret:grant.client_secret)
-          ~body:
-            (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-               [
-                 ("code", [ grant.code ]);
-                 ("redirect_uri", [ Http.Uri.to_string grant.redirect_uri ]);
-                 ("grant_type", [ "authorization_code" ]);
-               ])
-          ~uri:endpoint ()
+        Lwt.return_ok
+        @@ Http.Request.make ~meth:`POST
+             ~headers:
+               (make_headers ~client_id:grant.client_id
+                  ~client_secret:grant.client_secret)
+             ~body:
+               (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+                  [
+                    ("code", [ grant.code ]);
+                    ("redirect_uri", [ Http.Uri.to_string grant.redirect_uri ]);
+                    ("grant_type", [ "authorization_code" ]);
+                  ])
+             ~uri:endpoint ()
     | `Client_credentials
         (grant : Request_access_token_input.client_credentials_grant) ->
-        Http.Request.make ~meth:`POST
-          ~headers:
-            (make_headers ~client_id:grant.client_id
-               ~client_secret:grant.client_secret)
-          ~body:
-            (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-               [ ("grant_type", [ "client_credentials" ]) ])
-          ~uri:endpoint ()
+        Lwt.return_ok
+        @@ Http.Request.make ~meth:`POST
+             ~headers:
+               (make_headers ~client_id:grant.client_id
+                  ~client_secret:grant.client_secret)
+             ~body:
+               (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+                  [ ("grant_type", [ "client_credentials" ]) ])
+             ~uri:endpoint ()
 
   let of_http_response =
     Spotify_request.default_of_http_response ~deserialize:response_of_yojson
@@ -187,15 +189,16 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
   let endpoint = Http.Uri.of_string "https://accounts.spotify.com/api/token"
 
   let to_http_request (client_id, client_secret, refresh_token) =
-    Http.Request.make ~meth:`POST
-      ~headers:(make_headers ~client_id ~client_secret)
-      ~body:
-        (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
-           [
-             ("grant_type", [ "refresh_token" ]);
-             ("refresh_token", [ refresh_token ]);
-           ])
-      ~uri:endpoint ()
+    Lwt.return_ok
+    @@ Http.Request.make ~meth:`POST
+         ~headers:(make_headers ~client_id ~client_secret)
+         ~body:
+           (Http.Body.of_form ~scheme:"application/x-www-form-urlencoded"
+              [
+                ("grant_type", [ "refresh_token" ]);
+                ("refresh_token", [ refresh_token ]);
+              ])
+         ~uri:endpoint ()
 
   let of_http_response =
     Spotify_request.default_of_http_response ~deserialize:output_of_yojson

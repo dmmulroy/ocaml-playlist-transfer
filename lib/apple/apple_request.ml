@@ -6,7 +6,7 @@ module type S = sig
   type output [@@deriving of_yojson]
 
   val name : string
-  val to_http_request : input -> Http.Request.t
+  val to_http_request : input -> (Http.Request.t, Error.t) Lwt_result.t
   val of_http_response : Http.Response.t -> (output, Error.t) Lwt_result.t
 end
 
@@ -39,8 +39,8 @@ let internal_of_http_response (response : Http.Response.t) ~deserialize =
         Lwt.return_error
         @@ Error.Apple.make ~source:(`Serialization (`Json json)) msg
 
-let internal_request ~name ~input ~to_http_request ~of_http_response () =
-  let request = to_http_request input in
+let internal_request ~input ~to_http_request ~of_http_response () =
+  let+ request = to_http_request input in
   let headers' =
     Http.Header.add_unless_exists
       (Http.Request.headers request)
@@ -51,6 +51,7 @@ let internal_request ~name ~input ~to_http_request ~of_http_response () =
     match response with
     | response' when Http.Response.is_success response' ->
         of_http_response response'
+        (* TODO: Handle unauthenticated w/ a retry/refresh of auth token *)
     | response' ->
         let request_method = Http.Request.meth request in
         let request_uri = Http.Request.uri request in
@@ -61,15 +62,16 @@ let internal_request ~name ~input ~to_http_request ~of_http_response () =
              ~source:(`Http (response_status, request_method, request_uri))
              message
   in
-  Infix.Lwt_result.(
-    result >|? fun err ->
-    Error.Apple.make ~cause:err ~source:(`Source name)
-    @@ "Error executing request: " ^ name)
+  result
 
 module Make_unauthenticated (M : S) = struct
   let request input =
-    internal_request ~name:M.name ~input ~to_http_request:M.to_http_request
+    let open Infix.Lwt_result in
+    internal_request ~input ~to_http_request:M.to_http_request
       ~of_http_response:M.of_http_response ()
+    >|? fun err ->
+    Error.Spotify.make ~cause:err ~source:(`Source M.name)
+    @@ "Error executing request: " ^ M.name
 end
 
 let default_of_http_response ~deserialize =

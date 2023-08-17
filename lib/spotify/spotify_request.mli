@@ -3,7 +3,7 @@ module type S = sig
   type output [@@deriving of_yojson]
 
   val name : string
-  val to_http_request : input -> Http.Request.t
+  val to_http_request : input -> (Http.Request.t, Error.t) Lwt_result.t
   val of_http_response : Http.Response.t -> (output, Error.t) Lwt_result.t
 end
 
