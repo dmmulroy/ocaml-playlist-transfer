@@ -55,7 +55,7 @@ module Request = struct
 
   let headers { headers; _ } = headers
   let body { body; _ } = body
-  let method' { meth; _ } = meth
+  let meth { meth; _ } = meth
   let uri { uri; _ } = uri
 
   let make ?(headers = Header.empty) ?(body = Body.empty) ~meth ~uri () =

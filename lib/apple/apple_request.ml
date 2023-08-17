@@ -52,12 +52,13 @@ let internal_request ~name ~input ~to_http_request ~of_http_response () =
     | response' when Http.Response.is_success response' ->
         of_http_response response'
     | response' ->
-        let response_status = Http.Response.status response' in
+        let request_method = Http.Request.meth request in
         let request_uri = Http.Request.uri request in
+        let response_status = Http.Response.status response' in
         let message = Http.Code.reason_phrase_of_status_code response_status in
         Lwt.return_error
         @@ Error.Apple.make
-             ~source:(`Http (response_status, request_uri))
+             ~source:(`Http (response_status, request_method, request_uri))
              message
   in
   Infix.Lwt_result.(
