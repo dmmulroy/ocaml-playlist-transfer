@@ -101,7 +101,8 @@ module Test_auth = Apple_request.Make_unauthenticated (struct
   let to_http_request jwt =
     let meth = `GET in
     let headers =
-      Http.Header.add Http.Header.empty "Auth" (Jwt.to_bearer_token jwt)
+      Http.Header.add Http.Header.empty "Authorization"
+        (Jwt.to_bearer_token jwt)
     in
     let uri = Uri.of_string "https://api.music.apple.com/v1/test" in
     let body = Http.Body.empty in
