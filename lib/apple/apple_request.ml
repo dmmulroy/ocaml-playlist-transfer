@@ -1,9 +1,10 @@
 open Syntax
 open Let
 
+(* TODO: Create functor to create domain specific request modules *)
 module type S = sig
   type input
-  type output [@@deriving of_yojson]
+  type output
 
   val name : string
   val to_http_request : input -> (Http.Request.t, Error.t) Lwt_result.t
@@ -24,27 +25,34 @@ let execute ({ meth; headers; uri; body } : Http.Request.t) =
 
 let internal_of_http_response (response : Http.Response.t) ~deserialize =
   let open Infix.Lwt_result in
-  let* body_is_empty = Http.Body.is_empty @@ Http.Response.body response in
-  if body_is_empty then Lwt.return_ok ()
-  else
-    let+ json =
-      Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
-      let* json_str = Http.Body.to_string @@ Http.Response.body response in
-      let source = `Serialization (`Raw json_str) in
-      Lwt.return @@ Error.Apple.make ~source msg
-    in
-    match deserialize json with
-    | Ok response -> Lwt.return_ok response
-    | Error msg ->
-        Lwt.return_error
-        @@ Error.Apple.make ~source:(`Serialization (`Json json)) msg
+  let+ json =
+    Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
+    let* json_str = Http.Body.to_string @@ Http.Response.body response in
+    let source = `Serialization (`Raw json_str) in
+    Lwt.return @@ Error.Apple.make ~source msg
+  in
+  match deserialize json with
+  | Ok response -> Lwt.return_ok response
+  | Error msg ->
+      Lwt.return_error
+      @@ Error.Apple.make ~source:(`Serialization (`Json json)) msg
 
-let internal_request ~input ~to_http_request ~of_http_response () =
+let internal_request ?client ~input ~to_http_request ~of_http_response () =
   let+ request = to_http_request input in
-  let headers' =
+  let base_headers =
     Http.Header.add_unless_exists
       (Http.Request.headers request)
       "Content-Type" "application/json"
+  in
+  let headers' =
+    Option.fold ~none:base_headers
+      ~some:(fun client' ->
+        Http.Header.add_list_unless_exists base_headers
+          [
+            ("Authorization", Client.get_bearer_token client');
+            ("Music-User-Token", Client.music_user_token client');
+          ])
+      client
   in
   let* response = execute { request with headers = headers' } in
   let result =
@@ -64,15 +72,24 @@ let internal_request ~input ~to_http_request ~of_http_response () =
   in
   result
 
+module Make (M : S) = struct
+  let request ~client input =
+    let open Infix.Lwt_result in
+    internal_request ~client ~input ~to_http_request:M.to_http_request
+      ~of_http_response:M.of_http_response ()
+    >|? fun err ->
+    Error.Apple.make ~cause:err ~source:(`Source M.name)
+    @@ "Error executing request: " ^ M.name
+end
+
 module Make_unauthenticated (M : S) = struct
   let request input =
     let open Infix.Lwt_result in
     internal_request ~input ~to_http_request:M.to_http_request
       ~of_http_response:M.of_http_response ()
     >|? fun err ->
-    Error.Spotify.make ~cause:err ~source:(`Source M.name)
+    Error.Apple.make ~cause:err ~source:(`Source M.name)
     @@ "Error executing request: " ^ M.name
 end
 
-let default_of_http_response ~deserialize =
-  internal_of_http_response ~deserialize
+let default_of_http_response = internal_of_http_response
