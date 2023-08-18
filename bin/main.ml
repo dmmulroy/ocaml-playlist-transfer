@@ -51,25 +51,18 @@ let test_spotify () =
 
 let test_apple () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  let team_id = Sys.getenv "APPLE_TEAM_ID" in
-  let key_id = Sys.getenv "APPLE_KEY_ID" in
-  let| jwt = Apple.Auth.Jwt.make ~private_pem ~team_id ~key_id () in
-  let validated_jwt_res = Apple.Auth.Jwt.validate jwt in
-  let _ =
-    match validated_jwt_res with
-    | Error err ->
-        print_endline @@ Error.to_string err;
-        failwith "failed"
-    | Ok jwt ->
-        print_endline @@ "successfully validated: "
-        ^ Apple.Auth.Jwt.to_string jwt
+  (* let team_id = Sys.getenv "APPLE_TEAM_ID" in *)
+  (* let key_id = Sys.getenv "APPLE_KEY_ID" in *)
+  (* let| jwt = Apple.Jwt.make ~private_pem ~team_id ~key_id () in *)
+  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
+  let jwt_str = Sys.getenv "APPLE_JWT" in
+  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
+  let client = Apple.Client.make ~jwt ~music_user_token in
+  let+ playlists = Apple.Library_playlist.get_all_playlists ~client () in
+  let json =
+    Apple.Library_playlist.Get_all_playlists_output.to_yojson playlists
   in
-  let* test_res = Apple.Auth.test_auth jwt in
-  let _ =
-    match test_res with
-    | Error err -> print_endline @@ Error.to_string err
-    | Ok _ -> print_endline "success"
-  in
+  print_endline @@ "Playlists: " ^ Yojson.Safe.pretty_to_string json;
   Lwt.return_ok ()
 
 let () =

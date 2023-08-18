@@ -6,17 +6,16 @@ type description = { short : string option; standard : string }
 [@@deriving yojson]
 
 type attributes = {
-  artwork : artwork option;
+  (* artwork : artwork option; *)
   can_edit : bool; [@key "canEdit"]
   date_added : string option; [@key "dateAdded"]
   description : description;
   has_catalog : bool; [@key "hasCatalog"]
-  name : string;
-  play_params : play_params option; [@key "playParams"]
+  name : string; (* play_params : play_params option; [@key "playParams"] *)
   is_public : bool; [@key "isPublic"]
-  track_types : track_types list; [@key "trackTypes"]
+      (* track_types : track_types list; [@key "trackTypes"] *)
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 type t = {
   id : string;
@@ -32,7 +31,7 @@ end
 
 module Get_all_playlists_output = struct
   type playlist = t [@@deriving yojson]
-  type t = { data : playlist } [@@deriving yojson]
+  type t = { data : playlist } [@@deriving yojson { strict = false }]
 end
 
 module Get_all_playlists = Apple_request.Make (struct
