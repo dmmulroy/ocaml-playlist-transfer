@@ -3,7 +3,7 @@ type play_params = unit option (* TODO *) [@@deriving yojson]
 type track_types = unit option (* TODO *) [@@deriving yojson]
 
 type description = { short : string option; standard : string }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 type attributes = {
   (* artwork : artwork option; *)
@@ -23,7 +23,7 @@ type t = {
   href : Http.Uri.t;
   attributes : attributes;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 module Get_all_playlists_input = struct
   type t = unit
