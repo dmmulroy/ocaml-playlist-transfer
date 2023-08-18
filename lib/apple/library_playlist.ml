@@ -19,7 +19,7 @@ type attributes = {
 
 type t = {
   id : string;
-  resource_type : Resource.t; [@key "type"]
+  (* resource_type : Resource.t; [@key "type"] *)
   href : Http.Uri.t;
   attributes : attributes;
 }
