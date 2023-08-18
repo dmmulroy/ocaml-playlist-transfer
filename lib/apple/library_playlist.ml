@@ -19,7 +19,7 @@ type attributes = {
 
 type t = {
   id : string;
-  (* resource_type : Resource.t; [@key "type"] *)
+  resource_type : Resource.t; [@key "type"]
   href : Http.Uri.t;
   attributes : attributes;
 }
@@ -30,7 +30,7 @@ module Get_all_playlists_input = struct
 end
 
 module Get_all_playlists_output = struct
-  type playlist = t [@@deriving yojson]
+  type playlist = t [@@deriving yojson { strict = false }]
   type t = { data : playlist } [@@deriving yojson { strict = false }]
 end
 
