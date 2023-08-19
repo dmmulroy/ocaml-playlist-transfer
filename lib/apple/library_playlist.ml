@@ -19,9 +19,9 @@ type attributes = {
 
 type t = {
   id : string;
-  resource_type : Resource.t; [@key "type"]
-  href : Http.Uri.t;
-  attributes : attributes;
+      (* resource_type : Resource.t; [@key "type"] *)
+      (* href : Http.Uri.t; *)
+      (* attributes : attributes; *)
 }
 [@@deriving yojson { strict = false }]
 
@@ -31,7 +31,8 @@ end
 
 module Get_all_playlists_output = struct
   type playlist = t [@@deriving yojson { strict = false }]
-  type t = { data : playlist } [@@deriving yojson { strict = false }]
+  type meta = { total : int } [@@deriving yojson { strict = false }]
+  type t = { meta : meta } [@@deriving yojson { strict = false }]
 end
 
 module Get_all_playlists = Apple_request.Make (struct
