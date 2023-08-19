@@ -19,9 +19,8 @@ type attributes = {
 
 type t = {
   id : string;
-      (* resource_type : Resource.t; [@key "type"] *)
-      (* href : Http.Uri.t; *)
-      (* attributes : attributes; *)
+  resource_type : Resource.t; [@key "type"]
+  href : string; (* attributes : attributes; *)
 }
 [@@deriving yojson { strict = false }]
 
