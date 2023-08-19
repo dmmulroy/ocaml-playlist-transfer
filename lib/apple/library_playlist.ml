@@ -37,7 +37,9 @@ end
 
 module Get_all_playlists = Apple_request.Make (struct
   type input = Get_all_playlists_input.t
-  type output = Get_all_playlists_output.t [@@deriving yojson]
+
+  type output = Get_all_playlists_output.t
+  [@@deriving yojson { strict = false }]
 
   let name = "Get_all_playlists"
 
