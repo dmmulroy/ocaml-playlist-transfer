@@ -9,7 +9,7 @@ type attributes = {
   (* artwork : artwork option; *)
   can_edit : bool; [@key "canEdit"]
   (* date_added : string option; [@key "dateAdded"] *)
-  (* description : description; *)
+  description : description;
   has_catalog : bool; [@key "hasCatalog"]
   name : string;
   (* play_params : play_params option; [@key "playParams"] *)
