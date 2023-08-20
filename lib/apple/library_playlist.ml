@@ -1,20 +1,24 @@
 type artwork = unit option (* TODO *) [@@deriving yojson]
 type play_params = unit option (* TODO *) [@@deriving yojson]
 type track_types = unit option (* TODO *) [@@deriving yojson]
+type description = { standard : string } [@@deriving yojson { strict = false }]
 
-type description = { short : string option; standard : string option }
+type play_params = {
+  id : string;
+  kind : string;
+  is_library : bool; [@key "isLibrary"]
+}
 [@@deriving yojson { strict = false }]
 
 type attributes = {
-  (* artwork : artwork option; *)
+  last_modified_date : string; [@key "lastModifiedDate"]
   can_edit : bool; [@key "canEdit"]
-  date_added : string option; [@key "dateAdded"]
-  description : description option;
-  has_catalog : bool; [@key "hasCatalog"]
   name : string;
-  (* play_params : play_params option; [@key "playParams"] *)
+  description : description option;
   is_public : bool; [@key "isPublic"]
-      (* track_types : track_types list; [@key "trackTypes"] *)
+  has_catalog : bool; [@key "hasCatalog"]
+  play_params : play_params; [@key "playParams"]
+  date_added : string; [@key "dateAdded"]
 }
 [@@deriving yojson { strict = false }]
 
