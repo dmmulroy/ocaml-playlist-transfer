@@ -8,8 +8,8 @@ type description = { short : string option; standard : string }
 type attributes = {
   (* artwork : artwork option; *)
   can_edit : bool; [@key "canEdit"]
-  (* date_added : string option; [@key "dateAdded"] *)
-  description : description;
+  date_added : string option; [@key "dateAdded"]
+  description : description option;
   has_catalog : bool; [@key "hasCatalog"]
   name : string;
   (* play_params : play_params option; [@key "playParams"] *)
