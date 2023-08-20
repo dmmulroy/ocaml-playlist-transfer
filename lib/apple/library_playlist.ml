@@ -13,7 +13,7 @@ type attributes = {
   last_modified_date : string; [@key "lastModifiedDate"]
   can_edit : bool; [@key "canEdit"]
   name : string;
-  description : description option;
+  (* description : description option; *)
   is_public : bool; [@key "isPublic"]
   has_catalog : bool; [@key "hasCatalog"]
   play_params : play_params; [@key "playParams"]
