@@ -7,12 +7,13 @@ type description = { short : string option; standard : string }
 
 type attributes = {
   (* artwork : artwork option; *)
-  can_edit : bool; [@key "canEdit"]
-  date_added : string option; [@key "dateAdded"]
-  description : description;
-  has_catalog : bool; [@key "hasCatalog"]
-  name : string; (* play_params : play_params option; [@key "playParams"] *)
-  is_public : bool; [@key "isPublic"]
+  (* can_edit : bool; [@key "canEdit"] *)
+  (* date_added : string option; [@key "dateAdded"] *)
+  (* description : description; *)
+  (* has_catalog : bool; [@key "hasCatalog"] *)
+  name : string;
+      (* play_params : play_params option; [@key "playParams"] *)
+      (* is_public : bool; [@key "isPublic"] *)
       (* track_types : track_types list; [@key "trackTypes"] *)
 }
 [@@deriving yojson { strict = false }]
