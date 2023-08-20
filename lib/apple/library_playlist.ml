@@ -4,6 +4,7 @@ type description = { standard : string }
 (* [@@deriving yojson { strict = false }] *)
 
 let description_of_yojson json =
+  print_endline "description_of_yojson";
   Yojson.Safe.pretty_to_string json |> print_endline;
   match json with
   | `String s -> Ok { standard = s }
