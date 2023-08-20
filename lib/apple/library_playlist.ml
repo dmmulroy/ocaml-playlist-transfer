@@ -1,20 +1,8 @@
 type artwork = unit option (* TODO *) [@@deriving yojson]
 type track_types = unit option (* TODO *) [@@deriving yojson]
-type description = { standard : string }
-(* [@@deriving yojson { strict = false }] *)
 
-let description_of_yojson json =
-  print_endline "description_of_yojson";
-  Yojson.Safe.pretty_to_string json |> print_endline;
-  match json with
-  | `String s -> Ok { standard = s }
-  | _ -> failwith "f in the chat"
-
-(* function *)
-(* | `String s -> Ok { standard = s } *)
-(* | _ -> assert false *)
-
-let description_to_yojson { standard } = `String standard
+type description = { standard : string; short : string option }
+[@@deriving yojson]
 
 type play_params = {
   id : string;
@@ -27,7 +15,7 @@ type attributes = {
   last_modified_date : string; [@key "lastModifiedDate"]
   can_edit : bool; [@key "canEdit"]
   name : string;
-  description : description option;
+  description : description option; [@default None]
   is_public : bool; [@key "isPublic"]
   has_catalog : bool; [@key "hasCatalog"]
   play_params : play_params; [@key "playParams"]
