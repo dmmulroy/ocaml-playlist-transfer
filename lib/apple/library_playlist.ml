@@ -1,5 +1,4 @@
 type artwork = unit option (* TODO *) [@@deriving yojson]
-type play_params = unit option (* TODO *) [@@deriving yojson]
 type track_types = unit option (* TODO *) [@@deriving yojson]
 type description = { standard : string } [@@deriving yojson { strict = false }]
 
