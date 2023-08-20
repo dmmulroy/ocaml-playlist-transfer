@@ -69,4 +69,4 @@ let () =
   let res = Lwt_main.run @@ test_apple () in
   match res with
   | Ok () -> ()
-  | Error _err -> () (* print_endline @@ Error.to_string err *)
+  | Error err -> print_endline @@ Error.to_string err
