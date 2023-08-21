@@ -1,33 +1,46 @@
-type artwork = unit option (* TODO *) [@@deriving yojson]
-type track_types = unit option (* TODO *) [@@deriving yojson]
+type artwork = {
+  bg_color : string option; [@key "bgColor"]
+  height : int;
+  width : int;
+  text_color1 : string option; [@key "textColor1"]
+  text_color2 : string option; [@key "textColor2"]
+  text_color3 : string option; [@key "textColor3"]
+  text_color4 : string option; [@key "textColor4"]
+  url : string;
+}
+[@@deriving yojson]
 
 type description = { standard : string; short : string option [@default None] }
 [@@deriving yojson]
 
+type track_types = Resource.t list [@@deriving yojson]
+
 type play_params = {
   id : string;
-  kind : string;
   is_library : bool; [@key "isLibrary"]
+  kind : string;
 }
 [@@deriving yojson { strict = false }]
 
 type attributes = {
-  last_modified_date : string; [@key "lastModifiedDate"]
+  artwork : artwork option; [@default None]
   can_edit : bool; [@key "canEdit"]
-  name : string;
-  description : description option; [@default None]
-  is_public : bool; [@key "isPublic"]
-  has_catalog : bool; [@key "hasCatalog"]
-  play_params : play_params; [@key "playParams"]
   date_added : string; [@key "dateAdded"]
+  description : description option; [@default None]
+  has_catalog : bool; [@key "hasCatalog"]
+  is_public : bool; [@key "isPublic"]
+  last_modified_date : string; [@key "lastModifiedDate"]
+  name : string;
+  play_params : play_params; [@key "playParams"]
+  track_types : track_types option; [@key "trackTypes"] [@default None]
 }
 [@@deriving yojson { strict = false }]
 
 type t = {
+  attributes : attributes;
+  href : string;
   id : string;
   resource_type : Resource.t; [@key "type"]
-  href : string;
-  attributes : attributes;
 }
 [@@deriving yojson { strict = false }]
 
