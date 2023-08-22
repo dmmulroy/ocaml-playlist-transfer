@@ -22,7 +22,7 @@ let execute ({ meth; headers; uri; body } : Http.Request.t) =
   @@ Http.Response.make ~headers:response.headers ~body:body'
        ~status:response.status ()
 
-let internal_of_http_response (response : Http.Response.t) ~deserialize =
+let default_of_http_response ~deserialize (response : Http.Response.t) =
   let open Infix.Lwt_result in
   let+ json =
     Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
@@ -36,7 +36,7 @@ let internal_of_http_response (response : Http.Response.t) ~deserialize =
       Lwt.return_error
       @@ Error.Spotify.make ~source:(`Serialization (`Json json)) msg
 
-let internal_request ?client ~input ~to_http_request ~of_http_response () =
+let handle_request ?client ~input ~to_http_request ~of_http_response () =
   let+ request = to_http_request input in
   let base_headers =
     Http.Header.add_unless_exists
@@ -70,7 +70,7 @@ let internal_request ?client ~input ~to_http_request ~of_http_response () =
 module Make (M : S) = struct
   let request ~client input =
     let open Infix.Lwt_result in
-    internal_request ~client ~input ~to_http_request:M.to_http_request
+    handle_request ~client ~input ~to_http_request:M.to_http_request
       ~of_http_response:M.of_http_response ()
     >|? fun err ->
     Error.Spotify.make ~cause:err ~source:(`Source M.name)
@@ -80,12 +80,9 @@ end
 module Make_unauthenticated (M : S) = struct
   let request input =
     let open Infix.Lwt_result in
-    internal_request ~input ~to_http_request:M.to_http_request
+    handle_request ~input ~to_http_request:M.to_http_request
       ~of_http_response:M.of_http_response ()
     >|? fun err ->
     Error.Spotify.make ~cause:err ~source:(`Source M.name)
     @@ "Error executing request: " ^ M.name
 end
-
-let default_of_http_response ~deserialize =
-  internal_of_http_response ~deserialize
