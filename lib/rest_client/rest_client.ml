@@ -34,7 +34,7 @@ let execute ({ meth; headers; uri; body } : Http.Request.t) =
   @@ Http.Response.make ~headers:response.headers ~body:body'
        ~status:response.status ()
 
-module Make (C : CONFIG) = struct
+module Make (C : Config.S) = struct
   let handle_request ?client ~input ~to_http_request ~of_http_response () =
     let+ request = to_http_request input in
     let base_headers =

@@ -20,7 +20,7 @@ module Test_auth = Apple_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth ~headers ~uri ~body input
 
   let of_http_response =
-    Apple_request.default_of_http_response ~deserialize:(fun _ -> Ok ())
+    Apple_request.handle_response ~deserialize:(fun _ -> Ok ())
 end)
 
 let test_auth = Test_auth.request

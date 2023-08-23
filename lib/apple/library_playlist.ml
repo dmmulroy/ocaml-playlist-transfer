@@ -75,7 +75,7 @@ module Get_all_playlists = Apple_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:endpoint input
 
   let of_http_response =
-    Apple_request.default_of_http_response ~deserialize:output_of_yojson
+    Apple_request.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_all_playlists = Get_all_playlists.request
