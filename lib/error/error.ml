@@ -17,10 +17,23 @@ let make ?cause ~domain ~source message =
 
 let to_string = show
 
-module Apple = struct
+module type S = sig
+  val make :
+    ?cause:t ->
+    source:
+      [ `Auth
+      | `Http of
+        Http.Code.status_code * [ `GET | `POST | `PUT | `DELETE ] * Http.Uri.t
+      | `Serialization of [ `Json of Yojson.Safe.t | `Raw of string ]
+      | `Source of string ] ->
+    string ->
+    t
+end
+
+module Apple : S = struct
   let make = make ~domain:`Apple
 end
 
-module Spotify = struct
+module Spotify : S = struct
   let make = make ~domain:`Spotify
 end

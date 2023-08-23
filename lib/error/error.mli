@@ -11,21 +11,9 @@ type t = {
   timestamp : Ptime.t;
 }
 
-val make :
-  ?cause:t ->
-  domain:[ `Apple | `Spotify ] ->
-  source:
-    [ `Auth
-    | `Http of
-      Http.Code.status_code * [ `GET | `POST | `PUT | `DELETE ] * Http.Uri.t
-    | `Serialization of [ `Json of Yojson.Safe.t | `Raw of string ]
-    | `Source of string ] ->
-  string ->
-  t
-
 val to_string : t -> string
 
-module Apple : sig
+module type S = sig
   val make :
     ?cause:t ->
     source:
@@ -38,15 +26,5 @@ module Apple : sig
     t
 end
 
-module Spotify : sig
-  val make :
-    ?cause:t ->
-    source:
-      [ `Auth
-      | `Http of
-        Http.Code.status_code * [ `GET | `POST | `PUT | `DELETE ] * Http.Uri.t
-      | `Serialization of [ `Json of Yojson.Safe.t | `Raw of string ]
-      | `Source of string ] ->
-    string ->
-    t
-end
+module Apple : S
+module Spotify : S
