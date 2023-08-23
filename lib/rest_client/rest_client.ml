@@ -1,12 +1,14 @@
 open Syntax
 open Let
 
-module type CONFIG = sig
-  type client
+module Config = struct
+  module type S = sig
+    type client
 
-  module Error_handler : Error.S
+    module Error_handler : Error.S
 
-  val request_headers_of_client : client -> (string * string) list
+    val request_headers_of_client : client -> (string * string) list
+  end
 end
 
 module Api_request = struct
