@@ -28,13 +28,13 @@ let default_of_http_response ~deserialize (response : Http.Response.t) =
     Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
     let* json_str = Http.Body.to_string @@ Http.Response.body response in
     let source = `Serialization (`Raw json_str) in
-    Lwt.return @@ Error.Spotify.make ~source msg
+    Lwt.return @@ Spotify_error.make ~source msg
   in
   match deserialize json with
   | Ok response -> Lwt.return_ok response
   | Error msg ->
       Lwt.return_error
-      @@ Error.Spotify.make ~source:(`Serialization (`Json json)) msg
+      @@ Spotify_error.make ~source:(`Serialization (`Json json)) msg
 
 let handle_request ?client ~input ~to_http_request ~of_http_response () =
   let+ request = to_http_request input in
@@ -61,7 +61,7 @@ let handle_request ?client ~input ~to_http_request ~of_http_response () =
         let response_status = Http.Response.status response' in
         let message = Http.Code.reason_phrase_of_status_code response_status in
         Lwt.return_error
-        @@ Error.Spotify.make
+        @@ Spotify_error.make
              ~source:(`Http (response_status, request_method, request_uri))
              message
   in
@@ -73,7 +73,7 @@ module Make (M : S) = struct
     handle_request ~client ~input ~to_http_request:M.to_http_request
       ~of_http_response:M.of_http_response ()
     >|? fun err ->
-    Error.Spotify.make ~cause:err ~source:(`Source M.name)
+    Spotify_error.make ~cause:err ~source:(`Source M.name)
     @@ "Error executing request: " ^ M.name
 end
 
@@ -83,6 +83,6 @@ module Make_unauthenticated (M : S) = struct
     handle_request ~input ~to_http_request:M.to_http_request
       ~of_http_response:M.of_http_response ()
     >|? fun err ->
-    Error.Spotify.make ~cause:err ~source:(`Source M.name)
+    Spotify_error.make ~cause:err ~source:(`Source M.name)
     @@ "Error executing request: " ^ M.name
 end

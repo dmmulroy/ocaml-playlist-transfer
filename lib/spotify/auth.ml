@@ -18,7 +18,7 @@ module Internal_error = struct
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
     in
-    Error.Spotify.make ~source message
+    Spotify_error.make ~source message
 end
 
 let authorize_uri = Http.Uri.of_string "https://accounts.spotify.com/authorize"
@@ -218,7 +218,7 @@ let refresh_access_token ~client =
         let+ { expires_in; _ } =
           Refresh_access_token.request (client_id, client_secret, refresh_token)
           >|? fun err ->
-          Error.Spotify.make ~cause:err ~source:`Auth
+          Spotify_error.make ~cause:err ~source:`Auth
             "Error refreshing access token"
         in
         let refreshed_access_token =
