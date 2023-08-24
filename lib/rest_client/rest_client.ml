@@ -3,11 +3,11 @@ open Let
 
 module Config = struct
   module type S = sig
-    type client
+    type api_client
 
     module Error : Error.S
 
-    val request_headers_of_client : client -> (string * string) list
+    val headers_of_api_client : api_client -> (string * string) list
   end
 end
 
@@ -46,7 +46,7 @@ module Make (C : Config.S) = struct
       Option.fold ~none:base_headers
         ~some:(fun client' ->
           Http.Header.add_list_unless_exists base_headers
-            (C.request_headers_of_client client'))
+            (C.headers_of_api_client client'))
         client
     in
     let* response = execute { request with headers = headers' } in

@@ -1,8 +1,8 @@
 include Rest_client.Make (struct
-  type client = Client.t
+  type api_client = Client.t
 
   module Error = Spotify_error
 
-  let request_headers_of_client client =
+  let headers_of_api_client client =
     [ ("Authorization", Client.get_bearer_token client) ]
 end)
