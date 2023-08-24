@@ -155,7 +155,7 @@ module Request_access_token = Spotify_request.Make_unauthenticated (struct
              ~uri:endpoint ()
 
   let of_http_response =
-    Spotify_request.default_of_http_response ~deserialize:response_of_yojson
+    Spotify_request.handle_response ~deserialize:response_of_yojson
 end)
 
 let request_access_token = Request_access_token.request
@@ -201,7 +201,7 @@ module Refresh_access_token = Spotify_request.Make_unauthenticated (struct
          ~uri:endpoint ()
 
   let of_http_response =
-    Spotify_request.default_of_http_response ~deserialize:output_of_yojson
+    Spotify_request.handle_response ~deserialize:output_of_yojson
 end)
 
 let refresh_access_token ~client =

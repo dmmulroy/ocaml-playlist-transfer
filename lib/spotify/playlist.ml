@@ -72,7 +72,7 @@ module CreatePlaylist = Spotify_request.Make (struct
     @@ Http.Request.make ~meth:`POST ~body ~uri:(make_endpoint input.user_id) ()
 
   let of_http_response =
-    Spotify_request.default_of_http_response ~deserialize:output_of_yojson
+    Spotify_request.handle_response ~deserialize:output_of_yojson
 end)
 
 let create = CreatePlaylist.request
@@ -123,7 +123,7 @@ module Get_featured = Spotify_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =
-    Spotify_request.default_of_http_response ~deserialize:output_of_yojson
+    Spotify_request.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_featured = Get_featured.request
@@ -175,7 +175,7 @@ module Get_playlist_by_id = Spotify_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =
-    Spotify_request.default_of_http_response ~deserialize:output_of_yojson
+    Spotify_request.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_by_id = Get_playlist_by_id.request

@@ -35,7 +35,7 @@ module Get_playlists = Spotify_request.Make (struct
          ~body:Http.Body.empty ~uri:(make_endpoint input) ()
 
   let of_http_response =
-    Spotify_request.default_of_http_response ~deserialize:output_of_yojson
+    Spotify_request.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_playlists = Get_playlists.request
