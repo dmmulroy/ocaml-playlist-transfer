@@ -38,7 +38,7 @@ module Internal_error = struct
       (match err with `Msg str -> map_msg str | _ as err' -> err')
       |> to_string
     in
-    Error.Apple.make ~source:`Auth message
+    Apple_error.make ~source:`Auth message
 end
 
 type t = { key : Jwk.priv Jwk.t; jwt : Jwt.t }

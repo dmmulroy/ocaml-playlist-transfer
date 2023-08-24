@@ -1,7 +1,7 @@
 include Rest_client.Make (struct
   type client = Client.t
 
-  module Error_handler = Error.Apple
+  module Error = Apple_error
 
   let request_headers_of_client client =
     [

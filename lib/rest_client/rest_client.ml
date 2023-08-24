@@ -5,7 +5,7 @@ module Config = struct
   module type S = sig
     type client
 
-    module Error_handler : Error.S
+    module Error : Error.S
 
     val request_headers_of_client : client -> (string * string) list
   end
@@ -63,7 +63,7 @@ module Make (C : Config.S) = struct
             Http.Code.reason_phrase_of_status_code response_status
           in
           Lwt.return_error
-          @@ C.Error_handler.make
+          @@ C.Error.make
                ~source:(`Http (response_status, request_method, request_uri))
                message
     in
@@ -75,13 +75,13 @@ module Make (C : Config.S) = struct
       Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
       let* json_str = Http.Body.to_string @@ Http.Response.body response in
       let source = `Serialization (`Raw json_str) in
-      Lwt.return @@ C.Error_handler.make ~source msg
+      Lwt.return @@ C.Error.make ~source msg
     in
     match deserialize json with
     | Ok response -> Lwt.return_ok response
     | Error msg ->
         Lwt.return_error
-        @@ C.Error_handler.make ~source:(`Serialization (`Json json)) msg
+        @@ C.Error.make ~source:(`Serialization (`Json json)) msg
 
   module Make (M : Api_request.S) = struct
     open Infix.Lwt_result
@@ -90,7 +90,7 @@ module Make (C : Config.S) = struct
       handle_request ~client ~input ~to_http_request:M.to_http_request
         ~of_http_response:M.of_http_response ()
       >|? fun err ->
-      C.Error_handler.make ~cause:err ~source:(`Source M.name)
+      C.Error.make ~cause:err ~source:(`Source M.name)
       @@ "Error executing request: " ^ M.name
   end
 
@@ -101,7 +101,7 @@ module Make (C : Config.S) = struct
       handle_request ~input ~to_http_request:M.to_http_request
         ~of_http_response:M.of_http_response ()
       >|? fun err ->
-      C.Error_handler.make ~cause:err ~source:(`Source M.name)
+      C.Error.make ~cause:err ~source:(`Source M.name)
       @@ "Error executing request: " ^ M.name
   end
 end
