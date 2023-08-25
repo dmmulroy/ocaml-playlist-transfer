@@ -15,7 +15,7 @@ module Test_auth = Apple_request.Make (struct
   let to_http_request input =
     let meth = `GET in
     let headers = Http.Header.empty in
-    let uri = Uri.of_string "https://api.music.apple.com/v1/test" in
+    let uri = Http.Uri.of_string "https://api.music.apple.com/v1/test" in
     let body = Http.Body.empty in
     Lwt.return_ok @@ Http.Request.make ~meth ~headers ~uri ~body input
 

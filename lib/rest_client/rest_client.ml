@@ -22,7 +22,11 @@ module Api_request = struct
   end
 end
 
-let execute ({ meth; headers; uri; body } : Http.Request.t) =
+let execute request =
+  let meth = Http.Request.meth request in
+  let uri = Http.Request.uri request in
+  let headers = Http.Request.headers request in
+  let body = Http.Request.body request in
   let* response, body' =
     match meth with
     | `GET -> Http.Client.get ~headers uri
@@ -38,18 +42,19 @@ module Make (C : Config.S) = struct
   let handle_request ?client ~input ~to_http_request ~of_http_response () =
     let+ request = to_http_request input in
     let base_headers =
-      Http.Header.add_unless_exists
-        (Http.Request.headers request)
-        "Content-Type" "application/json"
+      Http.Header.(
+        add_unless_exists
+          (Http.Request.headers request)
+          (of_list [ ("Content-Type", "application/json") ]))
     in
     let headers' =
       Option.fold ~none:base_headers
         ~some:(fun client' ->
-          Http.Header.add_list_unless_exists base_headers
+          Http.Header.add_unless_exists base_headers
             (C.headers_of_api_client client'))
         client
     in
-    let* response = execute { request with headers = headers' } in
+    let* response = execute (Http.Request.set_headers request headers') in
     let result =
       match response with
       | response' when Http.Response.is_success response' ->

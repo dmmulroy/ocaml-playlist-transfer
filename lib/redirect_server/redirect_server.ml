@@ -1,8 +1,9 @@
-module Http = Cohttp_lwt_unix
+open Syntax
+open Let
 
 type t = {
   mailbox : string Lwt_mvar.t;
-  redirect_uri : Uri.t;
+  redirect_uri : Http.Uri.t;
   state : string;
   stop_server_promise : unit Lwt.t;
 }
@@ -17,14 +18,14 @@ let make ~redirect_uri ~state =
   }
 
 let handler ~state ~mailbox _conn req _body =
-  let request_uri = Http.Request.uri req in
-  let path = Uri.path request_uri in
+  let request_uri = Http.Cohttp_request.uri req in
+  let path = Http.Uri.path request_uri in
   match path with
   | "/spotify" -> (
       let code =
         match
-          ( Uri.get_query_param request_uri "code",
-            Uri.get_query_param request_uri "state" )
+          ( Http.Uri.get_query_param request_uri "code",
+            Http.Uri.get_query_param request_uri "state" )
         with
         | Some code, Some received_state when received_state = state -> Ok code
         | Some _, Some _ -> Error (`Msg "Invalid state")
@@ -33,7 +34,7 @@ let handler ~state ~mailbox _conn req _body =
       in
       match code with
       | Ok code when Lwt_mvar.is_empty mailbox ->
-          let%lwt () = Lwt_mvar.put mailbox code in
+          let* () = Lwt_mvar.put mailbox code in
           Http.Server.respond_string ~status:`OK
             ~body:"Authentication Successful" ()
       | Ok _ ->
@@ -46,7 +47,7 @@ let handler ~state ~mailbox _conn req _body =
 let run t () =
   let callback = handler ~state:t.state ~mailbox:t.mailbox in
   let server = Http.Server.make ~callback () in
-  let port = Uri.port t.redirect_uri in
+  let port = Http.Uri.port t.redirect_uri in
   let run_sever =
     match port with
     | Some port ->
@@ -63,6 +64,6 @@ let run t () =
   | Error (`Msg msg) -> Lwt.return_error (`Msg msg)
 
 let get_code t =
-  let%lwt code = Lwt_mvar.take t.mailbox in
+  let* code = Lwt_mvar.take t.mailbox in
   let () = Lwt.cancel t.stop_server_promise in
   Lwt.return code

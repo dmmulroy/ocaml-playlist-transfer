@@ -8,8 +8,8 @@ let test_spotify () =
   let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
   let state = Int.to_string @@ Random.bits () in
   let redirect_uri = Http.Uri.of_string "http://localhost:3939/spotify" in
-  let redirect_server = Http.Redirect_server.make ~state ~redirect_uri in
-  let* _ = Http.Redirect_server.run redirect_server () in
+  let redirect_server = Redirect_server.make ~state ~redirect_uri in
+  let* _ = Redirect_server.run redirect_server () in
   let authorization_uri =
     Spotify.Auth.make_authorization_url ~client_id ~redirect_uri ~state
       ~scopes:
@@ -20,9 +20,11 @@ let test_spotify () =
         ]
       ~show_dialog:false ()
   in
-  let cmd = Filename.quote_command "open" [ Uri.to_string authorization_uri ] in
+  let cmd =
+    Filename.quote_command "open" [ Http.Uri.to_string authorization_uri ]
+  in
   let _ = Unix.system cmd in
-  let* code = Http.Redirect_server.get_code redirect_server in
+  let* code = Redirect_server.get_code redirect_server in
   let+ access_token =
     Spotify.Auth.request_access_token
       (`Authorization_code { client_secret; client_id; code; redirect_uri })

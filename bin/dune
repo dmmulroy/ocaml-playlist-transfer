@@ -1,5 +1,5 @@
 (executable
  (public_name ocaml_playlist_transfer)
  (name main)
- (libraries spotify apple syntax ppx_deriving_yojson.runtime)
+ (libraries spotify apple syntax redirect_server ppx_deriving_yojson.runtime)
  (preprocess (pps lwt_ppx ppx_deriving_yojson)))

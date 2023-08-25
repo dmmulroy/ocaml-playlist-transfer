@@ -1,0 +1,3 @@
+(library
+ (name redirect_server)
+ (libraries http cohttp-lwt-unix syntax))
