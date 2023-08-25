@@ -4,5 +4,9 @@ include Rest_client.Make (struct
   module Error = Spotify_error
 
   let headers_of_api_client client =
-    Http.Header.of_list [ ("Authorization", Client.get_bearer_token client) ]
+    Http.Header.of_list
+      [
+        ( "Authorization",
+          Format.sprintf "Bearer %s" @@ Client.get_bearer_token client );
+      ]
 end)

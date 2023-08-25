@@ -16,5 +16,4 @@ val make :
   unit ->
   t
 
-val to_bearer_token : t -> string
 val set_expiration_time : t -> float -> t

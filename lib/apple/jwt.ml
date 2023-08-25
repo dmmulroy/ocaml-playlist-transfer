@@ -85,7 +85,6 @@ let of_string ~private_pem jwt_str =
   in
   Ok { key; jwt }
 
-let to_bearer_token t = "Bearer " ^ Jwt.to_string t.jwt
 let to_string t = Jwt.to_string t.jwt
 
 let validate t =
@@ -94,5 +93,4 @@ let validate t =
     Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt
     >|? Internal_error.to_error ~map_msg:(fun msg -> `Validation_error msg)
   in
-  print_endline "here 1";
   Ok { t with jwt = validated_jwt }

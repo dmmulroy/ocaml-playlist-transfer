@@ -5,9 +5,7 @@ type t = {
 }
 
 let get_access_token { access_token; _ } = access_token
-
-let get_bearer_token { access_token; _ } =
-  Access_token.to_bearer_token access_token
+let get_bearer_token { access_token; _ } = Access_token.get_token access_token
 
 let get_client_credentials { client_id; client_secret; _ } =
   (client_id, client_secret)

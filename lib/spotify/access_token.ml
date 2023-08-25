@@ -18,4 +18,3 @@ let make ?scopes ?refresh_token ~expiration_time ~grant_type ~token () =
   { token; grant_type; expiration_time; refresh_token; scopes }
 
 let set_expiration_time t expiration_time = { t with expiration_time }
-let to_bearer_token t = "Bearer " ^ t.token

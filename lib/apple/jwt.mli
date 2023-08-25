@@ -11,6 +11,5 @@ val make :
   (t, Error.t) result
 
 val of_string : private_pem:string -> string -> (t, Error.t) result
-val to_bearer_token : t -> string
 val to_string : t -> string
 val validate : t -> (t, Error.t) result
