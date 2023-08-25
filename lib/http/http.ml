@@ -39,7 +39,7 @@ module Header = struct
   let add_list_unless_exists headers new_headers =
     List.fold_left
       (fun headers' (key, value) -> Header.add_unless_exists headers' key value)
-      headers new_headers
+      headers (to_list new_headers)
 
   let of_request (_, headers, _, _) = headers
 end

@@ -7,7 +7,7 @@ module Config = struct
 
     module Error : Error.S
 
-    val headers_of_api_client : api_client -> (string * string) list
+    val headers_of_api_client : api_client -> Http.Header.t
   end
 end
 

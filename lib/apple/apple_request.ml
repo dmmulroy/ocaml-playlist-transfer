@@ -4,8 +4,9 @@ include Rest_client.Make (struct
   module Error = Apple_error
 
   let headers_of_api_client client =
-    [
-      ("Authorization", Client.get_bearer_token client);
-      ("Music-User-Token", Client.music_user_token client);
-    ]
+    Http.Header.of_list
+      [
+        ("Authorization", Client.get_bearer_token client);
+        ("Music-User-Token", Client.music_user_token client);
+      ]
 end)
