@@ -39,8 +39,6 @@ module Header = struct
     List.fold_left
       (fun headers' (key, value) -> Header.add_unless_exists headers' key value)
       headers (to_list new_headers)
-
-  let of_request (_, headers, _, _) = headers
 end
 
 module Uri = struct

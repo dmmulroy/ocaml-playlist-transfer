@@ -21,7 +21,6 @@ module Header : sig
 
   val add_unless_exists : t -> t -> t
   val empty : t
-  val of_request : 'a * t * 'b * 'c -> t
 end
 
 module Uri : sig
