@@ -1,7 +1,7 @@
 type attributes = {
   album_name : string option; [@key "albumName"] [@default None]
   artist_name : string option; [@key "artistName"] [@default None]
-  (* artwork : Artwork.t; *)
+  artwork : Artwork.t;
   content_rating : string option; [@key "contentRating"] [@default None]
   disc_number : int option; [@key "discNumber"] [@default None]
   duration_in_millis : int; [@key "durationInMillis"]

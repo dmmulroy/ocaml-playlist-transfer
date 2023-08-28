@@ -33,6 +33,7 @@ module Get_all_playlists_output = struct
   type playlist = t [@@deriving yojson { strict = false }]
   type meta = { total : int } [@@deriving yojson { strict = false }]
 
+  (* TODO: Move this out to it's own module/type *)
   type t = {
     data : playlist list;
     meta : meta;
