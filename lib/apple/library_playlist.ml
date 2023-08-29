@@ -30,16 +30,8 @@ module Get_all_playlists_input = struct
 end
 
 module Get_all_playlists_output = struct
-  type playlist = t [@@deriving yojson { strict = false }]
-  type meta = { total : int } [@@deriving yojson { strict = false }]
-
-  (* TODO: Move this out to it's own module/type *)
-  type t = {
-    data : playlist list;
-    meta : meta;
-    next : string option; [@default None]
-  }
-  [@@deriving yojson { strict = false }]
+  type playlist = t [@@deriving yojson]
+  type t = playlist Page.t [@@deriving yojson]
 end
 
 module Get_all_playlists = Apple_request.Make (struct
