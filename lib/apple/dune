@@ -2,4 +2,4 @@
  (name apple)
  (libraries syntax http rest_client jose ppx_deriving_yojson.runtime ptime ptime.clock.os error)
  (preprocess
-  (pps lwt_ppx ppx_deriving.show ppx_deriving_yojson)))
+  (pps ppx_deriving.make ppx_deriving.show ppx_deriving_yojson)))

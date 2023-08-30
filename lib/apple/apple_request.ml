@@ -6,8 +6,7 @@ include Rest_client.Make (struct
   let headers_of_api_client client =
     Http.Header.of_list
       [
-        ( "Authorization",
-          Format.sprintf "Bearer %s" @@ Client.get_bearer_token client );
+        ("Authorization", Fmt.str "Bearer %s" @@ Client.get_bearer_token client);
         ("Music-User-Token", Client.music_user_token client);
       ]
 end)
