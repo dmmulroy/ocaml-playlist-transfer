@@ -19,6 +19,10 @@ type attributes = {
 }
 [@@deriving yojson { strict = false }]
 
+(* type relationships = { *)
+(*   catalog *)
+(* } *)
+
 type t = {
   attributes : attributes;
   href : string;
