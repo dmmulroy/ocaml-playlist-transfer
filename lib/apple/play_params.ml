@@ -1,9 +1,10 @@
-type kind = ([ `Playlist ][@deriving yojson])
+type kind = ([ `Playlist | `Song ][@deriving yojson])
 
-let kind_to_string = function `Playlist -> "playlist"
+let kind_to_string = function `Playlist -> "playlist" | `Song -> "song"
 
 let kind_of_string = function
   | "playlist" -> Ok `Playlist
+  | "song" -> Ok `Song
   | _ -> Error "Invalid kind"
 
 let kind_to_yojson kind = `String (kind_to_string kind)
