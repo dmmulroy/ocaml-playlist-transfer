@@ -77,7 +77,7 @@ module Make (C : Config.S) = struct
   let handle_response ~deserialize (response : Http.Response.t) =
     let open Infix.Lwt_result in
     let+ json =
-      Http.Response.body response |> Http.Body.to_yojson >|?* fun (`Msg msg) ->
+      Http.Response.body response |> Http.Body.to_yojson >|?* fun msg ->
       let* json_str = Http.Body.to_string @@ Http.Response.body response in
       let source = `Serialization (`Raw json_str) in
       Lwt.return @@ C.Error.make ~source msg

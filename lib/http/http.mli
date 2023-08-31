@@ -5,8 +5,8 @@ include module type of Cohttp_lwt_unix
 module Body : sig
   include module type of Body
 
-  val to_yojson : t -> (Yojson.Safe.t, [> `Msg of string ]) result Lwt.t
-  val of_yojson : Yojson.Safe.t -> (t, [> `Msg of string ]) result
+  val to_yojson : t -> (Yojson.Safe.t, string) result Lwt.t
+  val of_yojson : Yojson.Safe.t -> (t, string) result
 end
 
 module Code : sig

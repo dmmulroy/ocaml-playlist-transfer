@@ -11,13 +11,13 @@ module Body = struct
     let* body' = Body.to_string body in
     let| json =
       try Ok (Yojson.Safe.from_string body')
-      with Yojson.Json_error msg -> Error (`Msg msg)
+      with Yojson.Json_error msg -> Error msg
     in
     Lwt.return_ok json
 
   let of_yojson json =
     try Yojson.Safe.to_string json |> Body.of_string |> Result.ok
-    with Yojson.Json_error msg -> Error (`Msg msg)
+    with Yojson.Json_error msg -> Error msg
 end
 
 module Code = struct

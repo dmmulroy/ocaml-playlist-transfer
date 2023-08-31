@@ -65,7 +65,7 @@ module CreatePlaylist = Spotify_request.Make (struct
     let open Infix.Result in
     let input_json = Create_input.to_yojson input in
     let| body =
-      Http.Body.of_yojson input_json >|? fun (`Msg str) ->
+      Http.Body.of_yojson input_json >|? fun str ->
       Spotify_error.make ~source:(`Serialization (`Json input_json)) str
     in
     Lwt.return_ok

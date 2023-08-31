@@ -1,25 +1,21 @@
-type t = ([ `Catalog | `Tracks ][@deriving yojson])
+type t = [ `Catalog | `Tracks ]
 
 let to_string = function `Catalog -> "catalog" | `Tracks -> "tracks" | #t -> .
 
 let of_string = function
   | "catalog" -> Ok `Catalog
   | "tracks" -> Ok `Tracks
-  | _ -> Error "Invalid relationship"
+  | _ -> Error (`Msg "Invalid relationship")
 
 let of_yojson = function
-  | `String "catalog" -> Ok `Catalog
-  | `String "tracks" -> Ok `Tracks
-  | _ -> Error "Invalid resource type"
+  | `String relationship -> of_string relationship
+  | _ -> Error (`Msg "Invalid relationship type")
 
-let to_yojson = function
-  | `Catalog -> `String "catalog"
-  | `Tracks -> `String "tracks"
-  | #t -> .
+let to_yojson relationship = `String (to_string relationship)
 
-let of_string_list resources =
+let of_string_list relationship =
   List.filter_map
     (fun resource -> Result.to_option @@ of_string resource)
-    resources
+    relationship
 
-let to_string_list resources = List.map to_string resources
+let to_string_list relationship = List.map to_string relationship
