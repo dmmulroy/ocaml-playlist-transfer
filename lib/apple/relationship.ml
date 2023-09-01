@@ -19,3 +19,10 @@ let of_string_list relationship =
     relationship
 
 let to_string_list relationship = List.map to_string relationship
+
+type 'a response = {
+  href : string option; [@default None]
+  data : 'a list;
+  next : Page.next option; [@default None]
+}
+[@@deriving yojson]

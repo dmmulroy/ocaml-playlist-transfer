@@ -19,12 +19,18 @@ type attributes = {
 }
 [@@deriving yojson { strict = false }]
 
-type relationships
+type relationships = {
+  (* TODO: Implement Catalog.t and Playlist.t *)
+  catalog : Catalog.t Relationship.response option; [@default None]
+  tracks : Playlist.t Relationship.response option; [@default None]
+}
+[@@deriving yojson]
 
 type t = {
   attributes : attributes;
   href : string;
   id : string;
+  relationships : relationships option; [@default None]
   resource_type : Resource.t; [@key "type"]
 }
 [@@deriving yojson { strict = false }]

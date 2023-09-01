@@ -1,4 +1,4 @@
-type kind = ([ `Playlist | `Song ][@deriving yojson])
+type kind = [ `Playlist | `Song ]
 
 let kind_to_string = function `Playlist -> "playlist" | `Song -> "song"
 
