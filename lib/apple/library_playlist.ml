@@ -1,15 +1,12 @@
 open Syntax
 
-type description = { standard : string; short : string option [@default None] }
-[@@deriving yojson]
-
 type track_types = Resource.t list [@@deriving yojson]
 
 type attributes = {
   artwork : Artwork.t option; [@default None]
   can_edit : bool; [@key "canEdit"]
   date_added : string; [@key "dateAdded"]
-  description : description option; [@default None]
+  description : Description.t option; [@default None]
   has_catalog : bool; [@key "hasCatalog"]
   is_public : bool; [@key "isPublic"]
   last_modified_date : string; [@key "lastModifiedDate"]
@@ -17,12 +14,11 @@ type attributes = {
   play_params : Play_params.t; [@key "playParams"]
   track_types : track_types option; [@key "trackTypes"] [@default None]
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
 
 type relationships = {
-  (* TODO: Implement Catalog.t and Playlist.t *)
-  catalog : Catalog.t Relationship.response option; [@default None]
-  tracks : Playlist.t Relationship.response option; [@default None]
+  catalog : Playlist.t Relationship.response option; [@default None]
+  tracks : Library_song.t Relationship.response option; [@default None]
 }
 [@@deriving yojson]
 
@@ -33,7 +29,7 @@ type t = {
   relationships : relationships option; [@default None]
   resource_type : Resource.t; [@key "type"]
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
 
 module Get_all_input = struct
   type t = unit
