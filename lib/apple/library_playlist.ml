@@ -1,7 +1,5 @@
 open Syntax
 
-type track_types = Resource.t list [@@deriving yojson]
-
 type attributes = {
   artwork : Artwork.t option; [@default None]
   can_edit : bool; [@key "canEdit"]
@@ -12,7 +10,7 @@ type attributes = {
   last_modified_date : string; [@key "lastModifiedDate"]
   name : string;
   play_params : Play_params.t; [@key "playParams"]
-  track_types : track_types option; [@key "trackTypes"] [@default None]
+  track_types : Resource.t list option; [@key "trackTypes"] [@default None]
 }
 [@@deriving yojson]
 
