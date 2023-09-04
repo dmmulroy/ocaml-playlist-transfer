@@ -9,19 +9,18 @@ type attributes = {
   is_public : bool; [@key "isPublic"]
   last_modified_date : string; [@key "lastModifiedDate"]
   name : string;
-  play_params : Play_params.t; [@key "playParams"]
+  play_params : Play_params.t option; [@key "playParams"] [@default None]
   track_types : Resource.t list option; [@key "trackTypes"] [@default None]
 }
 [@@deriving yojson]
 
-(* TODO: Figure out a good way to multiple types for the tracks relationships
- * It can be either library song(s) or library music video(s)
- *)
-type track_relationship = [ `Library_song of Library_song.t ]
-
 type relationships = {
   catalog : Playlist.t Relationship.response option; [@default None]
-  tracks : Library_song.t Relationship.response option; [@default None]
+  tracks :
+    [ `Library_song of Library_song.t | `Library_music_video ]
+    Relationship.response
+    option;
+      [@default None]
 }
 [@@deriving yojson]
 

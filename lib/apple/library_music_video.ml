@@ -4,10 +4,8 @@ type attributes = {
   artwork : Artwork.t;
   content_rating : [ `Clean | `Explicit ] option;
       [@key "contentRating"] [@default None]
-  disc_number : int option; [@key "discNumber"] [@default None]
   duration_in_millis : int; [@key "durationInMillis"]
   genre_names : string list; [@key "genreNames"]
-  has_lyrics : bool; [@key "hasLyrics"]
   name : string;
   play_params : Play_params.t option; [@key "playParams"] [@default None]
   release_date : string option; [@key "releaseDate"] [@default None]
@@ -15,7 +13,6 @@ type attributes = {
 }
 [@@deriving yojson]
 
-(* TODO: Type relationships *)
 type t = {
   attributes : attributes;
   id : string;
