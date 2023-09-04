@@ -41,4 +41,4 @@ type t = {
   resource_type : Resource.t; [@key "type"]
   href : string;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]

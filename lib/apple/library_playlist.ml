@@ -61,18 +61,18 @@ let relationships_of_yojson json =
     with Type_error _ -> None
   in
   let tracks =
-    let open Infix.Result in
     try
       member "tracks" json
-      |> Relationship.response_of_yojson (fun tracks_json ->
+      |> Relationship.response_of_yojson (fun track_json ->
+             let open Infix.Result in
              match
-               member "type" tracks_json |> to_string |> Resource.of_string
+               member "type" track_json |> to_string |> Resource.of_string
              with
              | Ok `Library_songs ->
-                 Library_song.of_yojson tracks_json >|= fun song ->
+                 Library_song.of_yojson track_json >|= fun song ->
                  `Library_song song
              | Ok `Library_music_videos ->
-                 Library_music_video.of_yojson tracks_json >|= fun video ->
+                 Library_music_video.of_yojson track_json >|= fun video ->
                  `Library_music_video video
              | _ -> Error "Invalid track type")
       |> Result.to_option
@@ -159,6 +159,8 @@ module Get_by_id = Apple_request.Make (struct
     @@ Get_by_id_input.to_query_params input
 
   let to_http_request input =
+    let uri = make_endpoint input in
+    let _ = Fmt.pr "%a\n" Http.Uri.pp_hum uri in
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =

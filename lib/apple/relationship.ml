@@ -18,11 +18,9 @@ let of_string_list relationship =
     (fun resource -> Result.to_option @@ of_string resource)
     relationship
 
-let to_string_list relationship = List.map to_string relationship
+let to_string_list relationships = List.map to_string relationships
 
 type meta = { total : int } [@@deriving yojson]
-
-[@@@ocaml.warning "-27"]
 
 type 'a response = {
   href : string option; [@default None]
