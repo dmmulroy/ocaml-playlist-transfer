@@ -61,8 +61,12 @@ let test_apple () =
   let jwt_str = Sys.getenv "APPLE_JWT" in
   let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
   let client = Apple.Client.make ~jwt ~music_user_token in
-  let+ playlists = Apple.Library_playlist.get_all ~client () in
-  let json = Apple.Library_playlist.Get_all_output.to_yojson playlists in
+  let input =
+    Apple.Library_playlist.Get_by_id_input.make ~relationships:[ `Catalog ]
+      ~id:"p.PkxV8JVIPa467ad" ()
+  in
+  let+ playlist = Apple.Library_playlist.get_by_id ~client input in
+  let json = Apple.Library_playlist.Get_by_id_output.to_yojson playlist in
   print_endline @@ "Playlists: " ^ Yojson.Safe.pretty_to_string json;
   Lwt.return_ok ()
 

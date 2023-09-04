@@ -17,7 +17,7 @@ type t = {
   catalog_id : string option; [@default None] [@key "catalogId"]
   global_id : string option; [@default None] [@key "globalId"]
   id : string;
-  is_library : bool; [@key "isLibrary"]
+  is_library : bool option; [@key "isLibrary"] [@default None]
   kind : kind;
   reporting : bool option; [@default None]
   reporting_id : string option; [@default None] [@key "reportingId"]

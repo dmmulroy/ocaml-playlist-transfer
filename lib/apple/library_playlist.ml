@@ -16,13 +16,43 @@ type attributes = {
 
 type relationships = {
   catalog : Playlist.t Relationship.response option; [@default None]
-  tracks :
-    [ `Library_song of Library_song.t | `Library_music_video ]
-    Relationship.response
-    option;
-      [@default None]
+      (* tracks : *)
+      (*   [ `Library_song of Library_song.t *)
+      (*   | `Library_music_video of Library_music_video.t ] *)
+      (*   Relationship.response *)
+      (*   option; *)
+      (*     [@default None] *)
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
+
+(* let relationships_of_yojson json = *)
+(*   let open Yojson.Safe.Util in *)
+(*   let catalog = *)
+(*     try *)
+(*       member "catalog" json *)
+(*       |> Relationship.response_of_yojson Playlist.of_yojson *)
+(*       |> Result.to_option *)
+(*     with Type_error _ -> None *)
+(*   in *)
+(*   let tracks = *)
+(*     let open Infix.Result in *)
+(*     try *)
+(*       member "tracks" json *)
+(*       |> Relationship.response_of_yojson (fun tracks_json -> *)
+(*              match *)
+(*                member "type" tracks_json |> to_string |> Resource.of_string *)
+(*              with *)
+(*              | Ok `Library_songs -> *)
+(*                  Library_song.of_yojson tracks_json >|= fun song -> *)
+(*                  `Library_song song *)
+(*              | Ok `Library_music_videos -> *)
+(*                  Library_music_video.of_yojson tracks_json >|= fun video -> *)
+(*                  `Library_music_video video *)
+(*              | _ -> Error "Invalid track type") *)
+(*       |> Result.to_option *)
+(*     with Type_error _ -> None *)
+(*   in *)
+(*   Ok { catalog; tracks } *)
 
 type t = {
   attributes : attributes;
@@ -31,20 +61,20 @@ type t = {
   relationships : relationships option; [@default None]
   resource_type : Resource.t; [@key "type"]
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 module Get_all_input = struct
   type t = unit
 end
 
 module Get_all_output = struct
-  type playlist = t [@@deriving yojson]
-  type t = playlist Page.t [@@deriving yojson]
+  type playlist = t [@@deriving yojson { strict = false }]
+  type t = playlist Page.t [@@deriving yojson { strict = false }]
 end
 
 module Get_all = Apple_request.Make (struct
   type input = Get_all_input.t
-  type output = Get_all_output.t [@@deriving yojson]
+  type output = Get_all_output.t [@@deriving yojson { strict = false }]
 
   let name = "Get_all"
 
@@ -96,7 +126,8 @@ module Get_by_id = Apple_request.Make (struct
   let make_endpoint (input : input) =
     let base_endpoint =
       Http.Uri.of_string
-      @@ Fmt.str "https://api.music.apple.com/v1/playlists/%s" input.id
+      @@ Fmt.str "https://api.music.apple.com/v1/me/library/playlists/%s"
+           input.id
     in
     Http.Uri.add_query_params' base_endpoint
     @@ Get_by_id_input.to_query_params input

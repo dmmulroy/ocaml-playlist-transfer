@@ -7,6 +7,7 @@ type attributes = {
   disc_number : int option; [@key "discNumber"] [@default None]
   duration_in_millis : int; [@key "durationInMillis"]
   genre_names : string list; [@key "genreNames"]
+  has_credits : bool; [@key "hasCredits"]
   has_lyrics : bool; [@key "hasLyrics"]
   name : string;
   play_params : Play_params.t option; [@key "playParams"] [@default None]
