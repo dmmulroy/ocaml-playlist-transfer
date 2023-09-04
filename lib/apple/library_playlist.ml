@@ -16,43 +16,69 @@ type attributes = {
 
 type relationships = {
   catalog : Playlist.t Relationship.response option; [@default None]
-      (* tracks : *)
-      (*   [ `Library_song of Library_song.t *)
-      (*   | `Library_music_video of Library_music_video.t ] *)
-      (*   Relationship.response *)
-      (*   option; *)
-      (*     [@default None] *)
+  tracks :
+    [ `Library_song of Library_song.t
+    | `Library_music_video of Library_music_video.t ]
+    Relationship.response
+    option;
+      [@default None]
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
 
-(* let relationships_of_yojson json = *)
-(*   let open Yojson.Safe.Util in *)
-(*   let catalog = *)
-(*     try *)
-(*       member "catalog" json *)
-(*       |> Relationship.response_of_yojson Playlist.of_yojson *)
-(*       |> Result.to_option *)
-(*     with Type_error _ -> None *)
-(*   in *)
-(*   let tracks = *)
-(*     let open Infix.Result in *)
-(*     try *)
-(*       member "tracks" json *)
-(*       |> Relationship.response_of_yojson (fun tracks_json -> *)
-(*              match *)
-(*                member "type" tracks_json |> to_string |> Resource.of_string *)
-(*              with *)
-(*              | Ok `Library_songs -> *)
-(*                  Library_song.of_yojson tracks_json >|= fun song -> *)
-(*                  `Library_song song *)
-(*              | Ok `Library_music_videos -> *)
-(*                  Library_music_video.of_yojson tracks_json >|= fun video -> *)
-(*                  `Library_music_video video *)
-(*              | _ -> Error "Invalid track type") *)
-(*       |> Result.to_option *)
-(*     with Type_error _ -> None *)
-(*   in *)
-(*   Ok { catalog; tracks } *)
+let relationships_to_yojson relationships =
+  let open Infix.Option in
+  let catalog =
+    match relationships.catalog with
+    | Some catalog ->
+        Relationship.response_to_yojson Playlist.to_yojson catalog
+        |> Option.some
+    | None -> None
+  in
+  let tracks =
+    match relationships.tracks with
+    | Some tracks ->
+        Relationship.response_to_yojson
+          (fun track ->
+            match track with
+            | `Library_song song -> Library_song.to_yojson song
+            | `Library_music_video video -> Library_music_video.to_yojson video)
+          tracks
+        |> Option.some
+    | None -> None
+  in
+  `Assoc
+    (List.filter_map
+       (fun (key, value) -> value >|= fun value -> (key, value))
+       [ ("catalog", catalog); ("tracks", tracks) ])
+
+let relationships_of_yojson json =
+  let open Yojson.Safe.Util in
+  let catalog =
+    try
+      member "catalog" json
+      |> Relationship.response_of_yojson Playlist.of_yojson
+      |> Result.to_option
+    with Type_error _ -> None
+  in
+  let tracks =
+    let open Infix.Result in
+    try
+      member "tracks" json
+      |> Relationship.response_of_yojson (fun tracks_json ->
+             match
+               member "type" tracks_json |> to_string |> Resource.of_string
+             with
+             | Ok `Library_songs ->
+                 Library_song.of_yojson tracks_json >|= fun song ->
+                 `Library_song song
+             | Ok `Library_music_videos ->
+                 Library_music_video.of_yojson tracks_json >|= fun video ->
+                 `Library_music_video video
+             | _ -> Error "Invalid track type")
+      |> Result.to_option
+    with Type_error _ -> None
+  in
+  Ok { catalog; tracks }
 
 type t = {
   attributes : attributes;
@@ -61,20 +87,20 @@ type t = {
   relationships : relationships option; [@default None]
   resource_type : Resource.t; [@key "type"]
 }
-[@@deriving yojson { strict = false }]
+[@@deriving yojson]
 
 module Get_all_input = struct
   type t = unit
 end
 
 module Get_all_output = struct
-  type playlist = t [@@deriving yojson { strict = false }]
-  type t = playlist Page.t [@@deriving yojson { strict = false }]
+  type playlist = t [@@deriving yojson]
+  type t = playlist Page.t [@@deriving yojson]
 end
 
 module Get_all = Apple_request.Make (struct
   type input = Get_all_input.t
-  type output = Get_all_output.t [@@deriving yojson { strict = false }]
+  type output = Get_all_output.t [@@deriving yojson]
 
   let name = "Get_all"
 

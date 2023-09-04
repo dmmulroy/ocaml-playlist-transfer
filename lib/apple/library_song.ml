@@ -1,9 +1,26 @@
+type content_rating = [ `Clean | `Explicit ] [@@deriving yojson]
+
+let content_rating_to_string = function
+  | `Clean -> "clean"
+  | `Explicit -> "explicit"
+
+let content_rating_of_string = function
+  | "clean" -> Ok `Clean
+  | "explicit" -> Ok `Explicit
+  | _ -> Error "Invalid content rating"
+
+let content_rating_to_yojson content_rating =
+  `String (content_rating_to_string content_rating)
+
+let content_rating_of_yojson = function
+  | `String s -> content_rating_of_string s
+  | _ -> Error "Invalid content rating"
+
 type attributes = {
   album_name : string option; [@key "albumName"] [@default None]
   artist_name : string; [@key "artistName"]
   artwork : Artwork.t;
-  content_rating : [ `Clean | `Explicit ] option;
-      [@key "contentRating"] [@default None]
+  content_rating : content_rating option; [@key "contentRating"] [@default None]
   disc_number : int option; [@key "discNumber"] [@default None]
   duration_in_millis : int; [@key "durationInMillis"]
   genre_names : string list; [@key "genreNames"]
@@ -19,6 +36,7 @@ type attributes = {
 (* TODO: Type relationships *)
 type t = {
   attributes : attributes;
+  (* relationships : unit; *)
   id : string;
   resource_type : Resource.t; [@key "type"]
   href : string;
