@@ -14,6 +14,11 @@ type attributes = {
 }
 [@@deriving yojson]
 
+(* TODO: Figure out a good way to multiple types for the tracks relationships
+ * It can be either library song(s) or library music video(s)
+ *)
+type track_relationship = [ `Library_song of Library_song.t ]
+
 type relationships = {
   catalog : Playlist.t Relationship.response option; [@default None]
   tracks : Library_song.t Relationship.response option; [@default None]
