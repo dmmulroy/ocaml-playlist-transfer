@@ -44,7 +44,7 @@ end
 
 module Get_all = Apple_request.Make (struct
   type input = Get_all_input.t
-  type output = Get_all_output.t [@@deriving yojson { strict = false }]
+  type output = Get_all_output.t [@@deriving yojson]
 
   let name = "Get_all"
 

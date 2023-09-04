@@ -69,5 +69,5 @@ let test_apple () =
 let () =
   let res = Lwt_main.run @@ test_apple () in
   match res with
-  | Ok () -> ()
+  | Ok () -> print_endline "Success"
   | Error err -> print_endline @@ Error.to_string err
