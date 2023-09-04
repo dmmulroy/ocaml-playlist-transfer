@@ -62,7 +62,7 @@ let test_apple () =
   let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
   let client = Apple.Client.make ~jwt ~music_user_token in
   let input =
-    Apple.Library_playlist.Get_by_id_input.make ~relationships:[ `Catalog ]
+    Apple.Library_playlist.Get_by_id_input.make ~relationships:[ `Tracks ]
       ~id:"p.PkxV8JVIPa467ad" ()
   in
   let+ playlist = Apple.Library_playlist.get_by_id ~client input in
