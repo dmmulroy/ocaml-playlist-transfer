@@ -108,7 +108,10 @@ module Create_input = struct
 
   type 'a data = { data : 'a list } [@@deriving to_yojson]
 
-  type relationships = { tracks : track data; parent : parent data option }
+  type relationships = {
+    tracks : track data option;
+    parent : parent data option;
+  }
   [@@deriving to_yojson]
 
   type attributes = { description : string option; name : string }
@@ -117,10 +120,10 @@ module Create_input = struct
   type t = { attributes : attributes; relationships : relationships option }
   [@@deriving to_yojson]
 
-  let make ?description ?parent_playlist_folder ~name ~tracks () =
+  let make ?description ?parent_playlist_folder ?tracks ~name () =
     let attributes = { description; name } in
     let relationships =
-      let tracks = { data = tracks } in
+      let tracks = Option.map (fun tracks -> { data = tracks }) tracks in
       let parent =
         Option.map (fun parent -> { data = [ parent ] }) parent_playlist_folder
       in
@@ -155,6 +158,8 @@ module Create = Apple_request.Make (struct
   let of_http_response =
     Apple_request.handle_response ~deserialize:output_of_yojson
 end)
+
+let create = Create.request
 
 module Get_all_input = struct
   type t = unit

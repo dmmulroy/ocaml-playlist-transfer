@@ -51,12 +51,8 @@ let test_spotify () =
   in
   Lwt.return_ok ()
 
-let test_apple () =
+let test_apple_get_playlist_by_id () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  (* let team_id = Sys.getenv "APPLE_TEAM_ID" in *)
-  (* let key_id = Sys.getenv "APPLE_KEY_ID" in *)
-  (* let| jwt = Apple.Jwt.make ~private_pem ~team_id ~key_id () in *)
-  (* let| _ = Apple.Jwt.validate jwt in *)
   let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
   let jwt_str = Sys.getenv "APPLE_JWT" in
   let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
@@ -70,8 +66,20 @@ let test_apple () =
   print_endline @@ "Playlists: " ^ Yojson.Safe.pretty_to_string json;
   Lwt.return_ok ()
 
+let test_apple_create_playlist () =
+  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
+  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
+  let jwt_str = Sys.getenv "APPLE_JWT" in
+  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
+  let client = Apple.Client.make ~jwt ~music_user_token in
+  let input = Apple.Library_playlist.Create_input.make ~name:"Test" () in
+  let+ playlist = Apple.Library_playlist.create ~client input in
+  let json = Apple.Library_playlist.Create_output.to_yojson playlist in
+  print_endline @@ "Playlist: " ^ Yojson.Safe.pretty_to_string json;
+  Lwt.return_ok ()
+
 let () =
-  let res = Lwt_main.run @@ test_apple () in
+  let res = Lwt_main.run @@ test_apple_create_playlist () in
   match res with
   | Ok () -> print_endline "Success"
   | Error err -> print_endline @@ Error.to_string err
