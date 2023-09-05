@@ -72,7 +72,12 @@ let test_apple_create_playlist () =
   let jwt_str = Sys.getenv "APPLE_JWT" in
   let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
   let client = Apple.Client.make ~jwt ~music_user_token in
-  let input = Apple.Library_playlist.Create_input.make ~name:"Test" () in
+  let input =
+    Apple.Library_playlist.Create_input.make ~name:"Test"
+      ~description:"Test description"
+      ~tracks:[ { id = "i.kGO5DkBTdX1lWXa"; resource_type = `Library_songs } ]
+      ()
+  in
   let+ playlist = Apple.Library_playlist.create ~client input in
   let json = Apple.Library_playlist.Create_output.to_yojson playlist in
   print_endline @@ "Playlist: " ^ Yojson.Safe.pretty_to_string json;

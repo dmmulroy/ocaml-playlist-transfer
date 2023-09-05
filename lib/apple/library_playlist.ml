@@ -121,11 +121,24 @@ module Create_input = struct
   [@@deriving to_yojson]
 
   let make ?description ?parent_playlist_folder ?tracks ~name () =
-    let attributes = { description; name } in
+    let attributes =
+      {
+        description = Option.value ~default:"" description |> Option.some;
+        name;
+      }
+    in
     let relationships =
-      let tracks = Option.map (fun tracks -> { data = tracks }) tracks in
+      let tracks =
+        Option.fold ~none:{ data = [] }
+          ~some:(fun tracks -> { data = tracks })
+          tracks
+        |> Option.some
+      in
       let parent =
-        Option.map (fun parent -> { data = [ parent ] }) parent_playlist_folder
+        Option.fold ~none:{ data = [] }
+          ~some:(fun parent -> { data = [ parent ] })
+          parent_playlist_folder
+        |> Option.some
       in
       Some { tracks; parent }
     in
