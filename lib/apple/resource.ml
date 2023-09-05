@@ -1,22 +1,28 @@
 type t =
   [ `Library_music_videos
-  | `Library_songs
+  | `Library_playlist_folders
   | `Library_playlists
+  | `Library_songs
+  | `Music_videos
   | `Playlists
   | `Songs ]
 
 let to_string = function
+  | `Library_music_videos -> "library-music-videos"
+  | `Library_playlist_folders -> "library-playlist-folders"
   | `Library_playlists -> "library-playlists"
   | `Library_songs -> "library-songs"
-  | `Library_music_videos -> "library-music-videos"
+  | `Music_videos -> "music-videos"
   | `Playlists -> "playlists"
   | `Songs -> "songs"
   | #t -> .
 
 let of_string = function
+  | "library-music-videos" -> Ok `Library_music_videos
+  | "library-playlist-folders" -> Ok `Library_playlist_folders
   | "library-playlists" -> Ok `Library_playlists
   | "library-songs" -> Ok `Library_songs
-  | "library-music-videos" -> Ok `Library_music_videos
+  | "music-videos" -> Ok `Music_videos
   | "playlists" -> Ok `Playlists
   | "songs" -> Ok `Songs
   | _ -> Error "Invalid resource type"

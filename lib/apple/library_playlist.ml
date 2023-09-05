@@ -1,4 +1,5 @@
 open Syntax
+open Let
 
 type attributes = {
   artwork : Artwork.t option; [@default None]
@@ -89,6 +90,72 @@ type t = {
 }
 [@@deriving yojson]
 
+module Create_input = struct
+  type track = {
+    id : string;
+    resource_type :
+      [ `Library_songs | `Library_music_videos | `Music_videos | `Songs ];
+        [@key "type"] [@to_yojson Resource.to_yojson]
+  }
+  [@@deriving to_yojson]
+
+  type parent = {
+    id : string;
+    resource_type : [ `Library_playlist_folders ];
+        [@key "type"] [@to_yojson Resource.to_yojson]
+  }
+  [@@deriving to_yojson]
+
+  type 'a data = { data : 'a list } [@@deriving to_yojson]
+
+  type relationships = { tracks : track data; parent : parent data option }
+  [@@deriving to_yojson]
+
+  type attributes = { description : string option; name : string }
+  [@@deriving to_yojson]
+
+  type t = { attributes : attributes; relationships : relationships option }
+  [@@deriving to_yojson]
+
+  let make ?description ?parent_playlist_folder ~name ~tracks () =
+    let attributes = { description; name } in
+    let relationships =
+      let tracks = { data = tracks } in
+      let parent =
+        Option.map (fun parent -> { data = [ parent ] }) parent_playlist_folder
+      in
+      Some { tracks; parent }
+    in
+    { attributes; relationships }
+end
+
+module Create_output = struct
+  type playlist = t [@@deriving yojson]
+  type t = { data : playlist list } [@@deriving yojson]
+end
+
+module Create = Apple_request.Make (struct
+  type input = Create_input.t
+  type output = Create_output.t [@@deriving yojson]
+
+  let name = "Create"
+
+  let endpoint =
+    Http.Uri.of_string "https://api.music.apple.com/v1/me/library/playlists"
+
+  let to_http_request input =
+    let open Infix.Result in
+    let input_json = Create_input.to_yojson input in
+    let| body =
+      Http.Body.of_yojson input_json >|? fun str ->
+      Apple_error.make ~source:(`Serialization (`Json input_json)) str
+    in
+    Lwt.return_ok @@ Http.Request.make ~meth:`POST ~uri:endpoint ~body ()
+
+  let of_http_response =
+    Apple_request.handle_response ~deserialize:output_of_yojson
+end)
+
 module Get_all_input = struct
   type t = unit
 end
@@ -159,8 +226,6 @@ module Get_by_id = Apple_request.Make (struct
     @@ Get_by_id_input.to_query_params input
 
   let to_http_request input =
-    let uri = make_endpoint input in
-    let _ = Fmt.pr "%a\n" Http.Uri.pp_hum uri in
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =
