@@ -32,6 +32,45 @@ type t = {
 }
 [@@deriving yojson]
 
+module Add_tracks_input = struct
+  type t = { playlist_id : string; uris : string list } [@@deriving make]
+
+  let to_yojson { uris; _ } =
+    `Assoc [ ("uris", `List (List.map (fun uri -> `String uri) uris)) ]
+end
+
+module Add_tracks_output = struct
+  type t = { snapshot_id : string } [@@deriving yojson]
+end
+
+module Add_tracks = Spotify_request.Make (struct
+  type input = Add_tracks_input.t
+  type output = Add_tracks_output.t [@@deriving yojson]
+
+  let name = "Add_tracks"
+
+  let make_endpoint (playlist_id : string) =
+    Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ playlist_id
+    ^ "/tracks"
+
+  let to_http_request input =
+    let open Infix.Result in
+    let input_json = Add_tracks_input.to_yojson input in
+    let| body =
+      Http.Body.of_yojson input_json >|? fun str ->
+      Spotify_error.make ~source:(`Serialization (`Json input_json)) str
+    in
+    Lwt.return_ok
+    @@ Http.Request.make ~meth:`POST ~body
+         ~uri:(make_endpoint input.playlist_id)
+         ()
+
+  let of_http_response =
+    Spotify_request.handle_response ~deserialize:output_of_yojson
+end)
+
+let add_tracks = Add_tracks.request
+
 module Create_input = struct
   type t = {
     collaborative : bool option;

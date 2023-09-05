@@ -2,4 +2,4 @@
  (name spotify)
  (libraries http ppx_deriving_yojson.runtime syntax ptime ptime.clock.os error rest_client)
  (preprocess
-  (pps lwt_ppx ppx_deriving.show ppx_deriving_yojson)))
+  (pps ppx_deriving.show ppx_deriving.make ppx_deriving_yojson)))

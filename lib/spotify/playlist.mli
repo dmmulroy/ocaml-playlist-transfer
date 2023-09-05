@@ -29,6 +29,21 @@ type t = {
 }
 [@@deriving yojson]
 
+module Add_tracks_input : sig
+  type t = { playlist_id : string; uris : string list } [@@deriving make]
+
+  val to_yojson : t -> Yojson.Safe.t
+end
+
+module Add_tracks_output : sig
+  type t = { snapshot_id : string } [@@deriving yojson]
+end
+
+val add_tracks :
+  client:Client.t ->
+  Add_tracks_input.t ->
+  (Add_tracks_output.t, Error.t) Lwt_result.t
+
 module Create_input : sig
   type t = {
     collaborative : bool option;
