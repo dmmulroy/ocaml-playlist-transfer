@@ -29,23 +29,13 @@ type relationships = {
 let relationships_to_yojson relationships =
   let open Infix.Option in
   let catalog =
-    match relationships.catalog with
-    | Some catalog ->
-        Relationship.response_to_yojson Playlist.to_yojson catalog
-        |> Option.some
-    | None -> None
+    relationships.catalog >|= Relationship.response_to_yojson Playlist.to_yojson
   in
   let tracks =
-    match relationships.tracks with
-    | Some tracks ->
-        Relationship.response_to_yojson
-          (fun track ->
-            match track with
-            | `Library_song song -> Library_song.to_yojson song
-            | `Library_music_video video -> Library_music_video.to_yojson video)
-          tracks
-        |> Option.some
-    | None -> None
+    relationships.tracks
+    >|= Relationship.response_to_yojson (function
+          | `Library_song song -> Library_song.to_yojson song
+          | `Library_music_video video -> Library_music_video.to_yojson video)
   in
   `Assoc
     (List.filter_map
