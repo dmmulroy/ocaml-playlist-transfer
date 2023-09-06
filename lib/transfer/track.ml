@@ -6,13 +6,21 @@ type t = {
   name : string;
 }
 
-let of_apple (song : Apple.Library_song.t) =
-  {
-    album = song.attributes.album_name;
-    artist = `Individual song.attributes.artist_name;
-    id = song.id;
-    name = song.attributes.name;
-  }
+let of_apple = function
+  | `Library_song (track : Apple.Library_song.t) ->
+      {
+        album = track.attributes.album_name;
+        artist = `Individual track.attributes.artist_name;
+        id = track.id;
+        name = track.attributes.name;
+      }
+  | `Library_music_video (track : Apple.Library_music_video.t) ->
+      {
+        album = track.attributes.album_name;
+        artist = `Individual track.attributes.artist_name;
+        id = track.id;
+        name = track.attributes.name;
+      }
 
 let of_spotify (track : Spotify.Track.t) =
   {
@@ -22,6 +30,6 @@ let of_spotify (track : Spotify.Track.t) =
         (List.map
            (fun (artist : Spotify.Simple_artist.t) -> artist.name)
            track.artists);
-    id = track.id;
+    id = track.uri;
     name = track.name;
   }

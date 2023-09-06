@@ -80,6 +80,12 @@ type t = {
 }
 [@@deriving yojson]
 
+let tracks playlist =
+  Infix.Option.(
+    playlist.relationships >|= fun relationships ->
+    relationships.tracks >|= fun response -> response.data)
+  |> Option.join
+
 module Create_input = struct
   type track = {
     id : string;
