@@ -126,21 +126,31 @@ module Create_input = struct
   type attributes = { description : string option; name : string }
   [@@deriving to_yojson]
 
+  let attributes_to_yojson attributes =
+    let open Infix.Option in
+    let description =
+      attributes.description >|= fun description -> `String description
+    in
+    let name = Option.some (`String attributes.name) in
+    `Assoc
+      (List.filter_map
+         (fun (key, value) -> value >|= fun value -> (key, value))
+         [ ("description", description); ("name", name) ])
+
   type t = { attributes : attributes; relationships : relationships option }
   [@@deriving to_yojson]
 
   let make ?description ?parent_playlist_folder ?tracks ~name () =
+    let open Infix.Option in
     let attributes = { description; name } in
     let relationships =
-      let tracks' =
-        Option.map (fun tracks_list -> { data = tracks_list }) tracks
-      in
+      let tracks = tracks >|= fun tracks' -> { data = tracks' } in
       let parent =
-        Option.map (fun parent -> { data = [ parent ] }) parent_playlist_folder
+        parent_playlist_folder >|= fun parent -> { data = [ parent ] }
       in
       match (tracks, parent) with
       | None, None -> None
-      | _, _ -> Some { tracks = tracks'; parent }
+      | _, _ -> Some { tracks; parent }
     in
     { attributes; relationships }
 end
