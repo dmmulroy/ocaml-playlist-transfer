@@ -1,3 +1,5 @@
+open Syntax
+
 type t =
   [ `Library_music_videos
   | `Library_playlist_folders
@@ -39,3 +41,9 @@ let of_string_list resources =
     resources
 
 let to_string_list resources = List.map to_string resources
+
+(* TODO: Attempt to do something like val of_yojson_narrowed ~( narrowed : [<t] )
+ * and have fns for each type matching on narrowed
+ *)
+let of_yojson_narrowed ~(narrow : t -> ([< t ], string) result) json =
+  Infix.Result.(of_yojson json >>= narrow)

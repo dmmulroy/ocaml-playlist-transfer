@@ -3,7 +3,7 @@ type t
 module Fns : sig
   module type S = sig
     val cause : t -> t option
-    val domain : t -> [ `Apple | `Spotify | `Domain of string ]
+    val domain : t -> [ `Apple | `Spotify | `Transfer | `Domain of string ]
     val message : t -> string
 
     val source :
@@ -37,7 +37,7 @@ module type S = sig
 end
 
 module type Error_domain = sig
-  val domain : [ `Apple | `Spotify | `Domain of string ]
+  val domain : [ `Apple | `Spotify | `Transfer | `Domain of string ]
 end
 
 module Make (_ : Error_domain) : sig
