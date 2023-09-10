@@ -33,6 +33,9 @@ let of_yojson = function
   | `String resource -> of_string resource
   | _ -> Error "Invalid resource type"
 
+let of_yojson_narrowed ~(narrow : t -> ([< t ], string) result) json =
+  Infix.Result.(of_yojson json >>= narrow)
+
 let to_yojson resource = `String (to_string resource)
 
 let of_string_list resources =
@@ -41,9 +44,3 @@ let of_string_list resources =
     resources
 
 let to_string_list resources = List.map to_string resources
-
-(* TODO: Attempt to do something like val of_yojson_narrowed ~( narrowed : [<t] )
- * and have fns for each type matching on narrowed
- *)
-let of_yojson_narrowed ~(narrow : t -> ([< t ], string) result) json =
-  Infix.Result.(of_yojson json >>= narrow)
