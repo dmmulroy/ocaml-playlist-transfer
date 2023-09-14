@@ -26,7 +26,7 @@ type attributes = {
   genre_names : string list; [@key "genreNames"]
   has_credits : bool; [@key "hasCredits"]
   has_lyrics : bool; [@key "hasLyrics"]
-  isrc : string option; [@default None]
+  isrc : string; (* TODO: Figure out if this actually optional or not  *)
   name : string;
   play_params : Play_params.t option; [@key "playParams"] [@default None]
   release_date : string option; [@key "releaseDate"] [@default None]

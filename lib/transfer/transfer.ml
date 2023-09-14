@@ -37,7 +37,7 @@ end
  *   else search Apple Music for the track using Apple.Song.search
  * 
  * TODO: 
- * - Run search results in parallel
+ * - Look up song by isrc id
  * - Handle not_found/processed results gracefully
  * 
  *)

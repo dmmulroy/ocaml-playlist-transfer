@@ -22,11 +22,19 @@ let of_apple (playlist : Apple.Library_playlist.t) =
       ~some:(fun (description : Apple.Description.t) -> description.standard)
       playlist.attributes.description
   in
-  let tracks =
+  let catalog_ids =
     Infix.Option.(
-      Apple.Library_playlist.tracks playlist >|= List.map Track.of_apple)
+      Apple.Library_playlist.tracks playlist >|= fun tracks ->
+      List.filter_map
+        (fun track ->
+          match track with
+          | `Library_music_video _ -> None
+          | `Library_song track ->
+              Apple.Library_song.(Some track.attributes.play_params.catalog_id))
+          (* TODO: Start here in the AM*)
+        tracks)
   in
-  { description; name; tracks }
+  { description; name; tracks = None }
 
 let of_spotify (playlist : Spotify.Playlist.t) =
   let name = playlist.name in
