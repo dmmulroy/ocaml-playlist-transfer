@@ -83,8 +83,20 @@ let test_apple_create_playlist () =
   print_endline @@ "Playlist: " ^ Yojson.Safe.pretty_to_string json;
   Lwt.return_ok ()
 
+let test_apple_get_song_by_id () =
+  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
+  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
+  let jwt_str = Sys.getenv "APPLE_JWT" in
+  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
+  let client = Apple.Client.make ~jwt ~music_user_token in
+  let input = Apple.Song.Get_by_id_input.make "1696596473" in
+  let+ result = Apple.Song.get_by_id ~client input in
+  print_endline @@ "Song: " ^ Yojson.Safe.pretty_to_string
+  @@ Apple.Song.Get_by_id_output.to_yojson result;
+  Lwt.return_ok ()
+
 let () =
-  let res = Lwt_main.run @@ test_apple_create_playlist () in
+  let res = Lwt_main.run @@ test_apple_get_song_by_id () in
   match res with
   | Ok () -> print_endline "Success"
   | Error err -> print_endline @@ Error.to_string err

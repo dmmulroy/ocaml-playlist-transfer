@@ -25,7 +25,7 @@ type meta = { total : int } [@@deriving yojson]
 type 'a response = {
   href : string option; [@default None]
   data : 'a list;
-  next : Page.next option; [@default None]
+  next : string option; [@default None]
   meta : meta option; [@default None]
 }
 [@@deriving yojson { strict = false }]

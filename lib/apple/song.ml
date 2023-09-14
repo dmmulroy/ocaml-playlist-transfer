@@ -26,12 +26,13 @@ type attributes = {
   genre_names : string list; [@key "genreNames"]
   has_credits : bool; [@key "hasCredits"]
   has_lyrics : bool; [@key "hasLyrics"]
+  isrc : string option; [@default None]
   name : string;
   play_params : Play_params.t option; [@key "playParams"] [@default None]
   release_date : string option; [@key "releaseDate"] [@default None]
   track_number : int option; [@key "trackNumber"] [@default None]
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 let narrow_resource_type = function
   | `Songs as resource -> Ok (resource :> [ `Songs ])
@@ -49,6 +50,36 @@ type t = {
   href : string;
 }
 [@@deriving yojson { strict = false }]
+
+module Get_by_id_input = struct
+  type t = string
+
+  let make id = id
+end
+
+module Get_by_id_output = struct
+  type song = t [@@deriving yojson { strict = false }]
+  type t = { data : song list } [@@deriving yojson { strict = false }]
+end
+
+module Get_by_id = Apple_request.Make (struct
+  type input = Get_by_id_input.t
+  type output = Get_by_id_output.t [@@deriving yojson { strict = false }]
+
+  let name = "Get_by_id"
+
+  let to_http_request input =
+    let uri =
+      Http.Uri.of_string
+        ("https://api.music.apple.com/v1/catalog/us/songs/" ^ input)
+    in
+    Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
+
+  let of_http_response =
+    Apple_request.handle_response ~deserialize:output_of_yojson
+end)
+
+let get_by_id = Get_by_id.request
 
 module Search_input = struct
   type t = {
