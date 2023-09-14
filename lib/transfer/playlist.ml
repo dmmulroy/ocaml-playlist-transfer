@@ -1,39 +1,68 @@
 open Syntax
+open Let
 
+(*
+ * let playlist, failed_tracks = Transfer.Playlist.of_apple apple_playlist in
+ * let spotify_playlist, failed_tracks' = Transfer.Playlist.to_spotify playlist in
+ *)
 type t = { description : string; name : string; tracks : Track.t list option }
 
-let add_track playlist track =
-  let converted_track =
-    match track with
-    | `Apple track' -> Track.of_apple track'
-    | `Spotify track' -> Track.of_spotify track'
-  in
-  let tracks =
-    match playlist.tracks with
-    | None -> Some [ converted_track ]
-    | Some tracks -> Some (converted_track :: tracks)
-  in
-  { playlist with tracks }
+let either_of_apple_track = function
+  | `Library_music_video video ->
+      Either.right @@ Track.of_apple_library_music_video video
+  | `Library_song (song : Apple.Library_song.t) -> (
+      let catalog_id =
+        Infix.Option.(
+          song.attributes.play_params >>= fun play_params ->
+          play_params.catalog_id)
+      in
+      match catalog_id with
+      | None -> Either.right @@ Track.of_apple (`Library song)
+      | Some catalog_id -> Either.left catalog_id)
 
-let of_apple (playlist : Apple.Library_playlist.t) =
+(* (Playlist.t * Track.t list) where Track.t list is a list of songs that we failed to convert*)
+(* val of_apple : Apple.Client.t -> Apple.Library_playlist.t -> (Playlist.t * Track.t list) Lwt_result.t *)
+let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
   let name = playlist.attributes.name in
   let description =
     Option.fold ~none:playlist.attributes.name
       ~some:(fun (description : Apple.Description.t) -> description.standard)
       playlist.attributes.description
   in
-  let catalog_ids =
-    Infix.Option.(
-      Apple.Library_playlist.tracks playlist >|= fun tracks ->
-      List.filter_map
-        (fun track ->
-          match track with
-          | `Library_music_video _ -> None
-          | `Library_song track ->
-              Apple.Library_song.(Some track.attributes.play_params.catalog_id))
-          (* TODO: Start here in the AM*)
-        tracks)
+  let catalog_ids, _skipped_tracks =
+    match Apple.Library_playlist.tracks playlist with
+    | None -> ([], [])
+    | Some tracks ->
+        List.fold_left
+          (fun (catalog_ids, skipped_tracks) track ->
+            match track with
+            | `Library_music_video video ->
+                ( catalog_ids,
+                  Track.of_apple_library_music_video video :: skipped_tracks )
+            | `Library_song (song : Apple.Library_song.t) -> (
+                let catalog_id =
+                  Infix.Option.(
+                    song.attributes.play_params >>= fun play_params ->
+                    play_params.catalog_id)
+                in
+                match catalog_id with
+                | None ->
+                    ( catalog_ids,
+                      Track.of_apple (`Library song) :: skipped_tracks )
+                | Some catalog_id -> (catalog_id :: catalog_ids, skipped_tracks)
+                ))
+          ([], []) tracks
   in
+  let track_promises =
+    List.map
+      (fun catalog_id ->
+        let get_by_id_input = Apple.Song.Get_by_id_input.make catalog_id in
+        let+ response = Apple.Song.get_by_id ~client get_by_id_input in
+        let song = List.hd response.data in
+        Lwt.return_ok @@ Track.of_apple (`Catalog song))
+      catalog_ids
+  in
+  let _ = Lwt_list.map_p (fun promise -> promise) track_promises in
   { description; name; tracks = None }
 
 let of_spotify (playlist : Spotify.Playlist.t) =

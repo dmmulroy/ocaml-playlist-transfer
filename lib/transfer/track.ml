@@ -1,29 +1,45 @@
 type t = {
   album : string option;
   artist : [ `Individual of string | `Collaboration of string list ];
-  (* This will be the track uri for Spotify and the track id for Apple *)
-  id : [ `Apple of string | `Spotify of string ];
-  isrc : string;
+  (* This will be the track uri for Spotify and the catalog id for Apple *)
+  id :
+    [ `Apple_library_id of string
+    | `Apple_catalog_id of string
+    | `Spotify_uri of string ];
+  isrc : string option;
   name : string;
 }
 
+let of_apple_catalog_song (track : Apple.Song.t) =
+  {
+    album = track.attributes.album_name;
+    artist = `Individual track.attributes.artist_name;
+    id = `Apple_catalog_id track.id;
+    name = track.attributes.name;
+    isrc = Some track.attributes.isrc;
+  }
+
+let of_apple_library_song (track : Apple.Library_song.t) =
+  {
+    album = track.attributes.album_name;
+    artist = `Individual track.attributes.artist_name;
+    id = `Apple_catalog_id track.id;
+    name = track.attributes.name;
+    isrc = None;
+  }
+
 let of_apple = function
-  | `Library_song (track : Apple.Song.t) ->
-      {
-        album = track.attributes.album_name;
-        artist = `Individual track.attributes.artist_name;
-        id = `Apple track.id;
-        name = track.attributes.name;
-        isrc = track.attributes.isrc;
-      }
-  | `Library_music_video (track : Apple.Music_video.t) ->
-      {
-        album = Some track.attributes.album_name;
-        artist = `Individual track.attributes.artist_name;
-        id = `Apple track.id;
-        name = track.attributes.name;
-        isrc = track.attributes.isrc;
-      }
+  | `Catalog song -> of_apple_catalog_song song
+  | `Library song -> of_apple_library_song song
+
+let of_apple_library_music_video (track : Apple.Library_music_video.t) =
+  {
+    album = track.attributes.album_name;
+    artist = `Individual track.attributes.artist_name;
+    id = `Apple_library_id track.id;
+    name = track.attributes.name;
+    isrc = None;
+  }
 
 let of_spotify (track : Spotify.Track.t) =
   {
@@ -33,8 +49,7 @@ let of_spotify (track : Spotify.Track.t) =
         (List.map
            (fun (artist : Spotify.Simple_artist.t) -> artist.name)
            track.artists);
-    id = `Spotify track.uri;
+    id = `Spotify_uri track.uri;
     name = track.name;
-    isrc = Option.get track.external_ids.isrc;
-    (* TODO: Don't use Option.get *)
+    isrc = track.external_ids.isrc;
   }
