@@ -89,3 +89,23 @@ let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
       playlist.tracks.items
   in
   ({ description; name; tracks = Some tracks }, skipped_tracks)
+
+(* type track = { *)
+(*   id : string; *)
+(*   resource_type : *)
+(*     [ `Library_songs | `Library_music_videos | `Music_videos | `Songs ]; *)
+(*       [@key "type"] [@to_yojson Resource.to_yojson] *)
+(* } *)
+
+let to_apple (playlist : t) =
+  (* TODO: If a Track.id is of `Spotify_id search spotify via isrc id *)
+  (* let _tracks = *)
+  (*   Infix.Option.( *)
+  (*     playlist.tracks *)
+  (*     >|= List.map (fun track -> *)
+  (*             match track with *)
+  (*             | `Apple_library_id id -> { id; resource_type = `Library_songs } *)
+  (* (*             | `Apple_catalog_id id -> { id; resource_type = `Songs })) *) *)
+  (* in *)
+  Apple.Library_playlist.Create_input.make ~description:playlist.description
+    ~name:playlist.name ~tracks:[] ()
