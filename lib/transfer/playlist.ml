@@ -78,12 +78,11 @@ let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
   let name = playlist.name in
   let description = Option.value ~default:playlist.name playlist.description in
   let tracks, skipped_tracks =
-    List.fold_left
-      (fun acc (item : Spotify.Playlist.playlist_track) ->
-        let track = Track.of_spotify item.track in
+    List.partition_map
+      (fun (item : Spotify.Playlist.playlist_track) ->
         match item.track.external_ids.isrc with
-        | None -> (fst acc, track :: snd acc)
-        | Some _ -> (track :: fst acc, snd acc))
-      ([], []) playlist.tracks.items
+        | None -> Either.right @@ Track.of_spotify item.track
+        | Some _ -> Either.left @@ Track.of_spotify item.track)
+      playlist.tracks.items
   in
   ({ description; name; tracks = Some tracks }, skipped_tracks)
