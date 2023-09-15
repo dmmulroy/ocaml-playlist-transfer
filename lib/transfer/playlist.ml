@@ -74,14 +74,16 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
     ( { description; name; tracks = Some tracks },
       skipped_tracks' @ skipped_tracks )
 
-let of_spotify (playlist : Spotify.Playlist.t) =
+let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
   let name = playlist.name in
   let description = Option.value ~default:playlist.name playlist.description in
-  let tracks =
-    Option.some
-    @@ List.map
-         (fun (playlist_track : Spotify.Playlist.playlist_track) ->
-           Track.of_spotify playlist_track.track)
-         playlist.tracks.items
+  let tracks, skipped_tracks =
+    List.fold_left
+      (fun acc (item : Spotify.Playlist.playlist_track) ->
+        let track = Track.of_spotify item.track in
+        match item.track.external_ids.isrc with
+        | None -> (fst acc, track :: snd acc)
+        | Some _ -> (track :: fst acc, snd acc))
+      ([], []) playlist.tracks.items
   in
-  { description; name; tracks }
+  ({ description; name; tracks = Some tracks }, skipped_tracks)
