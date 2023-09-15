@@ -28,10 +28,6 @@ let of_apple_library_song (track : Apple.Library_song.t) =
     isrc = None;
   }
 
-let of_apple = function
-  | `Catalog song -> of_apple_catalog_song song
-  | `Library song -> of_apple_library_song song
-
 let of_apple_library_music_video (track : Apple.Library_music_video.t) =
   {
     album = track.attributes.album_name;
@@ -40,6 +36,11 @@ let of_apple_library_music_video (track : Apple.Library_music_video.t) =
     name = track.attributes.name;
     isrc = None;
   }
+
+let of_apple = function
+  | `Catalog_song song -> of_apple_catalog_song song
+  | `Library_song song -> of_apple_library_song song
+  | `Library_music_video video -> of_apple_library_music_video video
 
 let of_spotify (track : Spotify.Track.t) =
   {

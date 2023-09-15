@@ -17,11 +17,11 @@ let either_of_apple_track = function
           play_params.catalog_id)
       in
       match catalog_id with
-      | None -> Either.right @@ Track.of_apple (`Library song)
+      | None -> Either.right @@ Track.of_apple (`Library_song song)
       | Some catalog_id -> Either.left catalog_id)
 
 (* (Playlist.t * Track.t list) where Track.t list is a list of songs that we failed to convert*)
-(* val of_apple : Apple.Client.t -> Apple.Library_playlist.t -> (Playlist.t * Track.t list) Lwt_result.t *)
+(* val of_apple : Apple.Client.t -> Apple.Library_playlist.t -> (Playlist.t * Track.t list) Lwt.t *)
 let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
   let name = playlist.attributes.name in
   let description =
@@ -29,41 +29,50 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
       ~some:(fun (description : Apple.Description.t) -> description.standard)
       playlist.attributes.description
   in
-  let catalog_ids, _skipped_tracks =
-    match Apple.Library_playlist.tracks playlist with
-    | None -> ([], [])
-    | Some tracks ->
-        List.fold_left
-          (fun (catalog_ids, skipped_tracks) track ->
-            match track with
-            | `Library_music_video video ->
-                ( catalog_ids,
-                  Track.of_apple_library_music_video video :: skipped_tracks )
-            | `Library_song (song : Apple.Library_song.t) -> (
-                let catalog_id =
-                  Infix.Option.(
-                    song.attributes.play_params >>= fun play_params ->
-                    play_params.catalog_id)
-                in
-                match catalog_id with
-                | None ->
-                    ( catalog_ids,
-                      Track.of_apple (`Library song) :: skipped_tracks )
-                | Some catalog_id -> (catalog_id :: catalog_ids, skipped_tracks)
-                ))
-          ([], []) tracks
+  let tracks =
+    Option.value ~default:[] @@ Apple.Library_playlist.tracks playlist
   in
+  let song_by_catalog_id = Hashtbl.create @@ List.length tracks in
+  let skipped_tracks =
+    List.filter_map
+      (fun track ->
+        match track with
+        | `Library_music_video (video : Apple.Library_music_video.t) ->
+            Some (Track.of_apple_library_music_video video)
+        | `Library_song (song : Apple.Library_song.t) -> (
+            let catalog_id_opt =
+              Infix.Option.(
+                song.attributes.play_params >>= fun play_params ->
+                play_params.catalog_id)
+            in
+            match catalog_id_opt with
+            | None -> Some (Track.of_apple (`Library_song song))
+            | Some catalog_id ->
+                Hashtbl.add song_by_catalog_id catalog_id track;
+                None))
+      tracks
+  in
+  let library_songs = List.of_seq @@ Hashtbl.to_seq song_by_catalog_id in
   let track_promises =
     List.map
-      (fun catalog_id ->
+      (fun (catalog_id, song) ->
         let get_by_id_input = Apple.Song.Get_by_id_input.make catalog_id in
-        let+ response = Apple.Song.get_by_id ~client get_by_id_input in
-        let song = List.hd response.data in
-        Lwt.return_ok @@ Track.of_apple (`Catalog song))
-      catalog_ids
+        let* response = Apple.Song.get_by_id ~client get_by_id_input in
+        match response with
+        | Error _ -> Lwt.return @@ Either.right @@ Track.of_apple song
+        | Ok { data } ->
+            let song =
+              try Either.left @@ Track.of_apple (`Catalog_song (List.hd data))
+              with _ -> Either.right @@ Track.of_apple song
+            in
+            Lwt.return song)
+      library_songs
   in
-  let _ = Lwt_list.map_p (fun promise -> promise) track_promises in
-  { description; name; tracks = None }
+  let* eithers = Lwt.all track_promises in
+  let tracks, skipped_tracks' = List.partition_map Fun.id eithers in
+  Lwt.return_ok
+    ( { description; name; tracks = Some tracks },
+      skipped_tracks' @ skipped_tracks )
 
 let of_spotify (playlist : Spotify.Playlist.t) =
   let name = playlist.name in
