@@ -16,7 +16,7 @@ let of_apple_catalog_song (track : Apple.Song.t) =
     artist = `Individual track.attributes.artist_name;
     id = `Apple_catalog_id track.id;
     name = track.attributes.name;
-    isrc = Some track.attributes.isrc;
+    isrc = track.attributes.isrc;
   }
 
 let of_apple_library_song (track : Apple.Library_song.t) =

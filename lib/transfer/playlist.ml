@@ -62,10 +62,13 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
         | Error _ -> Lwt.return @@ Either.right @@ Track.of_apple song
         | Ok { data } ->
             let song =
-              try Either.left @@ Track.of_apple (`Catalog_song (List.hd data))
-              with _ -> Either.right @@ Track.of_apple song
+              try Track.of_apple (`Catalog_song (List.hd data))
+              with _ -> Track.of_apple song
             in
-            Lwt.return song)
+            Lwt.return
+            @@
+            if Option.is_some song.isrc then Either.left song
+            else Either.right song)
       library_songs
   in
   let* eithers = Lwt.all track_promises in
