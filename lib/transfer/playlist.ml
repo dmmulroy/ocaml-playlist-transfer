@@ -2,26 +2,12 @@ open Syntax
 open Let
 
 (*
- * let playlist, failed_tracks = Transfer.Playlist.of_apple apple_playlist in
- * let spotify_playlist, failed_tracks' = Transfer.Playlist.to_spotify playlist in
+ * let playlist, failed_tracks = Transfer.Playlist.of_apple ~client apple_playlist in
+ * let spotify_playlist, failed_tracks' = Transfer.Playlist.to_spotify ~client playlist in
  *)
 type t = { description : string; name : string; tracks : Track.t list option }
+[@@deriving make]
 
-let either_of_apple_track = function
-  | `Library_music_video video ->
-      Either.right @@ Track.of_apple_library_music_video video
-  | `Library_song (song : Apple.Library_song.t) -> (
-      let catalog_id =
-        Infix.Option.(
-          song.attributes.play_params >>= fun play_params ->
-          play_params.catalog_id)
-      in
-      match catalog_id with
-      | None -> Either.right @@ Track.of_apple (`Library_song song)
-      | Some catalog_id -> Either.left catalog_id)
-
-(* (Playlist.t * Track.t list) where Track.t list is a list of songs that we failed to convert*)
-(* val of_apple : Apple.Client.t -> Apple.Library_playlist.t -> (Playlist.t * Track.t list) Lwt.t *)
 let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
   let name = playlist.attributes.name in
   let description =
@@ -38,7 +24,7 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
       (fun track ->
         match track with
         | `Library_music_video (video : Apple.Library_music_video.t) ->
-            Some (Track.of_apple_library_music_video video)
+            Some (`Library_music_video video)
         | `Library_song (song : Apple.Library_song.t) -> (
             let catalog_id_opt =
               Infix.Option.(
@@ -46,7 +32,7 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
                 play_params.catalog_id)
             in
             match catalog_id_opt with
-            | None -> Some (Track.of_apple (`Library_song song))
+            | None -> Some (`Library_song song)
             | Some catalog_id ->
                 Hashtbl.add song_by_catalog_id catalog_id track;
                 None))
@@ -59,16 +45,17 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
         let get_by_id_input = Apple.Song.Get_by_id_input.make catalog_id in
         let* response = Apple.Song.get_by_id ~client get_by_id_input in
         match response with
-        | Error _ -> Lwt.return @@ Either.right @@ Track.of_apple song
-        | Ok { data } ->
-            let song =
-              try Track.of_apple (`Catalog_song (List.hd data))
-              with _ -> Track.of_apple song
-            in
-            Lwt.return
-            @@
-            if Option.is_some song.isrc then Either.left song
-            else Either.right song)
+        | Error _ -> Lwt.return @@ Either.right @@ song
+        | Ok { data } -> (
+            try
+              let catalog_song = List.hd data in
+              match catalog_song.attributes.isrc with
+              | None -> Lwt.return @@ Either.right song
+              | Some isrc ->
+                  Lwt.return @@ Either.left
+                  @@ Track.make ~id:(`Apple_catalog_id catalog_id) ~isrc
+                       ~name:catalog_song.attributes.name
+            with _ -> Lwt.return @@ Either.right song))
       library_songs
   in
   let* eithers = Lwt.all track_promises in
@@ -79,33 +66,38 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
 
 let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
   let name = playlist.name in
-  let description = Option.value ~default:playlist.name playlist.description in
+  let description = Option.value ~default:name playlist.description in
   let tracks, skipped_tracks =
     List.partition_map
       (fun (item : Spotify.Playlist.playlist_track) ->
         match item.track.external_ids.isrc with
-        | None -> Either.right @@ Track.of_spotify item.track
-        | Some _ -> Either.left @@ Track.of_spotify item.track)
+        | None -> Either.right @@ item.track
+        | Some isrc ->
+            Either.left
+            @@ Track.make ~id:(`Spotify_uri item.track.uri) ~isrc
+                 ~name:item.track.name)
       playlist.tracks.items
   in
   ({ description; name; tracks = Some tracks }, skipped_tracks)
 
-(* type track = { *)
-(*   id : string; *)
-(*   resource_type : *)
-(*     [ `Library_songs | `Library_music_videos | `Music_videos | `Songs ]; *)
-(*       [@key "type"] [@to_yojson Resource.to_yojson] *)
-(* } *)
-
-let to_apple (playlist : t) =
-  (* TODO: If a Track.id is of `Spotify_id search spotify via isrc id *)
-  (* let _tracks = *)
-  (*   Infix.Option.( *)
-  (*     playlist.tracks *)
-  (*     >|= List.map (fun track -> *)
-  (*             match track with *)
-  (*             | `Apple_library_id id -> { id; resource_type = `Library_songs } *)
-  (* (*             | `Apple_catalog_id id -> { id; resource_type = `Songs })) *) *)
-  (* in *)
-  Apple.Library_playlist.Create_input.make ~description:playlist.description
-    ~name:playlist.name ~tracks:[] ()
+let to_apple (client : Apple.Client.t) (playlist : t) =
+  let isrcs =
+    Infix.Option.(
+      playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
+    |> Option.value ~default:[]
+  in
+  let+ { data = songs } = Apple.Song.get_songs_by_isrc ~client isrcs in
+  let tracks =
+    List.map
+      (fun (song : Apple.Song.t) ->
+        let track : Apple.Library_playlist.Create_input.track =
+          { id = song.id; resource_type = `Songs }
+        in
+        track)
+      songs
+  in
+  let create_input =
+    Apple.Library_playlist.Create_input.make ~name:playlist.name
+      ~description:playlist.description ~tracks ()
+  in
+  Apple.Library_playlist.create ~client create_input

@@ -103,3 +103,36 @@ module Search_output = struct
   type meta = { results : meta_results } [@@deriving yojson]
   type t = { results : results; meta : meta } [@@deriving yojson]
 end
+
+module Get_songs_by_isrc_input = struct
+  type t = string list
+
+  let to_query_params input = [ ("filter[isrc]", String.concat "," input) ]
+end
+
+module Get_songs_by_isrc_output = struct
+  type song = t [@@deriving yojson]
+  type t = { data : song list } [@@deriving yojson]
+end
+
+module Get_songs_by_isrc = Apple_request.Make (struct
+  type input = Get_songs_by_isrc_input.t
+  type output = Get_songs_by_isrc_output.t [@@deriving yojson]
+
+  let name = "Get_songs_by_isrc"
+
+  let to_http_request input =
+    let base_endpoint =
+      Http.Uri.of_string "https://api.music.apple.com/v1/catalog/us/songs/"
+    in
+    let uri =
+      Http.Uri.add_query_params' base_endpoint
+      @@ Get_songs_by_isrc_input.to_query_params input
+    in
+    Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
+
+  let of_http_response =
+    Apple_request.handle_response ~deserialize:output_of_yojson
+end)
+
+let get_songs_by_isrc = Get_songs_by_isrc.request
