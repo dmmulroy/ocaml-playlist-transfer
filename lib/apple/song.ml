@@ -104,20 +104,36 @@ module Search_output = struct
   type t = { results : results; meta : meta } [@@deriving yojson]
 end
 
-module Get_songs_by_isrc_input = struct
+module Get_many_by_isrcs_input = struct
   type t = string list
 
   let to_query_params input = [ ("filter[isrc]", String.concat "," input) ]
 end
 
-module Get_songs_by_isrc_output = struct
-  type song = t [@@deriving yojson]
-  type t = { data : song list } [@@deriving yojson]
+module Get_many_by_isrcs_output = struct
+  type isrc_response = {
+    id : string;
+    resource_type : [ `Songs ]; [@key "type"]
+    href : string;
+  }
+  [@@deriving yojson { strict = false }]
+
+  type isrc_filter = string * isrc_response
+  [@@deriving yojson { strict = false }]
+
+  type filters = { isrc : isrc_filter list }
+  [@@deriving yojson { strict = false }]
+
+  type meta = { filters : filters } [@@deriving yojson { strict = false }]
+  type song = t [@@deriving yojson { strict = false }]
+  type t = { data : song list } [@@deriving yojson { strict = false }]
 end
 
-module Get_songs_by_isrc = Apple_request.Make (struct
-  type input = Get_songs_by_isrc_input.t
-  type output = Get_songs_by_isrc_output.t [@@deriving yojson]
+module Get_many_by_isrcs = Apple_request.Make (struct
+  type input = Get_many_by_isrcs_input.t
+
+  type output = Get_many_by_isrcs_output.t
+  [@@deriving yojson { strict = false }]
 
   let name = "Get_songs_by_isrc"
 
@@ -127,7 +143,7 @@ module Get_songs_by_isrc = Apple_request.Make (struct
     in
     let uri =
       Http.Uri.add_query_params' base_endpoint
-      @@ Get_songs_by_isrc_input.to_query_params input
+      @@ Get_many_by_isrcs_input.to_query_params input
     in
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
 
@@ -135,4 +151,4 @@ module Get_songs_by_isrc = Apple_request.Make (struct
     Apple_request.handle_response ~deserialize:output_of_yojson
 end)
 
-let get_songs_by_isrc = Get_songs_by_isrc.request
+let get_many_by_isrcs = Get_many_by_isrcs.request

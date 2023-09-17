@@ -42,8 +42,7 @@ let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
   let track_promises =
     List.map
       (fun (catalog_id, song) ->
-        let get_by_id_input = Apple.Song.Get_by_id_input.make catalog_id in
-        let* response = Apple.Song.get_by_id ~client get_by_id_input in
+        let* response = Apple.Song.get_by_id ~client catalog_id in
         match response with
         | Error _ -> Lwt.return @@ Either.right @@ song
         | Ok { data } -> (
@@ -86,7 +85,7 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
       playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
     |> Option.value ~default:[]
   in
-  let+ { data = songs } = Apple.Song.get_songs_by_isrc ~client isrcs in
+  let+ { data = songs } = Apple.Song.get_many_by_isrcs ~client isrcs in
   let tracks =
     List.map
       (fun (song : Apple.Song.t) ->
