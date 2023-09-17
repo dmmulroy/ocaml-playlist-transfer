@@ -46,14 +46,14 @@ let make_authorization_url ~client_id ~redirect_uri ~state ?scopes
 
 type client_credentials_grant_response = {
   access_token : string;
-  expires_in : float;
+  expires_in : int;
   token_type : string;
 }
 [@@deriving yojson]
 
 type authorization_code_grant_response = {
   access_token : string;
-  expires_in : float;
+  expires_in : int;
   scope : string;
   token_type : string;
   refresh_token : string;
@@ -114,14 +114,14 @@ module Request_access_token = Spotify_request.Make_unauthenticated (struct
       match response with
       | `Authorization_code grant ->
           Access_token.make ~token:grant.access_token
-            ~expiration_time:(Unix.time () +. grant.expires_in)
+            ~expiration_time:((Unix.time () |> Int.of_float) + grant.expires_in)
             ~grant_type:`Authorization_code ~refresh_token:grant.refresh_token
             ~scopes:
               (Scope.of_string_list @@ String.split_on_char ' ' grant.scope)
             ()
       | `Client_credentials grant ->
           Access_token.make ~token:grant.access_token
-            ~expiration_time:(Unix.time () +. grant.expires_in)
+            ~expiration_time:((Unix.time () |> Int.of_float) + grant.expires_in)
             ~grant_type:`Client_credentials ()
     in
     Ok access_token
@@ -174,7 +174,7 @@ end
 module Internal_refresh_access_token_output = struct
   type t = {
     access_token : string;
-    expires_in : float;
+    expires_in : int;
     scope : string;
     token_type : string;
   }
@@ -223,6 +223,6 @@ let refresh_access_token ~client =
         in
         let refreshed_access_token =
           Access_token.set_expiration_time access_token
-            (Unix.time () +. expires_in)
+            ((Unix.time () |> Int.of_float) + expires_in)
         in
         Lwt.return_ok refreshed_access_token

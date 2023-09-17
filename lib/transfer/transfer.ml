@@ -1,13 +1,5 @@
-open Syntax
-open Let
 module Track = Track
 module Playlist = Playlist
-
-(* 
- * Transfer.to_spotify track
- * Transfer.to_apple track
- * TODO: Figure out how to deal w/ rate + page limits
- *)
 
 module Internal_error = struct
   type t = [ `Empty_apple_response | `Unhandled_error of string ]
@@ -28,31 +20,3 @@ module Internal_error = struct
     in
     Transfer_error.make ~source message
 end
-
-(* val to_apple : t -> Apple.Library_playlist.t Lwt_result.t *)
-(*
- * For each track in playlist.tracks
- *   if track.id is of Apple
- *   then map track to Apple.Library_playlist.Create_input.track
- *   else search Apple Music for the track using Apple.Song.search
- * 
- * TODO: 
- * - Look up song by isrc id
- * - Handle not_found/processed results gracefully
- * 
- *)
-let to_apple ~(client : Apple.Client.t) (playlist : Playlist.t) =
-  let create_input =
-    Apple.Library_playlist.Create_input.make ~description:playlist.description
-      ~name:playlist.name ()
-  in
-  let+ _apple_playlist =
-    Infix.Lwt_result.(
-      Apple.Library_playlist.create ~client create_input >>= fun { data } ->
-      try Lwt.return_ok (List.hd data)
-      with Failure _ ->
-        Lwt.return_error @@ Internal_error.to_error `Empty_apple_response)
-  in
-  Lwt.return_ok ()
-
-let to_spotify _track = ()

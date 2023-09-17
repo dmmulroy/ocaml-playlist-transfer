@@ -1,3 +1,5 @@
+[@@@ocaml.warning "-32"]
+
 type content_rating = [ `Clean | `Explicit ] [@@deriving yojson]
 
 let content_rating_to_string = function
@@ -19,8 +21,8 @@ let content_rating_of_yojson = function
 type attributes = {
   album_name : string option; [@key "albumName"] [@default None]
   artist_name : string; [@key "artistName"]
-  artwork : Artwork.t;
-  content_rating : content_rating option; [@key "contentRating"] [@default None]
+  (* artwork : Artwork.t; *)
+  (* content_rating : content_rating option; [@key "contentRating"] [@default None] *)
   disc_number : int option; [@key "discNumber"] [@default None]
   duration_in_millis : int; [@key "durationInMillis"]
   genre_names : string list; [@key "genreNames"]
@@ -28,11 +30,11 @@ type attributes = {
   has_lyrics : bool; [@key "hasLyrics"]
   isrc : string option; (* TODO: Figure out if this actually optional or not  *)
   name : string;
-  play_params : Play_params.t option; [@key "playParams"] [@default None]
+  (* play_params : Play_params.t option; [@key "playParams"] [@default None] *)
   release_date : string option; [@key "releaseDate"] [@default None]
   track_number : int option; [@key "trackNumber"] [@default None]
 }
-[@@deriving yojson { strict = false }]
+[@@deriving show, yojson { strict = false }]
 
 let narrow_resource_type = function
   | `Songs as resource -> Ok (resource :> [ `Songs ])
@@ -43,13 +45,13 @@ type t = {
   attributes : attributes;
   (* relationships : unit; *)
   id : string;
-  resource_type : [ `Songs ];
-      [@key "type"]
-      [@to_yojson Resource.to_yojson]
-      [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type]
+  (* resource_type : [ `Songs ]; *)
+  (*     [@key "type"] *)
+  (*     [@to_yojson Resource.to_yojson] *)
+  (*     [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type] *)
   href : string;
 }
-[@@deriving yojson { strict = false }]
+[@@deriving show, yojson { strict = false }]
 
 module Get_by_id_input = struct
   type t = string
@@ -113,29 +115,50 @@ end
 module Get_many_by_isrcs_output = struct
   type isrc_response = {
     id : string;
-    resource_type : [ `Songs ]; [@key "type"]
-    href : string;
+        (* resource_type : string; [@key "type"] *)
+        (* resource_type : [ `Songs ]; [@key "type"] *)
+        (* href : string; *)
   }
-  [@@deriving yojson { strict = false }]
+  [@@deriving show, yojson { strict = false; exn = true }]
 
-  type isrc_filter = string * isrc_response
-  [@@deriving yojson { strict = false }]
+  (* type isrc_filter = (string * isrc_response list) list *)
+  (* [@@deriving show, yojson { strict = false }] *)
 
-  type filters = { isrc : isrc_filter list }
-  [@@deriving yojson { strict = false }]
+  let isrc_of_yojson = function
+    | `Assoc list ->
+        Ok
+          (List.map
+             (fun (key, json) ->
+               match json with
+               | `List playlists ->
+                   print_endline "here";
+                   (key, List.map isrc_response_of_yojson_exn playlists)
+               | _ -> failwith "expected list of playlists")
+             list)
+    | _ -> Error "expected key-value pairs"
 
-  type meta = { filters : filters } [@@deriving yojson { strict = false }]
-  type song = t [@@deriving yojson { strict = false }]
+  module StringMap = Map.Make (String)
+
+  let yojson_of_stringmap m =
+    StringMap.bindings m |> [%of_yojson: (string * isrc_response) list]
+
+  type isrc = isrc_response list StringMap.t
+
+  let pp_isrc ppf _isrc = Format.fprintf ppf ""
+
+  type filters = { isrc : isrc } [@@deriving show, yojson { strict = false }]
+  type meta = { filters : filters } [@@deriving show, yojson { strict = false }]
+  type song = t [@@deriving show, yojson { strict = false }]
 
   type t = { data : song list; meta : meta }
-  [@@deriving yojson { strict = false }]
+  [@@deriving show, yojson { strict = false }]
 end
 
 module Get_many_by_isrcs = Apple_request.Make (struct
   type input = Get_many_by_isrcs_input.t
 
   type output = Get_many_by_isrcs_output.t
-  [@@deriving yojson { strict = false }]
+  [@@deriving show, yojson { strict = false }]
 
   let name = "Get_songs_by_isrc"
 

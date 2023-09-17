@@ -77,7 +77,7 @@ let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
                  ~name:item.track.name)
       playlist.tracks.items
   in
-  ({ description; name; tracks = Some tracks }, skipped_tracks)
+  Lwt.return_ok ({ description; name; tracks = Some tracks }, skipped_tracks)
 
 let to_apple (client : Apple.Client.t) (playlist : t) =
   let isrcs =
@@ -85,21 +85,21 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
       playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
     |> Option.value ~default:[]
   in
-  let+ { meta; _ } = Apple.Song.get_many_by_isrcs ~client isrcs in
-  let tracks =
-    let open Apple.Library_playlist.Create_input in
-    let open Apple.Song.Get_many_by_isrcs_output in
-    List.fold_left
-      (fun acc (isrc, { id = catalog_id; _ }) ->
-        match List.mem_assq isrc acc with
-        | true -> acc
-        | false -> (isrc, catalog_id) :: acc)
-      [] meta.filters.isrc
-    |> List.map (fun (_, catalog_id) : track ->
-           { id = catalog_id; resource_type = `Songs })
-  in
+  let+ { meta = _meta; _ } = Apple.Song.get_many_by_isrcs ~client isrcs in
+  (* let tracks = *)
+  (*   let open Apple.Library_playlist.Create_input in *)
+  (*   let open Apple.Song.Get_many_by_isrcs_output in *)
+  (*   List.fold_left *)
+  (*     (fun acc (isrc, { id = catalog_id; _ }) -> *)
+  (*       match List.mem_assq isrc acc with *)
+  (*       | true -> acc *)
+  (*       | false -> (isrc, catalog_id) :: acc) *)
+  (*     [] meta.filters.isrc *)
+  (*   |> List.map (fun (_, catalog_id) : track -> *)
+  (*          { id = catalog_id; resource_type = `Songs }) *)
+  (* in *)
   let create_input =
     Apple.Library_playlist.Create_input.make ~name:playlist.name
-      ~description:playlist.description ~tracks ()
+      ~description:playlist.description ~tracks:[] ()
   in
   Apple.Library_playlist.create ~client create_input
