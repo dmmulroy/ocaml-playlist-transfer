@@ -85,15 +85,18 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
       playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
     |> Option.value ~default:[]
   in
-  let+ { data = songs } = Apple.Song.get_many_by_isrcs ~client isrcs in
+  let+ { meta; _ } = Apple.Song.get_many_by_isrcs ~client isrcs in
   let tracks =
-    List.map
-      (fun (song : Apple.Song.t) ->
-        let track : Apple.Library_playlist.Create_input.track =
-          { id = song.id; resource_type = `Songs }
-        in
-        track)
-      songs
+    let open Apple.Library_playlist.Create_input in
+    let open Apple.Song.Get_many_by_isrcs_output in
+    List.fold_left
+      (fun acc (isrc, { id = catalog_id; _ }) ->
+        match List.mem_assq isrc acc with
+        | true -> acc
+        | false -> (isrc, catalog_id) :: acc)
+      [] meta.filters.isrc
+    |> List.map (fun (_, catalog_id) : track ->
+           { id = catalog_id; resource_type = `Songs })
   in
   let create_input =
     Apple.Library_playlist.Create_input.make ~name:playlist.name

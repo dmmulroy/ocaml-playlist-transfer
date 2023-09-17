@@ -126,7 +126,9 @@ module Get_many_by_isrcs_output = struct
 
   type meta = { filters : filters } [@@deriving yojson { strict = false }]
   type song = t [@@deriving yojson { strict = false }]
-  type t = { data : song list } [@@deriving yojson { strict = false }]
+
+  type t = { data : song list; meta : meta }
+  [@@deriving yojson { strict = false }]
 end
 
 module Get_many_by_isrcs = Apple_request.Make (struct
