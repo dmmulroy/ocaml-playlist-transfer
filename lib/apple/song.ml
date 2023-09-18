@@ -179,4 +179,25 @@ module Get_many_by_isrcs = Apple_request.Make (struct
 end)
 
 (*TODO: if List.length of isrcs > 25, make multiple requests *)
-let get_many_by_isrcs = Get_many_by_isrcs.request
+
+(* client:Client.t -> *)
+(* Get_many_by_isrcs_input.t -> *)
+(* (Get_many_by_isrcs_output.t, Error.t) Lwt_result.t *)
+
+let chunk_of size list =
+  List.fold_left
+    (fun (chunked_list : 'a list list) (item : 'a) ->
+      let (chunk : 'a list) =
+        try
+          let (tl : 'a list) =
+            List.nth chunked_list @@ (List.length chunked_list - 1)
+          in
+          if List.length tl = size then [] else tl
+        with _ -> []
+      in
+      let new_chunk = item :: chunk in
+      chunked_list @ [ new_chunk ])
+    [] list
+
+let get_many_by_isrcs (input : Get_many_by_isrcs_input.t) =
+  Get_many_by_isrcs.request
