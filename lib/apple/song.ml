@@ -199,5 +199,4 @@ let chunk_of size list =
       chunked_list @ [ new_chunk ])
     [] list
 
-let get_many_by_isrcs (input : Get_many_by_isrcs_input.t) =
-  Get_many_by_isrcs.request
+let get_many_by_isrcs = Get_many_by_isrcs.request
