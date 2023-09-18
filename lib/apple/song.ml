@@ -21,20 +21,20 @@ let content_rating_of_yojson = function
 type attributes = {
   album_name : string option; [@key "albumName"] [@default None]
   artist_name : string; [@key "artistName"]
-  (* artwork : Artwork.t; *)
-  (* content_rating : content_rating option; [@key "contentRating"] [@default None] *)
+  artwork : Artwork.t;
+  content_rating : content_rating option; [@key "contentRating"] [@default None]
   disc_number : int option; [@key "discNumber"] [@default None]
   duration_in_millis : int; [@key "durationInMillis"]
   genre_names : string list; [@key "genreNames"]
   has_credits : bool; [@key "hasCredits"]
   has_lyrics : bool; [@key "hasLyrics"]
-  isrc : string option; (* TODO: Figure out if this actually optional or not  *)
+  isrc : string option;
   name : string;
-  (* play_params : Play_params.t option; [@key "playParams"] [@default None] *)
+  play_params : Play_params.t option; [@key "playParams"] [@default None]
   release_date : string option; [@key "releaseDate"] [@default None]
   track_number : int option; [@key "trackNumber"] [@default None]
 }
-[@@deriving show, yojson { strict = false }]
+[@@deriving yojson { strict = false }]
 
 let narrow_resource_type = function
   | `Songs as resource -> Ok (resource :> [ `Songs ])
@@ -45,13 +45,18 @@ type t = {
   attributes : attributes;
   (* relationships : unit; *)
   id : string;
-  (* resource_type : [ `Songs ]; *)
-  (*     [@key "type"] *)
-  (*     [@to_yojson Resource.to_yojson] *)
-  (*     [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type] *)
+  resource_type : [ `Songs ];
+      [@key "type"]
+      [@to_yojson Resource.to_yojson]
+      [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type]
   href : string;
 }
-[@@deriving show, yojson { strict = false }]
+[@@deriving yojson { strict = false }]
+
+(* TODO: this *)
+module Internal_error = struct
+  type t
+end
 
 module Get_by_id_input = struct
   type t = string
@@ -115,50 +120,47 @@ end
 module Get_many_by_isrcs_output = struct
   type isrc_response = {
     id : string;
-        (* resource_type : string; [@key "type"] *)
-        (* resource_type : [ `Songs ]; [@key "type"] *)
-        (* href : string; *)
+    resource_type : [ `Songs ];
+        [@key "type"]
+        [@to_yojson Resource.to_yojson]
+        [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type]
+    href : string;
   }
-  [@@deriving show, yojson { strict = false; exn = true }]
+  [@@deriving yojson { exn = true }]
 
-  (* type isrc_filter = (string * isrc_response list) list *)
-  (* [@@deriving show, yojson { strict = false }] *)
+  let isrc_of_yojson (json : Yojson.Safe.t) =
+    match json with
+    | `Assoc assoc_list ->
+        let extract_playlists (key, value) =
+          match value with
+          | `List playlists ->
+              Some (key, List.map isrc_response_of_yojson_exn playlists)
+          | _ -> None
+        in
+        let results = List.filter_map extract_playlists assoc_list in
+        if List.length results = List.length assoc_list then Ok results
+        else Error "expected list of isrc_responses for every key"
+    | _ -> Error "expected an association list of playlists"
 
-  let isrc_of_yojson = function
-    | `Assoc list ->
-        Ok
-          (List.map
-             (fun (key, json) ->
-               match json with
-               | `List playlists ->
-                   print_endline "here";
-                   (key, List.map isrc_response_of_yojson_exn playlists)
-               | _ -> failwith "expected list of playlists")
-             list)
-    | _ -> Error "expected key-value pairs"
+  type filters = {
+    isrc : (string * isrc_response list) list; [@of_yojson isrc_of_yojson]
+  }
+  [@@deriving yojson]
 
-  module StringMap = Map.Make (String)
+  type meta = { filters : filters [@of_yojson filters_of_yojson] }
+  [@@deriving yojson]
 
-  let yojson_of_stringmap m =
-    StringMap.bindings m |> [%of_yojson: (string * isrc_response) list]
-
-  type isrc = isrc_response list StringMap.t
-
-  let pp_isrc ppf _isrc = Format.fprintf ppf ""
-
-  type filters = { isrc : isrc } [@@deriving show, yojson { strict = false }]
-  type meta = { filters : filters } [@@deriving show, yojson { strict = false }]
-  type song = t [@@deriving show, yojson { strict = false }]
+  type song = t [@@deriving yojson { strict = false }]
 
   type t = { data : song list; meta : meta }
-  [@@deriving show, yojson { strict = false }]
+  [@@deriving yojson { strict = false }]
 end
 
 module Get_many_by_isrcs = Apple_request.Make (struct
   type input = Get_many_by_isrcs_input.t
 
   type output = Get_many_by_isrcs_output.t
-  [@@deriving show, yojson { strict = false }]
+  [@@deriving yojson { strict = false }]
 
   let name = "Get_songs_by_isrc"
 
@@ -176,4 +178,5 @@ module Get_many_by_isrcs = Apple_request.Make (struct
     Apple_request.handle_response ~deserialize:output_of_yojson
 end)
 
+(*TODO: if List.length of isrcs > 25, make multiple requests *)
 let get_many_by_isrcs = Get_many_by_isrcs.request

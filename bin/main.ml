@@ -174,50 +174,10 @@ let test_transfer_from_spotify_to_apple id () =
   let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
   Lwt.return_ok ()
 
-(* type song = { id : string; name : string } *)
-(* [@@deriving yojson { exn = true }, show] *)
-open Apple.Song.Get_many_by_isrcs_output
-
-let isrc_of_yojson = function
-  | `Assoc list ->
-      Ok
-        (List.map
-           (fun (key, json) ->
-             match json with
-             | `List playlists ->
-                 (key, List.map isrc_response_of_yojson playlists)
-             | _ -> failwith "expected list of playlists")
-           list)
-  | _ -> Error "expected key-value pairs"
-
-(* type filters = { isrc : (string * song list) list } [@@deriving yojson, show] *)
-(* type meta = { filters : filters } [@@deriving yojson, show] *)
-(**)
-(* type search_songs_result = { data : song list; meta : meta } *)
-(* [@@deriving yojson, show] *)
-
-let my_songs =
-  [ ("1", [ { id = "1" }; { id = "2" } ]); ("2", [ { id = "2" } ]) ]
-
-let filters = { isrc = my_songs }
-let meta = { filters }
-
-let search_songs_result : Apple.Song.Get_many_by_isrcs_output.t =
-  { data = []; meta }
-
-let test_yojson () =
-  (* let json = search_songs_result_to_yojson search_songs_result in *)
-  let json = to_yojson search_songs_result in
-  let res = of_yojson json in
-  match res with
-  | Ok song_res -> show song_res |> print_endline
-  | Error err -> print_endline @@ "Error: " ^ err
-
-(* let () = test_yojson () *)
 let () =
   let res =
     Lwt_main.run
-    @@ test_transfer_from_spotify_to_apple "2rpDgSpEidno3A0O3tBdfO" ()
+    @@ test_transfer_from_spotify_to_apple "6wyXMRkxUSsXJCehiUd5WM" ()
   in
   match res with
   | Ok () -> print_endline "Success"

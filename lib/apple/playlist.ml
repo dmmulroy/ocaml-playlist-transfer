@@ -40,7 +40,6 @@ type attributes = {
 [@@deriving yojson]
 
 (* TODO: relationships & views *)
-
 type t = {
   id : string;
   href : string;
