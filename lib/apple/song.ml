@@ -1,4 +1,5 @@
-[@@@ocaml.warning "-32"]
+open Syntax
+open Let
 
 type content_rating = [ `Clean | `Explicit ] [@@deriving yojson]
 
@@ -178,25 +179,42 @@ module Get_many_by_isrcs = Apple_request.Make (struct
     Apple_request.handle_response ~deserialize:output_of_yojson
 end)
 
-(*TODO: if List.length of isrcs > 25, make multiple requests *)
+(* (val chunk: int -> 'a list -> 'a list list) *)
+let chunk (chunk_size : int) (list : 'a list) =
+  let rec aux (acc : 'a list list) (chunk : 'a list) (current_chunk_size : int)
+      (list' : 'a list) =
+    match list' with
+    | [] -> if chunk = [] then acc else List.rev chunk :: acc
+    | hd :: tl ->
+        if current_chunk_size < chunk_size then
+          aux acc (hd :: chunk) (current_chunk_size + 1) tl
+        else aux (List.rev chunk :: acc) [ hd ] 1 tl
+  in
+  List.rev (aux [] [] 0 list)
 
-(* client:Client.t -> *)
-(* Get_many_by_isrcs_input.t -> *)
-(* (Get_many_by_isrcs_output.t, Error.t) Lwt_result.t *)
-
-let chunk_of size list =
-  List.fold_left
-    (fun (chunked_list : 'a list list) (item : 'a) ->
-      let (chunk : 'a list) =
-        try
-          let (tl : 'a list) =
-            List.nth chunked_list @@ (List.length chunked_list - 1)
-          in
-          if List.length tl = size then [] else tl
-        with _ -> []
-      in
-      let new_chunk = item :: chunk in
-      chunked_list @ [ new_chunk ])
-    [] list
-
-let get_many_by_isrcs = Get_many_by_isrcs.request
+let get_many_by_isrcs ~(client : Client.t) (input : Get_many_by_isrcs_input.t) =
+  let chunked_isrcs = chunk 25 input in
+  let promises =
+    List.map
+      (fun isrcs -> Get_many_by_isrcs.request ~client isrcs)
+      chunked_isrcs
+  in
+  let open Get_many_by_isrcs_output in
+  let+ result =
+    List.fold_left
+      (fun acc chunked_result ->
+        let+ acc' = acc in
+        let+ chunked_result' = chunked_result in
+        let data' = chunked_result'.data in
+        let meta' = chunked_result'.meta in
+        (* TODO: Refactor away from using append *)
+        let merged_data = List.append acc'.data data' in
+        let merged_isrcs =
+          List.append acc'.meta.filters.isrc meta'.filters.isrc
+        in
+        Lwt_result.return
+          { data = merged_data; meta = { filters = { isrc = merged_isrcs } } })
+      (Lwt_result.return { data = []; meta = { filters = { isrc = [] } } })
+      promises
+  in
+  Lwt.return_ok result

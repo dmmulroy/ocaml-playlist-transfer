@@ -177,7 +177,7 @@ let test_transfer_from_spotify_to_apple id () =
 let () =
   let res =
     Lwt_main.run
-    @@ test_transfer_from_spotify_to_apple "2t0Yxn35CNGdT7yV9wr4cr" ()
+    @@ test_transfer_from_spotify_to_apple "2GGO90OJUSmMoxdqMXD6LQ" ()
   in
   match res with
   | Ok () -> print_endline "Success"
