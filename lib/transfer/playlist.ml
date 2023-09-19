@@ -116,3 +116,13 @@ type spotify_options = { public : bool option; collaborative : bool option }
 (*     |> Option.value ~default:[] *)
 (*   in *)
 (*   () *)
+let chunk chunk_size list =
+  let rec aux acc chunk current_chunk_size list' =
+    match list' with
+    | [] -> if chunk = [] then acc else List.rev chunk :: acc
+    | hd :: tl ->
+        if current_chunk_size < chunk_size then
+          aux acc (hd :: chunk) (current_chunk_size + 1) tl
+        else aux (List.rev chunk :: acc) [ hd ] 1 tl
+  in
+  List.rev (aux [] [] 0 list)

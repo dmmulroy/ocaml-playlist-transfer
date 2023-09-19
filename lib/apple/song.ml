@@ -181,24 +181,16 @@ end)
 
 let get_many_by_isrcs ~(client : Client.t) (input : Get_many_by_isrcs_input.t) =
   let chunked_isrcs = Extended.List.chunk 25 input in
-  let promises =
-    List.map
-      (fun isrcs -> Get_many_by_isrcs.request ~client isrcs)
-      chunked_isrcs
-  in
-  let open Get_many_by_isrcs_output in
+  let promises = List.map (Get_many_by_isrcs.request ~client) chunked_isrcs in
   let+ result =
+    let open Get_many_by_isrcs_output in
     List.fold_left
       (fun acc chunked_result ->
-        let+ acc' = acc in
-        let+ chunked_result' = chunked_result in
-        let data' = chunked_result'.data in
-        let meta' = chunked_result'.meta in
-        (* TODO: Refactor away from using append *)
-        let merged_data = List.append acc'.data data' in
-        let merged_isrcs =
-          List.append acc'.meta.filters.isrc meta'.filters.isrc
-        in
+        let+ { data; meta } = acc in
+        let+ { data = data'; meta = meta' } = chunked_result in
+        (* TODO: Refactor away from using append or append to data' and isrc' *)
+        let merged_data = List.append data' data in
+        let merged_isrcs = List.append meta'.filters.isrc meta.filters.isrc in
         Lwt_result.return
           { data = merged_data; meta = { filters = { isrc = merged_isrcs } } })
       (Lwt_result.return { data = []; meta = { filters = { isrc = [] } } })

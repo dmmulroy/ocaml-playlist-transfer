@@ -1,5 +1,4 @@
 module List = struct
-  (* (val chunk: int -> 'a list -> 'a list list) *)
   let chunk (chunk_size : int) (list : 'a list) =
     let rec aux (acc : 'a list list) (chunk : 'a list)
         (current_chunk_size : int) (list' : 'a list) =
