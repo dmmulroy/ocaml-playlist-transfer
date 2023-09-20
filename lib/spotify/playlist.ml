@@ -199,7 +199,14 @@ module Get_by_id_output = struct
 end
 
 module Get_playlist_by_id = Spotify_request.Make (struct
+  (*
+      type input = [`Input of Get_by_id_input.t | `Page of Page.t]
+  *)
   type input = Get_by_id_input.t
+
+  (*
+    Consider return a GADT based in the input type
+   *)
   type output = Get_by_id_output.t Response.t [@@deriving of_yojson]
 
   let name = "Get_playlist_by_id"
