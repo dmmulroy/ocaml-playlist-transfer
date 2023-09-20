@@ -77,9 +77,14 @@ let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
                  ~name:item.track.name)
       playlist.tracks.items
   in
+  print_endline @@ "of_spotify tracks: " ^ string_of_int (List.length tracks);
+  print_endline @@ "of_spotify skipped_tracks: "
+  ^ string_of_int (List.length skipped_tracks);
   Lwt.return_ok ({ description; name; tracks = Some tracks }, skipped_tracks)
 
 let to_apple (client : Apple.Client.t) (playlist : t) =
+  print_endline @@ "playlist track count: "
+  ^ string_of_int (Option.value ~default:[] playlist.tracks |> List.length);
   let isrcs =
     Infix.Option.(
       playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
@@ -101,13 +106,12 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
     |> List.map (fun (_, catalog_id) : track ->
            { id = catalog_id; resource_type = `Songs })
   in
+  print_endline @@ "tracks: " ^ string_of_int (List.length tracks);
   let create_input =
     Apple.Library_playlist.Create_input.make ~name:playlist.name
       ~description:playlist.description ~tracks ()
   in
   Apple.Library_playlist.create ~client create_input
-
-type spotify_options = { public : bool option; collaborative : bool option }
 
 (* let to_spotify ?options (client : Spotify.Client.t) (playlist : Playlist.t) = *)
 (*   let isrcs = *)
@@ -116,13 +120,3 @@ type spotify_options = { public : bool option; collaborative : bool option }
 (*     |> Option.value ~default:[] *)
 (*   in *)
 (*   () *)
-let chunk chunk_size list =
-  let rec aux acc chunk current_chunk_size list' =
-    match list' with
-    | [] -> if chunk = [] then acc else List.rev chunk :: acc
-    | hd :: tl ->
-        if current_chunk_size < chunk_size then
-          aux acc (hd :: chunk) (current_chunk_size + 1) tl
-        else aux (List.rev chunk :: acc) [ hd ] 1 tl
-  in
-  List.rev (aux [] [] 0 list)

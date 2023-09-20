@@ -218,3 +218,9 @@ module Get_playlist_by_id = Spotify_request.Make (struct
 end)
 
 let get_by_id = Get_playlist_by_id.request
+
+(*
+
+let get_by_id ~(client: Client.t) ?(next_page: Page.next_page) ?(previous_page: Page.next_page = 
+  let+ (output.t, pageFns) = Get_playlist_by_id.paginated_request
+ *)

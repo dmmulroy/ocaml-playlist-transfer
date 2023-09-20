@@ -31,7 +31,7 @@ let test_spotify_oauth () =
   in
   let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
   let get_by_id_input =
-    Spotify.Playlist.Get_by_id_input.make ~id:"37i9dQZF1DXcBWIGoYBM5M" ()
+    Spotify.Playlist.Get_by_id_input.make ~id:"37i9dQZF1F0sijgNaJdgit" ()
   in
   let* playlist_result = Spotify.Playlist.get_by_id ~client get_by_id_input in
   let _ =
@@ -177,7 +177,7 @@ let test_transfer_from_spotify_to_apple id () =
 let () =
   let res =
     Lwt_main.run
-    @@ test_transfer_from_spotify_to_apple "2GGO90OJUSmMoxdqMXD6LQ" ()
+    @@ test_transfer_from_spotify_to_apple "7eBq55wTPZ8v0JIeNUxk68" ()
   in
   match res with
   | Ok () -> print_endline "Success"

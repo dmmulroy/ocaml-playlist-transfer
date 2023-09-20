@@ -7,5 +7,3 @@ type 'a t = {
   next : string option; [@default None]
 }
 [@@deriving yojson]
-
-(* TODO: Add fns to work with the next type for paging *)

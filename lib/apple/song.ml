@@ -188,7 +188,6 @@ let get_many_by_isrcs ~(client : Client.t) (input : Get_many_by_isrcs_input.t) =
       (fun acc chunked_result ->
         let+ { data; meta } = acc in
         let+ { data = data'; meta = meta' } = chunked_result in
-        (* TODO: Refactor away from using append or append to data' and isrc' *)
         let merged_data = List.append data' data in
         let merged_isrcs = List.append meta'.filters.isrc meta.filters.isrc in
         Lwt_result.return

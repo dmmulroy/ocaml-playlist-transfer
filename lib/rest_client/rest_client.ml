@@ -97,6 +97,12 @@ module Make (C : Config.S) = struct
       >|? fun err ->
       C.Error.make ~cause:err ~source:(`Source M.name)
       @@ "Error executing request: " ^ M.name
+
+    (*
+      let paginated_request ~clinet input =
+        ...
+      ((M.output, { next_page: Some fn, previous_page: Some fn }, Error.t) Lwt_result.t
+     *)
   end
 
   module Make_unauthenticated (M : Api_request.S) = struct
