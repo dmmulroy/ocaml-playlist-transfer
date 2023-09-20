@@ -12,6 +12,3 @@ type 'a t = {
   total : int;
 }
 [@@deriving yojson]
-
-type page_info = { href : Http.Uri.t; limit : int; offset : int; total : int }
-type page = { next : page_info option; previous : page_info option }

@@ -98,7 +98,7 @@ end
 val get_by_id :
   client:Client.t ->
   Get_by_id_input.t ->
-  (Get_by_id_output.t, Error.t) Lwt_result.t
+  (Get_by_id_output.t Response.t, Error.t) Lwt_result.t
 
 module Get_featured_input : sig
   type t = {

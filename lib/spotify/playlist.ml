@@ -194,14 +194,14 @@ module Get_by_id_input = struct
 end
 
 module Get_by_id_output = struct
-  type nonrec t = t
+  type playlist = t [@@deriving yojson]
+  type t = playlist [@@deriving yojson]
 end
 
 module Get_playlist_by_id = Spotify_request.Make (struct
   type input = Get_by_id_input.t
-  type output = Get_by_id_output.t
+  type output = Get_by_id_output.t Response.t [@@deriving of_yojson]
 
-  let output_of_yojson = of_yojson
   let name = "Get_playlist_by_id"
 
   let make_endpoint (input : input) =
@@ -219,9 +219,3 @@ module Get_playlist_by_id = Spotify_request.Make (struct
 end)
 
 let get_by_id = Get_playlist_by_id.request
-
-(*
-
-let get_by_id ~(client: Client.t) ?(next_page: Page.next_page) ?(previous_page: Page.next_page = 
-  let+ (output.t, pageFns) = Get_playlist_by_id.paginated_request
- *)

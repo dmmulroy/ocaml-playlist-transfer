@@ -38,7 +38,7 @@ let test_spotify_oauth () =
   let _ =
     match playlist_result with
     | Error err -> print_endline @@ Error.to_string err
-    | Ok playlist ->
+    | Ok { data = playlist; _ } ->
         print_endline @@ "Playlist: " ^ playlist.name;
         let () =
           List.iteri
@@ -73,7 +73,7 @@ let test_get_spotify_playlist_by_id id () =
   let _ =
     match spotify_playlist with
     | Error err -> print_endline @@ Error.to_string err
-    | Ok playlist ->
+    | Ok { data = playlist; _ } ->
         print_endline @@ "Playlist: " ^ playlist.name;
         let () =
           List.iteri
@@ -161,7 +161,7 @@ let test_transfer_from_spotify_to_apple id () =
     Spotify.Client.make ~access_token ~client_id ~client_secret
   in
   let get_by_id_input = Spotify.Playlist.Get_by_id_input.make ~id () in
-  let+ spotify_playlist =
+  let+ { data = spotify_playlist; _ } =
     Spotify.Playlist.get_by_id ~client:spotify_client get_by_id_input
   in
   let+ transfer_playlist, _ =

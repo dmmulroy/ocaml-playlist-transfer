@@ -10,12 +10,3 @@ type 'a t = {
   total : int;
 }
 [@@deriving yojson]
-
-type page
-
-(*
-  val get_by_id : client:Client.t -> ?page:Page.t -> Input.t -> ((t,page), Error.t) result Lwt.t
-  let+ data, page = Spotify.Playlist.get_by_id ~client input
-  let+ next_page, page = match page.next with
-  | some fn -> fn ()
- *)
