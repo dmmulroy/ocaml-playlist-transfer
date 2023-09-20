@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   available_markets : string list;
   copyrights : Common.copyright list;

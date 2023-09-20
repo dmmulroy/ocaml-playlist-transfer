@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   audio_preview_url : Http.Uri.t;
   description : string;

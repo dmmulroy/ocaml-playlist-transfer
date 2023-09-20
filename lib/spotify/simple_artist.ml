@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   external_urls : Common.external_urls;
   href : Http.Uri.t;

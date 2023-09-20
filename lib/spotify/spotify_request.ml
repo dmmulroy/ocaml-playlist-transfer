@@ -1,3 +1,5 @@
+open Shared
+
 include Rest_client.Make (struct
   type api_client = Client.t
 

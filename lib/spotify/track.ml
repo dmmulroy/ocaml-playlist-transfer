@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   album : Simple_album.t;
   artists : Simple_artist.t list;

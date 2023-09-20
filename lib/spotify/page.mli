@@ -1,3 +1,5 @@
+open Shared
+
 type 'a t = {
   href : Http.Uri.t;
   items : 'a list;

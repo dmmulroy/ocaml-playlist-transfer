@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   artists : Simple_artist.t list;
   available_markets : string list;

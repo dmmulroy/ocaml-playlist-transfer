@@ -1,3 +1,5 @@
+open Shared
+
 module Test_auth_input = struct
   type t = unit
 end

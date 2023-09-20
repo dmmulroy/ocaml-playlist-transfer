@@ -1,5 +1,5 @@
 (library
  (name transfer)
- (libraries apple spotify syntax ptime ptime.clock.os error)
+ (libraries apple spotify shared ptime ptime.clock.os)
  (preprocess
   (pps ppx_deriving.make)))

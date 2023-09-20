@@ -1,3 +1,5 @@
+open Shared
+
 type t
 
 val make : redirect_uri:Http.Uri.t -> state:string -> t

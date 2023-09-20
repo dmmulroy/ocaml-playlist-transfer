@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   display_name : string option; [@default None]
   external_urls : Common.external_urls;

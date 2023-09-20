@@ -1,3 +1,4 @@
+open Shared
 open Syntax
 open Let
 module Header = Jose.Header

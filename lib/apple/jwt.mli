@@ -1,3 +1,5 @@
+open Shared
+
 type t
 
 val is_expired : t -> bool

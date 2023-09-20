@@ -1,3 +1,5 @@
+open Shared
+
 module Get_playlists_input = struct
   type t = { limit : int option; offset : int option } [@@deriving show, yojson]
 

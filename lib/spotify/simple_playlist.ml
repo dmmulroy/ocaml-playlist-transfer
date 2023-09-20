@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   collaborative : bool;
   description : string option;

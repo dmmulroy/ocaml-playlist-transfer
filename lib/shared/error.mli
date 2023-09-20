@@ -43,5 +43,3 @@ end
 module Make (_ : Error_domain) : sig
   include S
 end
-
-Error.Make()

@@ -1,3 +1,5 @@
+open Shared
+
 type playlist_track = {
   added_at : string;
   added_by : User.t;

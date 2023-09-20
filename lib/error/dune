@@ -1,4 +1,0 @@
-(library
- (name error)
- (libraries syntax http ptime ptime.clock.os)
- (preprocess (pps ppx_deriving.show)))

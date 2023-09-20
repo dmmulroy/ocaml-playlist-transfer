@@ -1,5 +1,6 @@
 [@@@ocaml.warning "-32"]
 
+open Shared
 open Syntax
 open Let
 

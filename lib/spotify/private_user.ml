@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   country : string;
   email : string;

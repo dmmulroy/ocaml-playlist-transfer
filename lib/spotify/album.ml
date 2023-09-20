@@ -1,3 +1,5 @@
+open Shared
+
 type album_type = [ `Album | `Single | `Compilation ]
 type album_group = [ album_type | `Appears_on ]
 

@@ -1,3 +1,5 @@
+open Shared
+
 type t = {
   album_group : Album.album_group option; [@default None]
   album_type : Album.album_type;

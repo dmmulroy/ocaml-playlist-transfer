@@ -1,3 +1,5 @@
+open Shared
+
 module Get_playlists_input : sig
   type t = { limit : int option; offset : int option } [@@deriving show, yojson]
 

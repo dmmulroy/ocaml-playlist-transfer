@@ -1,0 +1,4 @@
+(library
+ (name shared)
+ (libraries lwt cohttp-lwt-unix yojson ptime ptime.clock.os)
+ (preprocess (pps ppx_deriving.show)))

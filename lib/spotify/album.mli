@@ -1,3 +1,5 @@
+open Shared
+
 type album_type = [ `Album | `Single | `Compilation ] [@@deriving yojson]
 type album_group = [ album_type | `Appears_on ] [@@deriving yojson]
 

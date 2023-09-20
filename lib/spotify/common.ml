@@ -1,3 +1,5 @@
+open Shared
+
 type copyright = [ `C of string | `P of string ] [@@deriving yojson]
 
 let copyright_of_yojson = function

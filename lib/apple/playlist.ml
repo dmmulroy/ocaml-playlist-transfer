@@ -1,3 +1,5 @@
+open Shared
+
 type playlist_type =
   [ `Editoral | `External | `Personal_mix | `Replay | `User_shared ]
 [@@deriving yojson]

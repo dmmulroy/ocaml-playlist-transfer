@@ -1,3 +1,5 @@
+(* open Shared *)
+
 type t = {
   id :
     [ `Apple_library_id of string

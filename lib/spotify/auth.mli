@@ -1,3 +1,5 @@
+open Shared
+
 val make_authorization_url :
   client_id:string ->
   redirect_uri:Http.Uri.t ->

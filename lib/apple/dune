@@ -1,5 +1,5 @@
 (library
  (name apple)
- (libraries syntax extended http rest_client jose ppx_deriving_yojson.runtime ptime ptime.clock.os error)
+ (libraries shared jose ppx_deriving_yojson.runtime ptime ptime.clock.os)
  (preprocess
   (pps ppx_deriving.make ppx_deriving.show ppx_deriving_yojson)))
