@@ -70,31 +70,7 @@ let test_get_spotify_playlist_by_id id () =
   let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
   let request = Spotify.Playlist.Get_by_id_input.make ~id () in
   let+ response = Spotify.Playlist.get_by_id ~client request in
-  let+ _ =
-    Spotify.Playlist.get_by_id ~client
-      { request with page = response.page.next }
-  in
-  let+ _ =
-    Spotify.Playlist.get_by_id ~client
-      { request with page = response.page.previous }
-  in
-
-  (* let _ = *)
-  (*   match spotify_playlist with *)
-  (*   | Error err -> print_endline @@ Error.to_string err *)
-  (*   | Ok { data = playlist; _ } -> *)
-  (*       print_endline @@ "Playlist: " ^ playlist.name; *)
-  (*       let () = *)
-  (*         List.iteri *)
-  (*           (fun idx playlist_track -> *)
-  (*             Spotify.Playlist.( *)
-  (*               print_endline @@ string_of_int idx ^ ": " *)
-  (*               ^ playlist_track.track.name)) *)
-  (*           playlist.tracks.items *)
-  (*       in *)
-  (*       () *)
-  (* in *)
-  Lwt.return_ok ()
+  Lwt.return_ok response.data
 
 let test_apple_get_playlist_by_id () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
@@ -192,3 +168,21 @@ let () =
   match res with
   | Ok () -> print_endline "Success"
   | Error err -> print_endline @@ Error.to_string err
+
+let fetch_all_playlist_tracks ~client id =
+  let open Spotify.Pagination in
+  let request = Spotify.Playlist.Get_by_id_input.make ~id () in
+  let+ response = Spotify.Playlist.get_by_id ~client request in
+  let fetch_all_tracks ~client request tracks page =
+    let rec aux acc = function
+      | None -> Lwt.return_ok acc
+      | Some next ->
+          let+ { data; page = page' } =
+            Spotify.Playlist.get_by_id ~client { request with page = Some next }
+          in
+          aux (List.append data.tracks.items acc) page'.next
+    in
+    aux tracks page.next
+  in
+  Lwt.return_ok
+  @@ fetch_all_tracks ~client request response.data.tracks.items response.page
