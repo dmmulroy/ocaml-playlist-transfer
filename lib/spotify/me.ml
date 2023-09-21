@@ -18,7 +18,7 @@ module Get_playlists_output = struct
   type t = Simple_playlist.t Page.t [@@deriving yojson]
 end
 
-module Get_playlists = Spotify_request.Make (struct
+module Get_playlists = Spotify_rest_client.Make (struct
   type input = Get_playlists_input.t
   type output = Get_playlists_output.t [@@deriving yojson]
 
@@ -37,7 +37,7 @@ module Get_playlists = Spotify_request.Make (struct
          ~body:Http.Body.empty ~uri:(make_endpoint input) ()
 
   let of_http_response =
-    Spotify_request.handle_response ~deserialize:output_of_yojson
+    Spotify_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_playlists = Get_playlists.request

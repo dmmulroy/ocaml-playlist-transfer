@@ -44,7 +44,7 @@ module Add_tracks_output = struct
   type t = { snapshot_id : string } [@@deriving yojson]
 end
 
-module Add_tracks = Spotify_request.Make (struct
+module Add_tracks = Spotify_rest_client.Make (struct
   type input = Add_tracks_input.t
   type output = Add_tracks_output.t [@@deriving yojson]
 
@@ -67,7 +67,7 @@ module Add_tracks = Spotify_request.Make (struct
          ()
 
   let of_http_response =
-    Spotify_request.handle_response ~deserialize:output_of_yojson
+    Spotify_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let add_tracks = Add_tracks.request
@@ -90,7 +90,7 @@ module Create_output = struct
   type nonrec t = t
 end
 
-module CreatePlaylist = Spotify_request.Make (struct
+module CreatePlaylist = Spotify_rest_client.Make (struct
   type input = Create_input.t
   type output = Create_output.t
 
@@ -112,7 +112,7 @@ module CreatePlaylist = Spotify_request.Make (struct
     @@ Http.Request.make ~meth:`POST ~body ~uri:(make_endpoint input.user_id) ()
 
   let of_http_response =
-    Spotify_request.handle_response ~deserialize:output_of_yojson
+    Spotify_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let create = CreatePlaylist.request
@@ -146,7 +146,7 @@ module Get_featured_output = struct
   [@@deriving yojson]
 end
 
-module Get_featured = Spotify_request.Make (struct
+module Get_featured = Spotify_rest_client.Make (struct
   type input = Get_featured_input.t
   type output = Get_featured_output.t [@@deriving yojson]
 
@@ -163,7 +163,7 @@ module Get_featured = Spotify_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =
-    Spotify_request.handle_response ~deserialize:output_of_yojson
+    Spotify_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_featured = Get_featured.request
@@ -190,7 +190,7 @@ module Get_by_id_input = struct
       ]
 
   let make ?additional_types ?fields ?market ~id () =
-    { id; additional_types; fields; market }
+    Spotify_request.make { id; additional_types; fields; market }
 end
 
 module Get_by_id_output = struct
@@ -198,31 +198,26 @@ module Get_by_id_output = struct
   type t = playlist [@@deriving yojson]
 end
 
-module Get_playlist_by_id = Spotify_request.Make (struct
-  (*
-      type input = [`Input of Get_by_id_input.t | `Page of Page.t]
-  *)
-  type input = Get_by_id_input.t
-
-  (*
-    Consider return a GADT based in the input type
-   *)
-  type output = Get_by_id_output.t Response.t [@@deriving of_yojson]
+module Get_playlist_by_id = Spotify_rest_client.Make (struct
+  type input = Get_by_id_input.t Spotify_request.t
+  type output = Get_by_id_output.t Spotify_response.t [@@deriving of_yojson]
 
   let name = "Get_playlist_by_id"
 
-  let make_endpoint (input : input) =
+  let make_endpoint (request : input) =
     let base_endpoint =
-      Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/" ^ input.id
+      Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/"
+      ^ request.input.id
     in
     Http.Uri.add_query_params' base_endpoint
-    @@ Get_by_id_input.to_query_params input
+    @@ Get_by_id_input.to_query_params request.input
 
-  let to_http_request input =
-    Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
+  let to_http_request (request : input) =
+    Lwt.return_ok
+    @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint request) ()
 
   let of_http_response =
-    Spotify_request.handle_response ~deserialize:output_of_yojson
+    Spotify_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_by_id = Get_playlist_by_id.request

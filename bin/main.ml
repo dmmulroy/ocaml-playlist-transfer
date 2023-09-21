@@ -31,10 +31,10 @@ let test_spotify_oauth () =
       (`Authorization_code { client_secret; client_id; code; redirect_uri })
   in
   let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
-  let get_by_id_input =
+  let request =
     Spotify.Playlist.Get_by_id_input.make ~id:"37i9dQZF1F0sijgNaJdgit" ()
   in
-  let* playlist_result = Spotify.Playlist.get_by_id ~client get_by_id_input in
+  let* playlist_result = Spotify.Playlist.get_by_id ~client request in
   let _ =
     match playlist_result with
     | Error err -> print_endline @@ Error.to_string err
@@ -68,23 +68,32 @@ let test_get_spotify_playlist_by_id id () =
       ~grant_type:`Authorization_code ~token:access_token_str ()
   in
   let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
-  let get_by_id_input = Spotify.Playlist.Get_by_id_input.make ~id () in
-  let* spotify_playlist = Spotify.Playlist.get_by_id ~client get_by_id_input in
-  let _ =
-    match spotify_playlist with
-    | Error err -> print_endline @@ Error.to_string err
-    | Ok { data = playlist; _ } ->
-        print_endline @@ "Playlist: " ^ playlist.name;
-        let () =
-          List.iteri
-            (fun idx playlist_track ->
-              Spotify.Playlist.(
-                print_endline @@ string_of_int idx ^ ": "
-                ^ playlist_track.track.name))
-            playlist.tracks.items
-        in
-        ()
+  let request = Spotify.Playlist.Get_by_id_input.make ~id () in
+  let+ response = Spotify.Playlist.get_by_id ~client request in
+  let+ _ =
+    Spotify.Playlist.get_by_id ~client
+      { request with page = response.page.next }
   in
+  let+ _ =
+    Spotify.Playlist.get_by_id ~client
+      { request with page = response.page.previous }
+  in
+
+  (* let _ = *)
+  (*   match spotify_playlist with *)
+  (*   | Error err -> print_endline @@ Error.to_string err *)
+  (*   | Ok { data = playlist; _ } -> *)
+  (*       print_endline @@ "Playlist: " ^ playlist.name; *)
+  (*       let () = *)
+  (*         List.iteri *)
+  (*           (fun idx playlist_track -> *)
+  (*             Spotify.Playlist.( *)
+  (*               print_endline @@ string_of_int idx ^ ": " *)
+  (*               ^ playlist_track.track.name)) *)
+  (*           playlist.tracks.items *)
+  (*       in *)
+  (*       () *)
+  (* in *)
   Lwt.return_ok ()
 
 let test_apple_get_playlist_by_id () =
@@ -160,9 +169,9 @@ let test_transfer_from_spotify_to_apple id () =
   let spotify_client =
     Spotify.Client.make ~access_token ~client_id ~client_secret
   in
-  let get_by_id_input = Spotify.Playlist.Get_by_id_input.make ~id () in
+  let request = Spotify.Playlist.Get_by_id_input.make ~id () in
   let+ { data = spotify_playlist; _ } =
-    Spotify.Playlist.get_by_id ~client:spotify_client get_by_id_input
+    Spotify.Playlist.get_by_id ~client:spotify_client request
   in
   let+ transfer_playlist, _ =
     Transfer.Playlist.of_spotify spotify_client spotify_playlist
