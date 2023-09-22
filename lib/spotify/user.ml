@@ -10,4 +10,4 @@ type t = {
   resource_type : Resource.t; [@key "type"]
   uri : string;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]

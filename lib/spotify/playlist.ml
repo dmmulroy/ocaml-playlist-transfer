@@ -10,7 +10,7 @@ type playlist_track = {
   track : Track.t;
   video_thumbnail : video_thumbnail option; [@default None]
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 and video_thumbnail = { url : Http.Uri.t option } [@@deriving yojson]
 
@@ -221,3 +221,38 @@ module Get_playlist_by_id = Spotify_rest_client.Make (struct
 end)
 
 let get_by_id = Get_playlist_by_id.request
+
+module Get_tracks_input = struct
+  type t = string
+
+  let make (playlist_id : t) = Spotify_request.make playlist_id
+end
+
+module Get_tracks_output = struct
+  type t = playlist_track Page.t [@@deriving yojson { strict = false }]
+end
+
+module Get_tracks = Spotify_rest_client.Make (struct
+  type input = Get_tracks_input.t Spotify_request.t
+  type output = Get_tracks_output.t Spotify_response.t
+
+  let name = "Get_tracks"
+
+  let make_endpoint (request : input) =
+    Http.Uri.of_string @@ "https://api.spotify.com/v1/playlists/"
+    ^ request.input ^ "/tracks"
+
+  let to_http_request (request : input) =
+    Lwt.return_ok
+    @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint request) ()
+
+  let of_http_response http_response =
+    Infix.Lwt_result.(
+      Spotify_rest_client.handle_response
+        ~deserialize:Get_tracks_output.of_yojson http_response
+      >|= fun playlist_track_page ->
+      let page = Pagination.make playlist_track_page in
+      Spotify_response.make ~data:playlist_track_page ~page)
+end)
+
+let get_tracks = Get_tracks.request

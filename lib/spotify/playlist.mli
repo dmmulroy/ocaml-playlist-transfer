@@ -129,3 +129,18 @@ val get_featured :
   client:Client.t ->
   Get_featured_input.t ->
   (Get_featured_output.t, Error.t) Lwt_result.t
+
+module Get_tracks_input : sig
+  type t = string
+
+  val make : string -> t Spotify_request.t
+end
+
+module Get_tracks_output : sig
+  type t = playlist_track Page.t [@@deriving yojson]
+end
+
+val get_tracks :
+  client:Client.t ->
+  Get_tracks_input.t Spotify_request.t ->
+  (Get_tracks_output.t Spotify_response.t, Error.t) Lwt_result.t

@@ -11,4 +11,4 @@ type 'a t = {
   previous : Http.Uri.t option;
   total : int;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
