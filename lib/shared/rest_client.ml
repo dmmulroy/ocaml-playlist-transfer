@@ -9,7 +9,6 @@ module Config = struct
     module Error : Error.S
 
     val headers_of_api_client : api_client -> Http.Header.t
-    (* val reauthenticate : api_client -> (api_client, Shared_error.t) Lwt_result.t *)
   end
 end
 
@@ -60,23 +59,8 @@ module Make (C : Config.S) = struct
     let result =
       match response with
       | response' when Http.Response.is_success response' ->
-          of_http_response response'
-      (* TODO: Handle unauthenticated w/ a retry/refresh of auth token *)
-      (* | response' *)
-      (*   when Http.Response.status response' |> Http.Code.code_of_status = 401 -> *)
-      (*     let| client' = *)
-      (*       Option.to_result *)
-      (*         ~none: *)
-      (*           (C.Error.make ~source:(`Source "Auth - Attempt Refresh") *)
-      (*              "Not implemented") *)
-      (*         client *)
-      (*     in *)
-      (*     let+ reauthenticated_client = C.reauthenticate client' in *)
-      (*     let _headers' = *)
-      (*       Http.Header.add_unless_exists base_headers *)
-      (*         (C.headers_of_api_client reauthenticated_client) *)
-      (*     in *)
-      (*     failwith "Not implemented" *)
+          let+ result = of_http_response response' in
+          Lwt.return_ok result
       | response' ->
           let request_method = Http.Request.meth request in
           let request_uri = Http.Request.uri request in
@@ -102,6 +86,7 @@ module Make (C : Config.S) = struct
     match deserialize json with
     | Ok response -> Lwt.return_ok response
     | Error msg ->
+        print_endline "HERE!!!";
         Lwt.return_error
         @@ C.Error.make ~source:(`Serialization (`Json json)) msg
 
@@ -114,12 +99,6 @@ module Make (C : Config.S) = struct
       >|? fun err ->
       C.Error.make ~cause:err ~source:(`Source M.name)
       @@ "Error executing request: " ^ M.name
-
-    (*
-      let paginated_request ~clinet input =
-        ...
-      ((M.output, { next_page: Some fn, previous_page: Some fn }, Error.t) Lwt_result.t
-     *)
   end
 
   module Make_unauthenticated (M : Api_request.S) = struct

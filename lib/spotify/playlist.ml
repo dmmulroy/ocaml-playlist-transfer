@@ -243,8 +243,12 @@ module Get_tracks = Spotify_rest_client.Make (struct
     ^ request.input ^ "/tracks"
 
   let to_http_request (request : input) =
-    Lwt.return_ok
-    @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint request) ()
+    let uri =
+      match request.page with
+      | None -> make_endpoint request
+      | Some { href; _ } -> href
+    in
+    Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
 
   let of_http_response http_response =
     Infix.Lwt_result.(

@@ -9,6 +9,11 @@ open Let
 type t = { description : string; name : string; tracks : Track.t list option }
 [@@deriving make]
 
+let add_track playlist track =
+  let existing_tracks = Option.value ~default:[] playlist.tracks in
+  let updated_tracks = track :: existing_tracks in
+  { playlist with tracks = Some updated_tracks }
+
 let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
   let name = playlist.attributes.name in
   let description =
