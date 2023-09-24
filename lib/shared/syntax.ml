@@ -71,10 +71,10 @@ module Let = struct
   (** [let@ var = res] binds [var] to [v] when [res] is [Ok v] *)
   let ( let@ ) = Result.bind
 
-  (** [let+ var = promise] binds [var] to [v] when Lwt promise [promise] resolves to [v] *)
+  (** [let* var = promise] binds [var] to [v] when Lwt promise [promise] resolves to [v] *)
   let ( let* ) = Lwt.bind
 
-  (** [let* var = promise] binds [var] to [v] when Lwt promise [promise] resolves to [Ok v] *)
+  (** [let+ var = promise] binds [var] to [v] when Lwt promise [promise] resolves to [Ok v] *)
   let ( let+ ) = Lwt_result.bind
 
   (** [let| var = res] lifts a [('ok, 'err) result] [res] to a [('ok, 'err) Lwt_result.t], removing

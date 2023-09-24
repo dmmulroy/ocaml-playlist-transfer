@@ -3,12 +3,12 @@ open Syntax
 open Let
 
 type playlist_track = {
-  added_at : string;
-  added_by : User.t;
-  is_local : bool;
-  primary_color : string option; [@default None]
+  (* added_at : string; *)
+  (* added_by : User.t; *)
+  (* is_local : bool; *)
+  (* primary_color : string option; [@default None] *)
   track : Track.t;
-  video_thumbnail : video_thumbnail option; [@default None]
+      (* video_thumbnail : video_thumbnail option; [@default None] *)
 }
 [@@deriving yojson { strict = false }]
 
@@ -18,12 +18,12 @@ type t = {
   collaborative : bool;
   description : string option; [@default None]
   external_urls : Common.external_urls;
-  followers : Resource.reference;
+  (* followers : Resource.reference; *)
   href : Http.Uri.t;
   id : string;
-  images : Common.image list;
+  (* images : Common.image list; *)
   name : string;
-  owner : User.t;
+  (* owner : User.t; *)
   primary_color : string option; [@default None]
   public : bool option; [@default None]
   resource_type : Resource.t; [@key "type"]
@@ -31,7 +31,7 @@ type t = {
   tracks : playlist_track Page.t;
   uri : string;
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
 module Add_tracks_input = struct
   type t = { playlist_id : string; uris : string list } [@@deriving make]
@@ -200,7 +200,7 @@ end
 
 module Get_playlist_by_id = Spotify_rest_client.Make (struct
   type input = Get_by_id_input.t Spotify_request.t
-  type output = Get_by_id_output.t Spotify_response.t [@@deriving of_yojson]
+  type output = Get_by_id_output.t Spotify_response.t
 
   let name = "Get_playlist_by_id"
 
@@ -217,7 +217,7 @@ module Get_playlist_by_id = Spotify_rest_client.Make (struct
     @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint request) ()
 
   let of_http_response =
-    Spotify_rest_client.handle_response ~deserialize:output_of_yojson
+    Spotify_rest_client.handle_response ~deserialize:Get_by_id_output.of_yojson
 end)
 
 let get_by_id = Get_playlist_by_id.request

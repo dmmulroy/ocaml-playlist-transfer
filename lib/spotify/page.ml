@@ -12,3 +12,14 @@ type 'a t = {
   total : int;
 }
 [@@deriving yojson { strict = false }]
+
+let empty =
+  {
+    href = Http.Uri.of_string "";
+    items = [];
+    limit = 0;
+    next = None;
+    offset = 0;
+    previous = None;
+    total = 0;
+  }

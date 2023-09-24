@@ -6,9 +6,13 @@ module Config = struct
   module type S = sig
     type api_client
 
+    type 'a interceptor =
+      (?client:api_client -> 'a -> ('a, Shared_error.t) Lwt_result.t) option
+
     module Error : Error.S
 
-    val headers_of_api_client : api_client -> Http.Header.t
+    val intercept_request : Http.Request.t interceptor
+    val intercept_response : Http.Response.t interceptor
   end
 end
 
@@ -41,21 +45,20 @@ let execute request =
 
 module Make (C : Config.S) = struct
   let handle_request ?client ~input ~to_http_request ~of_http_response () =
-    let+ request = to_http_request input in
-    let base_headers =
+    let+ request =
+      Infix.Lwt_result.(
+        to_http_request input >>= fun request ->
+        match C.intercept_request with
+        | None -> Lwt.return_ok request
+        | Some f -> f ?client request)
+    in
+    let headers =
       Http.Header.(
         add_unless_exists
           (Http.Request.headers request)
           (of_list [ ("Content-Type", "application/json") ]))
     in
-    let headers' =
-      Option.fold ~none:base_headers
-        ~some:(fun client' ->
-          Http.Header.add_unless_exists base_headers
-            (C.headers_of_api_client client'))
-        client
-    in
-    let* response = execute (Http.Request.set_headers request headers') in
+    let* response = execute (Http.Request.set_headers request headers) in
     let result =
       match response with
       | response' when Http.Response.is_success response' ->
@@ -79,16 +82,15 @@ module Make (C : Config.S) = struct
     let open Infix.Lwt_result in
     let+ json =
       Http.Response.body response |> Http.Body.to_yojson >|?* fun msg ->
-      let* json_str = Http.Body.to_string @@ Http.Response.body response in
-      let source = `Serialization (`Raw json_str) in
+      let* _json_str = Http.Body.to_string @@ Http.Response.body response in
+      let source = `Serialization (`Raw "") in
       Lwt.return @@ C.Error.make ~source msg
     in
     match deserialize json with
     | Ok response -> Lwt.return_ok response
     | Error msg ->
         print_endline "HERE!!!";
-        Lwt.return_error
-        @@ C.Error.make ~source:(`Serialization (`Json json)) msg
+        Lwt.return_error @@ C.Error.make ~source:(`Serialization (`Raw "")) msg
 
   module Make (M : Api_request.S) = struct
     open Infix.Lwt_result

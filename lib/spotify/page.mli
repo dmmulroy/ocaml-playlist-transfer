@@ -10,3 +10,5 @@ type 'a t = {
   total : int;
 }
 [@@deriving yojson]
+
+val empty : 'a t

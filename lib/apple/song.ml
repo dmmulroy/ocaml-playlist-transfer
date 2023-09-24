@@ -71,7 +71,7 @@ module Get_by_id_output = struct
   type t = { data : song list } [@@deriving yojson { strict = false }]
 end
 
-module Get_by_id = Apple_request.Make (struct
+module Get_by_id = Apple_rest_client.Make (struct
   type input = Get_by_id_input.t
   type output = Get_by_id_output.t [@@deriving yojson { strict = false }]
 
@@ -85,7 +85,7 @@ module Get_by_id = Apple_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
 
   let of_http_response =
-    Apple_request.handle_response ~deserialize:output_of_yojson
+    Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_by_id = Get_by_id.request
@@ -158,7 +158,7 @@ module Get_many_by_isrcs_output = struct
   [@@deriving yojson { strict = false }]
 end
 
-module Get_many_by_isrcs = Apple_request.Make (struct
+module Get_many_by_isrcs = Apple_rest_client.Make (struct
   type input = Get_many_by_isrcs_input.t
 
   type output = Get_many_by_isrcs_output.t
@@ -177,7 +177,7 @@ module Get_many_by_isrcs = Apple_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
 
   let of_http_response =
-    Apple_request.handle_response ~deserialize:output_of_yojson
+    Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_many_by_isrcs ~(client : Client.t) (input : Get_many_by_isrcs_input.t) =

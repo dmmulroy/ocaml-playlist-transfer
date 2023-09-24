@@ -157,7 +157,7 @@ module Create_output = struct
   type t = { data : playlist list } [@@deriving yojson]
 end
 
-module Create = Apple_request.Make (struct
+module Create = Apple_rest_client.Make (struct
   type input = Create_input.t
   type output = Create_output.t [@@deriving yojson]
 
@@ -176,7 +176,7 @@ module Create = Apple_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`POST ~uri:endpoint ~body ()
 
   let of_http_response =
-    Apple_request.handle_response ~deserialize:output_of_yojson
+    Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let create = Create.request
@@ -190,7 +190,7 @@ module Get_all_output = struct
   type t = playlist Page.t [@@deriving yojson]
 end
 
-module Get_all = Apple_request.Make (struct
+module Get_all = Apple_rest_client.Make (struct
   type input = Get_all_input.t
   type output = Get_all_output.t [@@deriving yojson]
 
@@ -203,7 +203,7 @@ module Get_all = Apple_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:endpoint input
 
   let of_http_response =
-    Apple_request.handle_response ~deserialize:output_of_yojson
+    Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_all = Get_all.request
@@ -235,7 +235,7 @@ module Get_by_id_output = struct
   type t = { data : playlist list } [@@deriving yojson]
 end
 
-module Get_by_id = Apple_request.Make (struct
+module Get_by_id = Apple_rest_client.Make (struct
   type input = Get_by_id_input.t
   type output = Get_by_id_output.t [@@deriving yojson]
 
@@ -254,7 +254,7 @@ module Get_by_id = Apple_request.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
   let of_http_response =
-    Apple_request.handle_response ~deserialize:output_of_yojson
+    Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end)
 
 let get_by_id = Get_by_id.request

@@ -6,7 +6,7 @@ include Rest_client.Make (struct
   type 'a interceptor =
     (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
 
-  module Error = Spotify_error
+  module Error = Apple_error
 
   let set_headers ?(client : api_client option) (request : Http.Request.t) =
     match client with
@@ -20,6 +20,7 @@ include Rest_client.Make (struct
                  [
                    ( "Authorization",
                      Fmt.str "Bearer %s" @@ Client.get_bearer_token client );
+                   ("Music-User-Token", Client.music_user_token client);
                  ])
         in
         Lwt.return_ok updated_request

@@ -1,4 +1,4 @@
-[@@@ocaml.warning "-32"]
+[@@@ocaml.warning "-32-33-27"]
 
 open Shared
 open Syntax
@@ -183,44 +183,56 @@ let test_apple_get_song_by_isrcs () =
 let test_transfer_from_spotify_to_apple playlist_id () =
   let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
   let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
-  let access_token_str = Sys.getenv "SPOTIFY_ACCESS_TOKEN" in
-  let access_token =
-    Spotify.Access_token.make
+  let state = Int.to_string @@ Random.bits () in
+  let redirect_uri = Http.Uri.of_string "http://localhost:3939/spotify" in
+  let redirect_server = Redirect_server.make ~state ~redirect_uri in
+  let* _ = Redirect_server.run redirect_server () in
+  let authorization_uri =
+    Spotify.Auth.make_authorization_url ~client_id ~redirect_uri ~state
       ~scopes:
         [
           `Playlist_read_private;
           `Playlist_modify_public;
           `Playlist_modify_private;
         ]
-      ~expiration_time:((Int.of_float @@ Unix.time ()) + 3600)
-      ~grant_type:`Authorization_code ~token:access_token_str ()
+      ~show_dialog:false ()
+  in
+  let cmd =
+    Filename.quote_command "open" [ Http.Uri.to_string authorization_uri ]
+  in
+  let _ = Unix.system cmd in
+  let* code = Redirect_server.get_code redirect_server in
+  let+ access_token =
+    Spotify.Auth.request_access_token
+      (`Authorization_code { client_secret; client_id; code; redirect_uri })
   in
   let spotify_client =
     Spotify.Client.make ~access_token ~client_id ~client_secret
   in
   let request = Spotify.Playlist.Get_by_id_input.make ~id:playlist_id () in
-  let+ { data = playlist; page } = Spotify.Playlist.get_by_id ~client:spotify_client request in
-  let request = Spotify.Playlist.Get_tracks_input.make playlist_id in
-  let request' = { request with page = page.next } in
-  let open Spotify.Playlist in
-  let+ { data; _ } =
-    Spotify.Playlist.get_tracks ~client:spotify_client request'
+  let+ { data = playlist; _ } =
+    Spotify.Playlist.get_by_id ~client:spotify_client request
   in
-  (* let tracks =  *)
-  (**)
-  (* let+ transfer_playlist, _ = *)
-  (*   Transfer.Playlist.of_spotify spotify_client spotify_playlist *)
-  (* in *)
-  (* let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in *)
-  (* let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in *)
-  (* let jwt_str = Sys.getenv "APPLE_JWT" in *)
-  (* let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in *)
-  (* let apple_client = Apple.Client.make ~jwt ~music_user_token in *)
-  (* let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in *)
+  let+ spotify_tracks =
+    fetch_all_spotify_playlist_tracks ~client:spotify_client playlist_id
+  in
+  let playlist' = { playlist with tracks = Spotify.Page.empty } in
+  let+ transfer_playlist, _ =
+    Transfer.Playlist.of_spotify spotify_client playlist'
+  in
+  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
+  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
+  let jwt_str = Sys.getenv "APPLE_JWT" in
+  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
+  let apple_client = Apple.Client.make ~jwt ~music_user_token in
+  let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
   Lwt.return_ok ()
 
 let () =
   let res =
-    Lwt_main.run @@ test_get_spotify_playlist_tracks "7eBq55wTPZ8v0JIeNUxk68"
+    Lwt_main.run
+    @@ test_transfer_from_spotify_to_apple "37i9dQZF1DWXJyjYpHunCf" ()
   in
-  match res with Ok () -> print_endline "Success" | Error _ -> ()
+  match res with
+  | Ok _ -> print_endline "Success"
+  | Error err -> Error.to_string err |> print_endline

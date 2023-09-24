@@ -83,9 +83,6 @@ let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
                  ~name:item.track.name)
       playlist.tracks.items
   in
-  print_endline @@ "of_spotify tracks: " ^ string_of_int (List.length tracks);
-  print_endline @@ "of_spotify skipped_tracks: "
-  ^ string_of_int (List.length skipped_tracks);
   Lwt.return_ok ({ description; name; tracks = Some tracks }, skipped_tracks)
 
 let to_apple (client : Apple.Client.t) (playlist : t) =
