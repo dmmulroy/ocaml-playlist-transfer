@@ -216,7 +216,12 @@ let test_transfer_from_spotify_to_apple playlist_id () =
   let+ spotify_tracks =
     fetch_all_spotify_playlist_tracks ~client:spotify_client playlist_id
   in
-  let playlist' = { playlist with tracks = Spotify.Page.empty } in
+  let playlist' =
+    {
+      playlist with
+      tracks = { Spotify.Page.empty with items = spotify_tracks };
+    }
+  in
   let+ transfer_playlist, _ =
     Transfer.Playlist.of_spotify spotify_client playlist'
   in
@@ -231,7 +236,7 @@ let test_transfer_from_spotify_to_apple playlist_id () =
 let () =
   let res =
     Lwt_main.run
-    @@ test_transfer_from_spotify_to_apple "37i9dQZF1DWXJyjYpHunCf" ()
+    @@ test_transfer_from_spotify_to_apple "7eBq55wTPZ8v0JIeNUxk68" ()
   in
   match res with
   | Ok _ -> print_endline "Success"

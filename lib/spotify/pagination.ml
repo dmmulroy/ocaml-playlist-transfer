@@ -9,6 +9,8 @@ type cursor = { href : Http.Uri.t; limit : int; offset : int; total : int }
 type t = { next : cursor option; previous : cursor option }
 [@@deriving yojson { strict = false }]
 
+let empty = { next = None; previous = None }
+
 let make (page : 'a Page.t) =
   let open Infix.Option in
   let next =

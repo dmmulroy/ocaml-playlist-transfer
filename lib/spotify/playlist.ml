@@ -216,8 +216,11 @@ module Get_playlist_by_id = Spotify_rest_client.Make (struct
     Lwt.return_ok
     @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint request) ()
 
-  let of_http_response =
-    Spotify_rest_client.handle_response ~deserialize:Get_by_id_output.of_yojson
+  let of_http_response http_response =
+    Infix.Lwt_result.(
+      Spotify_rest_client.handle_response
+        ~deserialize:Get_by_id_output.of_yojson http_response
+      >|= Spotify_response.make)
 end)
 
 let get_by_id = Get_playlist_by_id.request
@@ -256,7 +259,7 @@ module Get_tracks = Spotify_rest_client.Make (struct
         ~deserialize:Get_tracks_output.of_yojson http_response
       >|= fun playlist_track_page ->
       let page = Pagination.make playlist_track_page in
-      Spotify_response.make ~data:playlist_track_page ~page)
+      Spotify_response.make ~page playlist_track_page)
 end)
 
 let get_tracks = Get_tracks.request

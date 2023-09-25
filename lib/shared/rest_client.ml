@@ -50,7 +50,7 @@ module Make (C : Config.S) = struct
         to_http_request input >>= fun request ->
         match C.intercept_request with
         | None -> Lwt.return_ok request
-        | Some f -> f ?client request)
+        | Some interceptor -> interceptor ?client request)
     in
     let headers =
       Http.Header.(
