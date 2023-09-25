@@ -1,5 +1,3 @@
-[@@@ocaml.warning "-69-32"]
-
 open Shared
 open Syntax
 

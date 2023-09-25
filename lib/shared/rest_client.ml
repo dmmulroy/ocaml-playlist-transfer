@@ -11,6 +11,9 @@ module Config = struct
 
     module Error : Error.S
 
+    type rate_limit_unit = Miliseconds | Seconds
+
+    val rate_limit_unit : rate_limit_unit
     val intercept_request : Http.Request.t interceptor
     val intercept_response : Http.Response.t interceptor
   end
@@ -44,7 +47,7 @@ let execute request =
        ~status:response.status ()
 
 module Make (C : Config.S) = struct
-  let handle_request ?client ~input ~to_http_request ~of_http_response () =
+  let rec handle_request ?client ~input ~to_http_request ~of_http_response () =
     let+ request =
       Infix.Lwt_result.(
         to_http_request input >>= fun request ->
@@ -64,6 +67,35 @@ module Make (C : Config.S) = struct
       | response' when Http.Response.is_success response' ->
           let+ result = of_http_response response' in
           Lwt.return_ok result
+      | response'
+        when Http.Code.code_of_status @@ Http.Response.status response' = 429
+        -> (
+          let request_method = Http.Request.meth request in
+          let request_uri = Http.Request.uri request in
+          let response_headers = Http.Response.headers response' in
+          let retry_after =
+            Http.Header.get response_headers "Retry-After"
+            |> Option.map int_of_string
+          in
+          match retry_after with
+          | None ->
+              Lwt.return_error
+              @@ C.Error.make
+                   ~source:
+                     (`Http
+                       ( Http.Code.status_of_code 429,
+                         request_method,
+                         request_uri ))
+                   "Too many requests"
+          | Some retry_after ->
+              let retry_after_seconds =
+                match C.rate_limit_unit with
+                | Miliseconds -> float_of_int retry_after /. 1000.
+                | Seconds -> float_of_int retry_after
+              in
+              let* _ = Lwt_unix.sleep retry_after_seconds in
+              handle_request ?client ~input ~to_http_request ~of_http_response
+                ())
       | response' ->
           let request_method = Http.Request.meth request in
           let request_uri = Http.Request.uri request in

@@ -1,3 +1,4 @@
+(* Potentailly ignore some warnings in dune profiles *)
 [@@@ocaml.warning "-32-33-27"]
 
 open Shared
@@ -216,14 +217,16 @@ let test_transfer_from_spotify_to_apple playlist_id () =
   let+ spotify_tracks =
     fetch_all_spotify_playlist_tracks ~client:spotify_client playlist_id
   in
-  let playlist' =
-    {
-      playlist with
-      tracks = { Spotify.Page.empty with items = spotify_tracks };
-    }
+  let transfer_tracks, _skipped_tracks =
+    List.partition_map
+      (fun (playlist_track : Spotify.Playlist.playlist_track) ->
+        Transfer.Track.of_spotify playlist_track.track)
+      spotify_tracks
   in
-  let+ transfer_playlist, _ =
-    Transfer.Playlist.of_spotify spotify_client playlist'
+  let transfer_playlist =
+    Transfer.Playlist.make ~name:playlist.name
+      ~description:(Option.value ~default:playlist.name playlist.description)
+      ~tracks:transfer_tracks ()
   in
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
   let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
@@ -232,6 +235,19 @@ let test_transfer_from_spotify_to_apple playlist_id () =
   let apple_client = Apple.Client.make ~jwt ~music_user_token in
   let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
   Lwt.return_ok ()
+
+let test_transfer_from_apple_to_spotify playlist_id =
+  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
+  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
+  let jwt_str = Sys.getenv "APPLE_JWT" in
+  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
+  let apple_client = Apple.Client.make ~jwt ~music_user_token in
+  let input =
+    Apple.Library_playlist.Get_by_id_input.make
+      ~relationships:[ `Tracks; `Catalog ] ~id:"p.PkxV8pzCPa467ad" ()
+  in
+  let+ playlist = Apple.Library_playlist.get_by_id ~client:apple_client input in
+  failwith "Not implemented"
 
 let () =
   let res =
