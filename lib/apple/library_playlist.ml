@@ -17,11 +17,11 @@ type attributes = {
 [@@deriving yojson]
 
 type relationships = {
-  catalog : Playlist.t Relationship.response option; [@default None]
+  catalog : Playlist.t Page.t option; [@default None]
   tracks :
     [ `Library_song of Library_song.t
     | `Library_music_video of Library_music_video.t ]
-    Relationship.response
+    Page.t
     option;
       [@default None]
 }
@@ -29,12 +29,10 @@ type relationships = {
 
 let relationships_to_yojson relationships =
   let open Infix.Option in
-  let catalog =
-    relationships.catalog >|= Relationship.response_to_yojson Playlist.to_yojson
-  in
+  let catalog = relationships.catalog >|= Page.to_yojson Playlist.to_yojson in
   let tracks =
     relationships.tracks
-    >|= Relationship.response_to_yojson (function
+    >|= Page.to_yojson (function
           | `Library_song song -> Library_song.to_yojson song
           | `Library_music_video video -> Library_music_video.to_yojson video)
   in
@@ -48,14 +46,14 @@ let relationships_of_yojson json =
   let catalog =
     try
       member "catalog" json
-      |> Relationship.response_of_yojson Playlist.of_yojson
+      |> Page.of_yojson Playlist.of_yojson
       |> Result.to_option
     with Type_error _ -> None
   in
   let tracks =
     try
       member "tracks" json
-      |> Relationship.response_of_yojson (fun track_json ->
+      |> Page.of_yojson (fun track_json ->
              let open Infix.Result in
              match
                member "type" track_json |> to_string |> Resource.of_string
@@ -214,7 +212,9 @@ module Get_by_id_input = struct
     extended_attributes : [ `Track_types ] option;
     relationships : [ `Tracks | `Catalog ] list option;
   }
-  [@@deriving make]
+
+  let make ?extended_attributes ?relationships id =
+    Apple_rest_client.Request.make { id; extended_attributes; relationships }
 
   let extended_attributes_to_string = function `Track_types -> "trackTypes"
 
@@ -236,25 +236,65 @@ module Get_by_id_output = struct
 end
 
 module Get_by_id = Apple_rest_client.Make (struct
-  type input = Get_by_id_input.t
-  type output = Get_by_id_output.t [@@deriving yojson]
+  type input = Get_by_id_input.t Apple_rest_client.Request.t
+  type output = Get_by_id_output.t Apple_rest_client.Response.t
 
   let name = "Get_by_id"
 
-  let make_endpoint (input : input) =
+  let make_endpoint (request : input) =
     let base_endpoint =
       Http.Uri.of_string
       @@ Fmt.str "https://api.music.apple.com/v1/me/library/playlists/%s"
-           input.id
+           request.input.id
     in
     Http.Uri.add_query_params' base_endpoint
-    @@ Get_by_id_input.to_query_params input
+    @@ Get_by_id_input.to_query_params request.input
 
   let to_http_request input =
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
 
-  let of_http_response =
-    Apple_rest_client.handle_response ~deserialize:output_of_yojson
+  let of_http_response http_response =
+    Infix.Lwt_result.(
+      Apple_rest_client.handle_response ~deserialize:Get_by_id_output.of_yojson
+        http_response
+      >|= Apple_rest_client.Response.make)
 end)
 
 let get_by_id = Get_by_id.request
+
+module Get_relationship_by_name_input = struct
+  type t = { playlist_id : string; relationship : Relationship.t }
+
+  let test () = "Piq is going to write OCaml for the rest of his life"
+
+  let make ~playlist_id ~(relationship : [< Relationship.t ]) =
+    Apple_rest_client.Request.make { playlist_id; relationship }
+end
+
+module Get_relationship_by_name_output = struct
+  type t = Library_song.t Page.t [@@deriving yojson]
+end
+
+module Get_relationship_by_name = Apple_rest_client.Make (struct
+  type input = Get_relationship_by_name_input.t Apple_rest_client.Request.t
+  type output = Get_relationship_by_name_output.t Apple_rest_client.Response.t
+
+  let name = "Get_relationship_by_name"
+
+  let make_endpoint (request : input) =
+    Http.Uri.of_string
+    @@ Fmt.str "https://api.music.apple.com/v1/me/library/playlists/%s/%s"
+         request.input.playlist_id
+         (Relationship.to_string request.input.relationship)
+
+  let to_http_request input =
+    Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()
+
+  let of_http_response http_response =
+    Infix.Lwt_result.(
+      Apple_rest_client.handle_response
+        ~deserialize:Get_relationship_by_name_output.of_yojson http_response
+      >|= Apple_rest_client.Response.make)
+end)
+
+let get_relationship_by_name = Get_relationship_by_name.request

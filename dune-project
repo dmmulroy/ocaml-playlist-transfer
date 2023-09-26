@@ -1,4 +1,4 @@
-(lang dune 3.7)
+(lang dune 3.10)
 
 (name ocaml_playlist_transfer)
 

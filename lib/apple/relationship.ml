@@ -19,13 +19,3 @@ let of_string_list relationship =
     relationship
 
 let to_string_list relationships = List.map to_string relationships
-
-type meta = { total : int } [@@deriving yojson]
-
-type 'a response = {
-  href : string option; [@default None]
-  data : 'a list;
-  next : string option; [@default None]
-  meta : meta option; [@default None]
-}
-[@@deriving yojson { strict = false }]

@@ -90,29 +90,6 @@ end)
 
 let get_by_id = Get_by_id.request
 
-module Search_input = struct
-  type t = {
-    name : string;
-    artist_name : string;
-    album_name : string;
-    limit : int;
-  }
-  [@@deriving make]
-end
-
-module Search_output = struct
-  type results = { songs : t Page.t } [@@deriving yojson]
-
-  type meta_results = {
-    order : string list;
-    raw_order : string list; [@key "rawOrder"]
-  }
-  [@@deriving yojson]
-
-  type meta = { results : meta_results } [@@deriving yojson]
-  type t = { results : results; meta : meta } [@@deriving yojson]
-end
-
 module Get_many_by_isrcs_input = struct
   type t = string list
 

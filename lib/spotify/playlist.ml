@@ -190,7 +190,7 @@ module Get_by_id_input = struct
       ]
 
   let make ?additional_types ?fields ?market ~id () =
-    Spotify_request.make { id; additional_types; fields; market }
+    Spotify_rest_client.Request.make { id; additional_types; fields; market }
 end
 
 module Get_by_id_output = struct
@@ -198,11 +198,11 @@ module Get_by_id_output = struct
   type t = playlist [@@deriving yojson]
 end
 
-module Get_playlist_by_id = Spotify_rest_client.Make (struct
-  type input = Get_by_id_input.t Spotify_request.t
-  type output = Get_by_id_output.t Spotify_response.t
+module Get_by_id = Spotify_rest_client.Make (struct
+  type input = Get_by_id_input.t Spotify_rest_client.Request.t
+  type output = Get_by_id_output.t Spotify_rest_client.Response.t
 
-  let name = "Get_playlist_by_id"
+  let name = "Get_by_id"
 
   let make_endpoint (request : input) =
     let base_endpoint =
@@ -220,15 +220,15 @@ module Get_playlist_by_id = Spotify_rest_client.Make (struct
     Infix.Lwt_result.(
       Spotify_rest_client.handle_response
         ~deserialize:Get_by_id_output.of_yojson http_response
-      >|= Spotify_response.make)
+      >|= Spotify_rest_client.Response.make)
 end)
 
-let get_by_id = Get_playlist_by_id.request
+let get_by_id = Get_by_id.request
 
 module Get_tracks_input = struct
   type t = string
 
-  let make (playlist_id : t) = Spotify_request.make playlist_id
+  let make (playlist_id : t) = Spotify_rest_client.Request.make playlist_id
 end
 
 module Get_tracks_output = struct
@@ -236,8 +236,8 @@ module Get_tracks_output = struct
 end
 
 module Get_tracks = Spotify_rest_client.Make (struct
-  type input = Get_tracks_input.t Spotify_request.t
-  type output = Get_tracks_output.t Spotify_response.t
+  type input = Get_tracks_input.t Spotify_rest_client.Request.t
+  type output = Get_tracks_output.t Spotify_rest_client.Response.t
 
   let name = "Get_tracks"
 
@@ -258,8 +258,18 @@ module Get_tracks = Spotify_rest_client.Make (struct
       Spotify_rest_client.handle_response
         ~deserialize:Get_tracks_output.of_yojson http_response
       >|= fun playlist_track_page ->
-      let page = Pagination.make playlist_track_page in
-      Spotify_response.make ~page playlist_track_page)
+      let page =
+        Spotify_rest_client.Pagination.make
+          ~next:
+            {
+              href = playlist_track_page.href;
+              limit = playlist_track_page.limit;
+              offset = playlist_track_page.offset;
+              total = playlist_track_page.total;
+            }
+          ()
+      in
+      Spotify_rest_client.Response.make ~page playlist_track_page)
 end)
 
 let get_tracks = Get_tracks.request

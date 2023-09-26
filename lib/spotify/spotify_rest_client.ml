@@ -1,6 +1,18 @@
 open Shared
 
-include Rest_client.Make (struct
+type spotify_cursor = {
+  href : Http.Uri.t;
+  limit : int;
+  offset : int;
+  total : int;
+}
+[@@deriving yojson]
+
+module Config :
+  Rest_client.Config.S
+    with type api_client = Client.t
+     and type cursor = spotify_cursor = struct
+  type cursor = spotify_cursor [@@deriving yojson]
   type api_client = Client.t
 
   type 'a interceptor =
@@ -30,4 +42,6 @@ include Rest_client.Make (struct
 
   let intercept_response = None
   let intercept_request = Some set_headers
-end)
+end
+
+include Rest_client.Make (Config)

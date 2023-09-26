@@ -11,7 +11,7 @@ doc: "https://github.com/dmmulroy/ocaml-playlist-transfer"
 bug-reports: "https://github.com/dmmulroy/ocaml-playlist-transfer/issues"
 depends: [
   "cohttp-lwt-unix"
-  "dune" {>= "3.7"}
+  "dune" {>= "3.10"}
   "jose"
   "lwt_ssl"
   "ocaml"

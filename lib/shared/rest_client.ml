@@ -5,6 +5,7 @@ module Shared_error = Error
 module Config = struct
   module type S = sig
     type api_client
+    type cursor [@@deriving yojson]
 
     type 'a interceptor =
       (?client:api_client -> 'a -> ('a, Shared_error.t) Lwt_result.t) option
@@ -123,6 +124,28 @@ module Make (C : Config.S) = struct
     | Error msg ->
         print_endline "HERE!!!";
         Lwt.return_error @@ C.Error.make ~source:(`Serialization (`Raw "")) msg
+
+  module Pagination = struct
+    type cursor = C.cursor [@@deriving yojson]
+
+    type t = { next : cursor option; previous : cursor option }
+    [@@deriving yojson]
+
+    let make ?next ?previous () = { next; previous }
+    let empty = { next = None; previous = None }
+  end
+
+  module Request = struct
+    type 'a t = { input : 'a; page : Pagination.cursor option }
+
+    let make ?page input = { input; page }
+  end
+
+  module Response = struct
+    type 'a t = { data : 'a; page : Pagination.t } [@@deriving yojson]
+
+    let make ?(page = Pagination.empty) data = { data; page }
+  end
 
   module Make (M : Api_request.S) = struct
     open Infix.Lwt_result

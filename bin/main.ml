@@ -74,7 +74,7 @@ let test_get_spotify_playlist_by_id id () =
   Lwt.return_ok response.data
 
 let fetch_all_spotify_playlist_tracks ?page ~client id =
-  let open Spotify.Pagination in
+  let open Spotify.Spotify_rest_client.Pagination in
   let request = Spotify.Playlist.Get_tracks_input.make id in
   let+ response = Spotify.Playlist.get_tracks ~client request in
   let fetch_all_tracks ~client request tracks page =
@@ -127,19 +127,19 @@ let test_get_spotify_playlist_tracks playlist_id =
     response;
   Lwt.return_ok ()
 
-let test_apple_get_playlist_by_id () =
-  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
-  let jwt_str = Sys.getenv "APPLE_JWT" in
-  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
-  let _client = Apple.Client.make ~jwt ~music_user_token in
-  let _input =
-    Apple.Library_playlist.Get_by_id_input.make
-      ~relationships:[ `Tracks; `Catalog ] ~id:"p.PkxV8pzCPa467ad" ()
-  in
-  (* let+ playlist = Apple.Library_playlist.get_by_id ~client input in *)
-  (* print_endline @@ "Playlists: " ^ Yojson.Safe.pretty_to_string json; *)
-  Lwt.return_ok ()
+(* let test_apple_Get_by_id () = *)
+(*   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in *)
+(*   let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in *)
+(*   let jwt_str = Sys.getenv "APPLE_JWT" in *)
+(*   let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in *)
+(*   let _client = Apple.Client.make ~jwt ~music_user_token in *)
+(*   let _input = *)
+(*     Apple.Library_playlist.Get_by_id_input.make *)
+(*       ~relationships:[ `Tracks; `Catalog ] ~id:"p.PkxV8pzCPa467ad" () *)
+(*   in *)
+(*   (* let+ playlist = Apple.Library_playlist.get_by_id ~client input in *) *)
+(*   (* print_endline @@ "Playlists: " ^ Yojson.Safe.pretty_to_string json; *) *)
+(*   Lwt.return_ok () *)
 
 let test_apple_create_playlist () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
@@ -236,17 +236,28 @@ let test_transfer_from_spotify_to_apple playlist_id () =
   let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
   Lwt.return_ok ()
 
-let test_transfer_from_apple_to_spotify playlist_id =
+(* "p.PkxV8pzCPa467ad" *)
+let test_transfer_from_apple_to_spotify (playlist_id : string) =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
   let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
   let jwt_str = Sys.getenv "APPLE_JWT" in
   let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
   let apple_client = Apple.Client.make ~jwt ~music_user_token in
-  let input =
-    Apple.Library_playlist.Get_by_id_input.make
-      ~relationships:[ `Tracks; `Catalog ] ~id:"p.PkxV8pzCPa467ad" ()
+  let request = Apple.Library_playlist.Get_by_id_input.make playlist_id in
+  let+ { data = playlist; _ } =
+    Apple.Library_playlist.get_by_id ~client:apple_client request
   in
-  let+ playlist = Apple.Library_playlist.get_by_id ~client:apple_client input in
+  let tracks_request =
+    Apple.Library_playlist.Get_relationship_by_name_input.make ~playlist_id
+      ~relationship:`Tracks
+  in
+  let+ { data = tracks; _ } =
+    Apple.Library_playlist.get_relationship_by_name ~client:apple_client
+      tracks_request
+  in
+  let _transfer_tracks =
+    Transfer.Playlist.of_apple apple_client @@ List.hd playlist.data
+  in
   failwith "Not implemented"
 
 let () =
