@@ -5,6 +5,34 @@ open Shared
 open Syntax
 open Let
 
+let make_spotify_client () =
+  let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
+  let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
+  let state = Int.to_string @@ Random.bits () in
+  let redirect_uri = Http.Uri.of_string "http://localhost:3939/spotify" in
+  let redirect_server = Redirect_server.make ~state ~redirect_uri in
+  let* _ = Redirect_server.run redirect_server () in
+  let authorization_uri =
+    Spotify.Auth.make_authorization_url ~client_id ~redirect_uri ~state
+      ~scopes:
+        [
+          `Playlist_read_private;
+          `Playlist_modify_public;
+          `Playlist_modify_private;
+        ]
+      ~show_dialog:false ()
+  in
+  let cmd =
+    Filename.quote_command "open" [ Http.Uri.to_string authorization_uri ]
+  in
+  let _ = Unix.system cmd in
+  let* code = Redirect_server.get_code redirect_server in
+  let+ access_token =
+    Spotify.Auth.request_access_token
+      (`Authorization_code { client_secret; client_id; code; redirect_uri })
+  in
+  Lwt.return_ok @@ Spotify.Client.make ~access_token ~client_id ~client_secret
+
 let test_spotify_oauth () =
   let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
   let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
@@ -92,32 +120,7 @@ let fetch_all_spotify_playlist_tracks ?page ~client id =
   fetch_all_tracks ~client request response.data.items response.page
 
 let test_get_spotify_playlist_tracks playlist_id =
-  let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
-  let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
-  let state = Int.to_string @@ Random.bits () in
-  let redirect_uri = Http.Uri.of_string "http://localhost:3939/spotify" in
-  let redirect_server = Redirect_server.make ~state ~redirect_uri in
-  let* _ = Redirect_server.run redirect_server () in
-  let authorization_uri =
-    Spotify.Auth.make_authorization_url ~client_id ~redirect_uri ~state
-      ~scopes:
-        [
-          `Playlist_read_private;
-          `Playlist_modify_public;
-          `Playlist_modify_private;
-        ]
-      ~show_dialog:false ()
-  in
-  let cmd =
-    Filename.quote_command "open" [ Http.Uri.to_string authorization_uri ]
-  in
-  let _ = Unix.system cmd in
-  let* code = Redirect_server.get_code redirect_server in
-  let+ access_token =
-    Spotify.Auth.request_access_token
-      (`Authorization_code { client_secret; client_id; code; redirect_uri })
-  in
-  let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
+  let+ client = make_spotify_client () in
   let+ response = fetch_all_spotify_playlist_tracks ~client playlist_id in
   print_endline "Playlist tracks:";
   List.iteri
@@ -125,6 +128,18 @@ let test_get_spotify_playlist_tracks playlist_id =
       let open Spotify.Playlist in
       print_endline @@ string_of_int idx ^ ": " ^ playlist_track.track.name)
     response;
+  Lwt.return_ok ()
+
+let test_search_spotify () =
+  let+ client = make_spotify_client () in
+  let request =
+    Spotify.Search.Search_input.make
+      ~query:[ ("USUM72307683", `Isrc) ]
+      ~search_types:[ `Track ] ()
+  in
+  let+ { data; _ } = Spotify.Search.search ~client request in
+  let tracks = Option.get data.tracks in
+  print_endline @@ "Number of tracks found: " ^ Int.to_string tracks.total;
   Lwt.return_ok ()
 
 (* let test_apple_Get_by_id () = *)
@@ -255,16 +270,14 @@ let test_transfer_from_apple_to_spotify (playlist_id : string) =
     Apple.Library_playlist.get_relationship_by_name ~client:apple_client
       tracks_request
   in
+  (* Handle error case where List.hd is called on an empty list *)
   let _transfer_tracks =
     Transfer.Playlist.of_apple apple_client @@ List.hd playlist.data
   in
   failwith "Not implemented"
 
 let () =
-  let res =
-    Lwt_main.run
-    @@ test_transfer_from_spotify_to_apple "7eBq55wTPZ8v0JIeNUxk68" ()
-  in
+  let res = Lwt_main.run @@ test_search_spotify () in
   match res with
   | Ok _ -> print_endline "Success"
   | Error err -> Error.to_string err |> print_endline

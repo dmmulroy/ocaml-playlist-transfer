@@ -6,7 +6,7 @@ type t = {
   available_markets : string list;
   disc_number : int;
   duration_ms : int;
-  episode : bool;
+  episode : bool option; [@default None]
   explicit : bool;
   external_ids : Common.external_ids;
   external_urls : Common.external_urls;
@@ -20,7 +20,7 @@ type t = {
   preview_url : string option; [@default None]
   resource_type : Resource.t; [@key "type"]
   (* restrictions : Common.restriction list option; [@default None] *)
-  track : bool;
+  track : bool option; [@default None]
   track_number : int;
   uri : string;
 }
