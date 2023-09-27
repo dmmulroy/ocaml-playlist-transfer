@@ -156,17 +156,17 @@ let test_get_spotify_playlist_tracks playlist_id =
     response;
   Lwt.return_ok ()
 
-let test_search_spotify () =
-  let+ client = make_spotify_client () in
-  let request =
-    Spotify.Search.Search_input.make
-      ~query:[ ("USUM72307683", `Isrc) ]
-      ~search_types:[ `Track ] ()
-  in
-  let+ { data; _ } = Spotify.Search.search ~client request in
-  let tracks = Option.get data.tracks in
-  print_endline @@ "Number of tracks found: " ^ Int.to_string tracks.total;
-  Lwt.return_ok ()
+(* let test_search_spotify () = *)
+(*   let+ client = make_spotify_client () in *)
+(*   let request = *)
+(*     Spotify.Search.Search_input.make *)
+(*       ~query:[ ("USUM72307683", `Isrc) ] *)
+(*       ~search_types:[ `Track ] () *)
+(*   in *)
+(*   let+ { data; _ } = Spotify.Search.search ~client request in *)
+(*   let tracks = Option.get data.tracks in *)
+(*   print_endline @@ "Number of tracks found: " ^ Int.to_string tracks.total; *)
+(*   Lwt.return_ok () *)
 
 (* let test_apple_Get_by_id () = *)
 (*   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in *)
@@ -302,8 +302,8 @@ let test_transfer_from_apple_to_spotify (playlist_id : string) =
   in
   failwith "Not implemented"
 
-let () =
-  let res = Lwt_main.run @@ test_search_spotify () in
-  match res with
-  | Ok _ -> print_endline "Success"
-  | Error err -> Error.to_string err |> print_endline
+(* let () = *)
+(*   let res = Lwt_main.run @@ test_search_spotify () in *)
+(*   match res with *)
+(*   | Ok _ -> print_endline "Success" *)
+(*   | Error err -> Error.to_string err |> print_endline *)

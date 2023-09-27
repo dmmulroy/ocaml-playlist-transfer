@@ -5,9 +5,6 @@ module Infix = struct
 
     (** [>|=] is an infix left-to-right [Option.map]. *)
     let ( >|= ) opt_a f = Option.map f opt_a
-
-    (** [<$>] is an infix right-to-left [Option.map]. *)
-    let ( <$> ) = Option.map
   end
   (* [>>=?] is an infix operator for passing [Ok] values through
      or applying [f] to [Error] values. *)
@@ -24,9 +21,6 @@ module Infix = struct
       * or applying [f] to [Error] values. 
       *)
     let ( >|? ) v f = Result.map_error f v
-
-    (** [<$>] is an infix right-to-left [Result.map]. *)
-    let ( <$> ) = Result.map
   end
 
   module Lwt = struct
@@ -35,9 +29,6 @@ module Infix = struct
 
     (** [>|=] is an infix left-to-right [Lwt.map]. *)
     let ( >|= ) v f = Lwt.map f v
-
-    (** [<$>] is an infix right-to-left [Lwt.map]. *)
-    let ( <$> ) = Lwt.map
   end
 
   module Lwt_result = struct
@@ -58,10 +49,12 @@ module Infix = struct
 
     (** [>|=] is an infix left-to-right [Lwt.map]. *)
     let ( >|= ) v f = Lwt_result.map f v
-
-    (** [<$>] is an infix right-to-left [Lwt.map]. *)
-    let ( <$> ) = Lwt_result.map
   end
+end
+
+module Super_secret = struct
+  (** Courtesy of sixfourtwelve on twitch *)
+  let ( >>?|>|?^|? ) _v = failwith "don't use this, idiot"
 end
 
 module Let = struct

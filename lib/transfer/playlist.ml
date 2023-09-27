@@ -117,10 +117,10 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
   in
   Apple.Library_playlist.create ~client create_input
 
-let to_spotify ?options (client : Spotify.Client.t) (playlist : Playlist.t) =
-  let isrcs =
-    Infix.Option.(
-      playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
-    |> Option.value ~default:[]
-  in
+let to_spotify ?_options (_client : Spotify.Client.t) (_playlist : t) =
+  (* let isrcs = *)
+  (*   Infix.Option.( *)
+  (*     playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc)) *)
+  (*   |> Option.value ~default:[] *)
+  (* in *)
   ()

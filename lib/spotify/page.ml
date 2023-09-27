@@ -1,5 +1,3 @@
-[@@@ocaml.warning "-69"]
-
 open Shared
 
 type 'a t = {

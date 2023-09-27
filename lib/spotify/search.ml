@@ -107,14 +107,14 @@ module Search_input = struct
     Spotify_rest_client.Request.make { query; search_types; limit; offset }
 end
 
-module Search_output = struct
-  type output = t [@@deriving yojson { strict = false }]
-  type t = output Page.t [@@deriving yojson { strict = false }]
-end
+(* module Search_output = struct *)
+(*   type search_output = t [@@deriving yojson { strict = false }] *)
+(*   type t = search_output [@@deriving yojson { strict = false }] *)
+(* end *)
 
 module Search = Spotify_rest_client.Make (struct
   type input = Search_input.t Spotify_rest_client.Request.t
-  type output = Search_output.t Spotify_rest_client.Response.t
+  type output = t Spotify_rest_client.Response.t
 
   let name = "search"
   let endpoint = Http.Uri.of_string "https://api.spotify.com/v1/search"
@@ -129,21 +129,22 @@ module Search = Spotify_rest_client.Make (struct
 
   let of_http_response http_response =
     let+ search_results =
-      Spotify_rest_client.handle_response ~deserialize:Search_output.of_yojson
-        http_response
+      Spotify_rest_client.handle_response ~deserialize:of_yojson http_response
     in
     let page =
-      Spotify_rest_client.Pagination.make
-        ~next:
-          {
-            href = search_results.href;
-            limit = search_results.limit;
-            offset = search_results.offset;
-            total = search_results.total;
-          }
-        ()
+      let- track_page = search_results.tracks in
+      Option.some
+      @@ Spotify_rest_client.Pagination.make
+           ~next:
+             {
+               href = track_page.href;
+               limit = track_page.limit;
+               offset = track_page.offset;
+               total = track_page.total;
+             }
+           ()
     in
-    Lwt.return_ok @@ Spotify_rest_client.Response.make ~page search_results
+    Lwt.return_ok @@ Spotify_rest_client.Response.make ?page search_results
 end)
 
 let search = Search.request
