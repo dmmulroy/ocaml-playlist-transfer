@@ -2,10 +2,6 @@ open Shared
 open Syntax
 open Let
 
-(*
- * let playlist, failed_tracks = Transfer.Playlist.of_apple ~client apple_playlist in
- * let spotify_playlist, failed_tracks' = Transfer.Playlist.to_spotify ~client playlist in
- *)
 type t = { description : string; name : string; tracks : Track.t list option }
 [@@deriving make]
 
@@ -121,10 +117,10 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
   in
   Apple.Library_playlist.create ~client create_input
 
-(* let to_spotify ?options (client : Spotify.Client.t) (playlist : Playlist.t) = *)
-(*   let isrcs = *)
-(*     Infix.Option.( *)
-(*       playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc)) *)
-(*     |> Option.value ~default:[] *)
-(*   in *)
-(*   () *)
+let to_spotify ?options (client : Spotify.Client.t) (playlist : Playlist.t) =
+  let isrcs =
+    Infix.Option.(
+      playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
+    |> Option.value ~default:[]
+  in
+  ()

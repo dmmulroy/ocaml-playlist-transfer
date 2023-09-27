@@ -109,7 +109,7 @@ end
 
 module Search_output = struct
   type output = t [@@deriving yojson { strict = false }]
-  type t = output [@@deriving yojson { strict = false }]
+  type t = output Page.t [@@deriving yojson { strict = false }]
 end
 
 module Search = Spotify_rest_client.Make (struct
@@ -128,11 +128,22 @@ module Search = Spotify_rest_client.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
 
   let of_http_response http_response =
-    let+ deserialzed_response =
+    let+ search_results =
       Spotify_rest_client.handle_response ~deserialize:Search_output.of_yojson
         http_response
     in
-    Lwt.return_ok @@ Spotify_rest_client.Response.make deserialzed_response
+    let page =
+      Spotify_rest_client.Pagination.make
+        ~next:
+          {
+            href = search_results.href;
+            limit = search_results.limit;
+            offset = search_results.offset;
+            total = search_results.total;
+          }
+        ()
+    in
+    Lwt.return_ok @@ Spotify_rest_client.Response.make ~page search_results
 end)
 
 let search = Search.request

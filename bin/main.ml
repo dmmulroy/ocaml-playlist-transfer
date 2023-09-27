@@ -101,7 +101,7 @@ let test_get_spotify_playlist_by_id id () =
   let+ response = Spotify.Playlist.get_by_id ~client request in
   Lwt.return_ok response.data
 
-let fetch_all_spotify_playlist_tracks ?page ~client id =
+let fetch_all_spotify_playlist_tracks ~client id =
   let open Spotify.Spotify_rest_client.Pagination in
   let request = Spotify.Playlist.Get_tracks_input.make id in
   let+ response = Spotify.Playlist.get_tracks ~client request in
@@ -118,6 +118,32 @@ let fetch_all_spotify_playlist_tracks ?page ~client id =
     aux tracks page.next
   in
   fetch_all_tracks ~client request response.data.items response.page
+
+let fetch_all_spotify_search_results ~client iscr_ids =
+  let open Spotify.Spotify_rest_client.Pagination in
+  let request =
+    Spotify.Search.Search_input.make ~limit:50 ~query:iscr_ids
+      ~search_types:[ `Track ] ()
+  in
+  let+ response = Spotify.Search.search ~client request in
+  let fetch_all_results ~client request results page =
+    let rec aux acc = function
+      | None -> Lwt.return_ok acc
+      | Some next -> (
+          let+ { data; page = page' } =
+            Spotify.Search.search ~client { request with page = Some next }
+          in
+          match data.tracks with
+          | None -> aux acc None
+          | Some tracks_page ->
+              aux (List.append tracks_page.items acc) page'.next)
+    in
+    aux results page.next
+  in
+  match response.data.tracks with
+  | None -> Lwt.return_ok []
+  | Some tracks_page ->
+      fetch_all_results ~client request tracks_page.items response.page
 
 let test_get_spotify_playlist_tracks playlist_id =
   let+ client = make_spotify_client () in

@@ -122,7 +122,6 @@ module Make (C : Config.S) = struct
     match deserialize json with
     | Ok response -> Lwt.return_ok response
     | Error msg ->
-        print_endline "HERE!!!";
         Lwt.return_error @@ C.Error.make ~source:(`Serialization (`Raw "")) msg
 
   module Pagination = struct
@@ -138,6 +137,26 @@ module Make (C : Config.S) = struct
   module Request = struct
     type 'a t = { input : 'a; page : Pagination.cursor option }
 
+    (* Spotify.Pagination.previous ~client cursor *)
+    (* Spotify.Pagination.next ~client cursor *)
+    (* Spotify.Pagination.all ~client ~direction:`Next cursor *)
+    (* val cb : Spotify.Spotify_request.t -> 'a Spotify.Spotify_request.t -> ('b Spotify.Spotify_response.t, 'e) Lwt_result.t *)
+    (* Spotify.Pagination.paginate ~client cb *)
+    (*
+   lib/spotify/pagination.ml
+  
+   let paginate ~initial_request request_cb =
+     let+ { data; page; } = request_cb initial_request in
+     let rec aux acc = function
+       | None -> Lwt.return_ok acc
+       | Some next ->
+           let+ { data; page = page' } =
+              request_cb { request with page = Some next }
+           in
+           aux (List.append data.items acc) page'.next
+     in
+     aux tracks page.next
+*)
     let make ?page input = { input; page }
   end
 
