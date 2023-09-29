@@ -15,7 +15,7 @@ let add_tracks playlist tracks =
   let updated_tracks = List.append existing_tracks tracks in
   { playlist with tracks = Some updated_tracks }
 
-let of_apple (client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
+let of_apple ~(client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
   let name = playlist.attributes.name in
   let description =
     Option.fold ~none:playlist.attributes.name

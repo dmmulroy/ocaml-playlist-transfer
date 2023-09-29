@@ -33,6 +33,13 @@ let make_spotify_client () =
   in
   Lwt.return_ok @@ Spotify.Client.make ~access_token ~client_id ~client_secret
 
+let make_apple_client () =
+  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
+  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
+  let jwt_str = Sys.getenv "APPLE_JWT" in
+  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
+  Lwt.return_ok @@ Apple.Client.make ~jwt ~music_user_token
+
 let test_spotify_oauth () =
   let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
   let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
@@ -119,10 +126,10 @@ let fetch_all_spotify_playlist_tracks ~client id =
   in
   fetch_all_tracks ~client request response.data.items response.page
 
-let fetch_all_spotify_search_results ~client iscr_ids =
+let fetch_all_spotify_search_results ~client isrc_ids =
   let open Spotify.Spotify_rest_client.Pagination in
   let request =
-    Spotify.Search.Search_input.make ~limit:50 ~query:iscr_ids
+    Spotify.Search.Search_input.make ~limit:50 ~query:isrc_ids
       ~search_types:[ `Track ] ()
   in
   let+ response = Spotify.Search.search ~client request in
@@ -223,34 +230,7 @@ let test_apple_get_song_by_isrcs () =
   Lwt.return_ok ()
 
 let test_transfer_from_spotify_to_apple playlist_id () =
-  let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
-  let client_secret = Sys.getenv "SPOTIFY_CLIENT_SECRET" in
-  let state = Int.to_string @@ Random.bits () in
-  let redirect_uri = Http.Uri.of_string "http://localhost:3939/spotify" in
-  let redirect_server = Redirect_server.make ~state ~redirect_uri in
-  let* _ = Redirect_server.run redirect_server () in
-  let authorization_uri =
-    Spotify.Auth.make_authorization_url ~client_id ~redirect_uri ~state
-      ~scopes:
-        [
-          `Playlist_read_private;
-          `Playlist_modify_public;
-          `Playlist_modify_private;
-        ]
-      ~show_dialog:false ()
-  in
-  let cmd =
-    Filename.quote_command "open" [ Http.Uri.to_string authorization_uri ]
-  in
-  let _ = Unix.system cmd in
-  let* code = Redirect_server.get_code redirect_server in
-  let+ access_token =
-    Spotify.Auth.request_access_token
-      (`Authorization_code { client_secret; client_id; code; redirect_uri })
-  in
-  let spotify_client =
-    Spotify.Client.make ~access_token ~client_id ~client_secret
-  in
+  let+ spotify_client = make_spotify_client () in
   let request = Spotify.Playlist.Get_by_id_input.make ~id:playlist_id () in
   let+ { data = playlist; _ } =
     Spotify.Playlist.get_by_id ~client:spotify_client request
@@ -278,28 +258,38 @@ let test_transfer_from_spotify_to_apple playlist_id () =
   Lwt.return_ok ()
 
 (* "p.PkxV8pzCPa467ad" *)
-let test_transfer_from_apple_to_spotify (playlist_id : string) =
-  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
-  let jwt_str = Sys.getenv "APPLE_JWT" in
-  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
-  let apple_client = Apple.Client.make ~jwt ~music_user_token in
+let test_transfer_from_apple_to_spotify ~apple_client ~spotify_client
+    (playlist_id : string) =
   let request = Apple.Library_playlist.Get_by_id_input.make playlist_id in
-  let+ { data = playlist; _ } =
+  let+ { data; _ } =
     Apple.Library_playlist.get_by_id ~client:apple_client request
+  in
+  let| playlist =
+    data.data |> Extended.List.hd_opt
+    |> Option.to_result
+         ~none:
+           (Apple.Apple_error.make ~source:(`Source "main") "No songs found")
   in
   let tracks_request =
     Apple.Library_playlist.Get_relationship_by_name_input.make ~playlist_id
       ~relationship:`Tracks
   in
-  let+ { data = tracks; _ } =
+  let+ { data = apple_tracks; _ } =
     Apple.Library_playlist.get_relationship_by_name ~client:apple_client
       tracks_request
   in
-  (* Handle error case where List.hd is called on an empty list *)
-  let _transfer_tracks =
-    Transfer.Playlist.of_apple apple_client @@ List.hd playlist.data
-  in
+  let _ : Apple.Library_song.t list = apple_tracks.data in
+  (* let transfer_tracks, _skipped_tracks = *)
+  (*   List.partition_map *)
+  (*     (fun (playlist_track : Spotify.Playlist.playlist_track) -> *)
+  (*       Transfer.Track.of_apple playlist_track.track) *)
+  (*     apple_tracks.data *)
+  (* let transfer_playlist = *)
+  (*   Transfer.Playlist.make ~name:playlist.attributes.name *)
+  (*     ~description:playlist.attributes.name ~tracks:transfer_tracks () *)
+  (* let spotify_tracks = *)
+  (*   fetch_all_spotify_search_results ~client:spotify_client *)
+  (* in *)
   failwith "Not implemented"
 
 (* let () = *)

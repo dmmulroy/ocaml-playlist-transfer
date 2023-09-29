@@ -90,6 +90,12 @@ end)
 
 let get_by_id = Get_by_id.request
 
+(*
+    TODO Monday: Implement Get_many_by_ids so that we can convert from
+    Library song -> Catalog Song. Validate that a library song id is a valid
+    catalog song id.
+*)
+
 module Get_many_by_isrcs_input = struct
   type t = string list
 

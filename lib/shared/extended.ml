@@ -10,4 +10,7 @@ module List = struct
           else aux (List.rev chunk :: acc) [ hd ] 1 tl
     in
     List.rev (aux [] [] 0 list)
+
+  let hd_opt (list : 'a list) : 'a option =
+    match list with [] -> None | hd :: _ -> Some hd
 end
