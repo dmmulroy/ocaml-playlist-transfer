@@ -272,13 +272,13 @@ let test_transfer_from_apple_to_spotify ~apple_client ~spotify_client
   in
   let tracks_request =
     Apple.Library_playlist.Get_relationship_by_name_input.make ~playlist_id
-      ~relationship:`Tracks
+      ~relationship:`Tracks ~include_relationships:(Some [ `Catalog ]) ()
   in
-  let+ { data = apple_tracks; _ } =
-    Apple.Library_playlist.get_relationship_by_name ~client:apple_client
-      tracks_request
-  in
-  let _ : Apple.Library_song.t list = apple_tracks.data in
+  (* let+ { data = apple_tracks; _ } =
+       Apple.Library_playlist.get_relationship_by_name ~client:apple_client
+         tracks_request
+     in
+     let _ : Apple.Library_song.t list = apple_tracks.data in *)
   (* let transfer_tracks, _skipped_tracks = *)
   (*   List.partition_map *)
   (*     (fun (playlist_track : Spotify.Playlist.playlist_track) -> *)

@@ -17,7 +17,10 @@ type attributes = {
 [@@deriving yojson]
 
 type relationships = {
-  catalog : Playlist.t Page.t option; [@default None]
+  catalog :
+    [ `Catalog_playlist of Playlist.t Page.t | `Catalog_song of Song.t Page.t ]
+    option;
+      [@default None]
   tracks :
     [ `Library_song of Library_song.t
     | `Library_music_video of Library_music_video.t ]
@@ -29,7 +32,12 @@ type relationships = {
 
 let relationships_to_yojson relationships =
   let open Infix.Option in
-  let catalog = relationships.catalog >|= Page.to_yojson Playlist.to_yojson in
+  let catalog =
+    relationships.catalog >|= fun catalog ->
+    match catalog with
+    | `Catalog_playlist playlist -> Page.to_yojson Playlist.to_yojson playlist
+    | `Catalog_song song -> Page.to_yojson Song.to_yojson song
+  in
   let tracks =
     relationships.tracks
     >|= Page.to_yojson (function
@@ -41,12 +49,16 @@ let relationships_to_yojson relationships =
        (fun (key, value) -> value >|= fun value -> (key, value))
        [ ("catalog", catalog); ("tracks", tracks) ])
 
-let relationships_of_yojson json =
+let relationships_of_yojson_v2 json =
   let open Yojson.Safe.Util in
   let catalog =
     try
       member "catalog" json
       |> Page.of_yojson Playlist.of_yojson
+      |> Result.map (fun playlist -> `Catalog_playlist playlist)
+      |> Extended.Result.ok_or_else (fun _ ->
+             Page.of_yojson Song.of_yojson json
+             |> Result.map (fun song -> `Catalog_song song))
       |> Result.to_option
     with Type_error _ -> None
   in
@@ -263,12 +275,18 @@ end)
 let get_by_id = Get_by_id.request
 
 module Get_relationship_by_name_input = struct
-  type t = { playlist_id : string; relationship : Relationship.t }
+  type t = {
+    playlist_id : string;
+    relationship : Relationship.t;
+    include_relationships : [ `Catalog ] list option;
+  }
 
   let test () = "Piq is going to write OCaml for the rest of his life"
 
-  let make ~playlist_id ~(relationship : [< Relationship.t ]) =
-    Apple_rest_client.Request.make { playlist_id; relationship }
+  let make ?(include_relationships = Some []) ~playlist_id
+      ~(relationship : [< Relationship.t ]) () =
+    Apple_rest_client.Request.make
+      { playlist_id; relationship; include_relationships }
 end
 
 module Get_relationship_by_name_output = struct

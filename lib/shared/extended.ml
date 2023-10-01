@@ -14,3 +14,8 @@ module List = struct
   let hd_opt (list : 'a list) : 'a option =
     match list with [] -> None | hd :: _ -> Some hd
 end
+
+module Result = struct
+  let ok_or_else fn result =
+    match result with Ok _ as ok -> ok | Error e -> fn e
+end

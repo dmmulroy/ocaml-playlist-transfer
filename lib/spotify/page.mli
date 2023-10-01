@@ -11,4 +11,8 @@ type 'a t = {
 }
 [@@deriving yojson]
 
+module Test : sig
+  val empty : 'a t
+end
+
 val empty : 'a t
