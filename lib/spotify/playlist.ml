@@ -82,6 +82,8 @@ module Create_input = struct
   }
   [@@deriving yojson]
 
+  type body = { name : string } [@@deriving yojson]
+
   let make ?collaborative ?description ?public ~name ~user_id () =
     { collaborative; description; name; public; user_id }
 end
@@ -101,9 +103,9 @@ module CreatePlaylist = Spotify_rest_client.Make (struct
     Http.Uri.of_string @@ "https://api.spotify.com/v1/users/" ^ user_id
     ^ "/playlists"
 
-  let to_http_request input =
+  let to_http_request (input : Create_input.t) =
     let open Infix.Result in
-    let input_json = Create_input.to_yojson input in
+    let input_json = Create_input.body_to_yojson { name = input.name } in
     let| body =
       Http.Body.of_yojson input_json >|? fun str ->
       Spotify_error.make ~source:(`Serialization (`Json input_json)) str

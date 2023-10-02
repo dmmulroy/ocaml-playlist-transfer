@@ -4,9 +4,9 @@ type 'a t = {
   href : Http.Uri.t;
   items : 'a list;
   limit : int;
-  next : Http.Uri.t option;
+  next : Http.Uri.t option; [@default None]
   offset : int;
-  previous : Http.Uri.t option;
+  previous : Http.Uri.t option; [@default None]
   total : int;
 }
 [@@deriving yojson { strict = false }]

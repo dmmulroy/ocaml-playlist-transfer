@@ -2,8 +2,7 @@ open Shared
 open Syntax
 open Let
 
-type t = { tracks : Track.t Page.t option }
-[@@deriving yojson { strict = false }]
+type t = { tracks : Track.t Page.t } [@@deriving yojson { strict = false }]
 
 type filter =
   [ `Album
@@ -107,11 +106,6 @@ module Search_input = struct
     Spotify_rest_client.Request.make { query; search_types; limit; offset }
 end
 
-(* module Search_output = struct *)
-(*   type search_output = t [@@deriving yojson { strict = false }] *)
-(*   type t = search_output [@@deriving yojson { strict = false }] *)
-(* end *)
-
 module Search = Spotify_rest_client.Make (struct
   type input = Search_input.t Spotify_rest_client.Request.t
   type output = t Spotify_rest_client.Response.t
@@ -132,17 +126,19 @@ module Search = Spotify_rest_client.Make (struct
       Spotify_rest_client.handle_response ~deserialize:of_yojson http_response
     in
     let page =
-      let- track_page = search_results.tracks in
-      Option.some
-      @@ Spotify_rest_client.Pagination.make
-           ~next:
-             {
-               href = track_page.href;
-               limit = track_page.limit;
-               offset = track_page.offset;
-               total = track_page.total;
-             }
-           ()
+      if Option.is_some search_results.tracks.next then
+        let track_page = search_results.tracks in
+        Option.some
+        @@ Spotify_rest_client.Pagination.make
+             ~next:
+               {
+                 href = track_page.href;
+                 limit = track_page.limit;
+                 offset = track_page.offset;
+                 total = track_page.total;
+               }
+             ()
+      else None
     in
     Lwt.return_ok @@ Spotify_rest_client.Response.make ?page search_results
 end)
