@@ -90,6 +90,7 @@ module Search_input = struct
     offset : int option;
   }
 
+  (* TODO Tuesday: Search does do bulk search, search for 1 item at a time*)
   let to_query_params t =
     let formatted_query =
       List.fold_left
