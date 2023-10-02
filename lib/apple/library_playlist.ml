@@ -49,7 +49,7 @@ let relationships_to_yojson relationships =
        (fun (key, value) -> value >|= fun value -> (key, value))
        [ ("catalog", catalog); ("tracks", tracks) ])
 
-let relationships_of_yojson_v2 json =
+let relationships_of_yojson json =
   let open Yojson.Safe.Util in
   let catalog =
     try
@@ -236,7 +236,7 @@ module Get_by_id_input = struct
       (fun (key, value) -> value >|= fun value -> (key, value))
       [
         ( "include",
-          input.relationships >|= Relationship.to_string_list
+          input.relationships >|= Relationship.request_to_string_list
           >|= String.concat "," );
         ("extend", input.extended_attributes >|= extended_attributes_to_string);
       ]
@@ -277,16 +277,16 @@ let get_by_id = Get_by_id.request
 module Get_relationship_by_name_input = struct
   type t = {
     playlist_id : string;
-    relationship : Relationship.t;
-    include_relationships : [ `Catalog ] list option;
+    relationship : Relationship.request;
+    relationships : [ `Catalog ] list option;
   }
 
   let test () = "Piq is going to write OCaml for the rest of his life"
 
-  let make ?(include_relationships = Some []) ~playlist_id
-      ~(relationship : [< Relationship.t ]) () =
+  let make ?(relationships = []) ~playlist_id
+      ~(relationship : [< Relationship.request ]) () =
     Apple_rest_client.Request.make
-      { playlist_id; relationship; include_relationships }
+      { playlist_id; relationship; relationships = Some relationships }
 end
 
 module Get_relationship_by_name_output = struct
@@ -299,11 +299,12 @@ module Get_relationship_by_name = Apple_rest_client.Make (struct
 
   let name = "Get_relationship_by_name"
 
+  (* TODO Monday morning: Make sure to append relationships query param 🤦*)
   let make_endpoint (request : input) =
     Http.Uri.of_string
     @@ Fmt.str "https://api.music.apple.com/v1/me/library/playlists/%s/%s"
          request.input.playlist_id
-         (Relationship.to_string request.input.relationship)
+         (Relationship.request_to_string request.input.relationship)
 
   let to_http_request input =
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri:(make_endpoint input) ()

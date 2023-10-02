@@ -175,26 +175,18 @@ let test_get_spotify_playlist_tracks playlist_id =
 (*   print_endline @@ "Number of tracks found: " ^ Int.to_string tracks.total; *)
 (*   Lwt.return_ok () *)
 
-(* let test_apple_Get_by_id () = *)
-(*   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in *)
-(*   let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in *)
-(*   let jwt_str = Sys.getenv "APPLE_JWT" in *)
-(*   let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in *)
-(*   let _client = Apple.Client.make ~jwt ~music_user_token in *)
-(*   let _input = *)
-(*     Apple.Library_playlist.Get_by_id_input.make *)
-(*       ~relationships:[ `Tracks; `Catalog ] ~id:"p.PkxV8pzCPa467ad" () *)
-(*   in *)
-(*   (* let+ playlist = Apple.Library_playlist.get_by_id ~client input in *) *)
-(*   (* print_endline @@ "Playlists: " ^ Yojson.Safe.pretty_to_string json; *) *)
-(*   Lwt.return_ok () *)
+let test_apple_get_playlist_by_id () =
+  let+ client = make_apple_client () in
+  let input =
+    Apple.Library_playlist.Get_by_id_input.make
+      ~relationships:[ `Tracks; `Catalog ] "p.PkxV8pzCPa467ad"
+  in
+  let+ playlist = Apple.Library_playlist.get_by_id ~client input in
+  (* print_endline @@ "Playlists: " ^ Yojson.Safe.pretty_to_string json; *)
+  Lwt.return_ok ()
 
 let test_apple_create_playlist () =
-  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
-  let jwt_str = Sys.getenv "APPLE_JWT" in
-  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
-  let client = Apple.Client.make ~jwt ~music_user_token in
+  let+ client = make_apple_client () in
   let input =
     Apple.Library_playlist.Create_input.make ~name:"Test"
       ~description:"Test description"
@@ -207,11 +199,7 @@ let test_apple_create_playlist () =
   Lwt.return_ok ()
 
 let test_apple_get_song_by_id () =
-  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
-  let jwt_str = Sys.getenv "APPLE_JWT" in
-  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
-  let client = Apple.Client.make ~jwt ~music_user_token in
+  let+ client = make_apple_client () in
   let input = Apple.Song.Get_by_id_input.make "1696596473" in
   let+ result = Apple.Song.get_by_id ~client input in
   print_endline @@ "Song: " ^ Yojson.Safe.pretty_to_string
@@ -219,11 +207,7 @@ let test_apple_get_song_by_id () =
   Lwt.return_ok ()
 
 let test_apple_get_song_by_isrcs () =
-  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
-  let jwt_str = Sys.getenv "APPLE_JWT" in
-  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
-  let client = Apple.Client.make ~jwt ~music_user_token in
+  let+ client = make_apple_client () in
   let+ _result = Apple.Song.get_many_by_isrcs ~client [ "USUM72102276" ] in
   (* print_endline @@ "Song: " ^ Yojson.Safe.pretty_to_string *)
   (* @@ Apple.Song.Get_many_by_isrcs_output.to_yojson result; *)
@@ -249,17 +233,14 @@ let test_transfer_from_spotify_to_apple playlist_id () =
       ~description:(Option.value ~default:playlist.name playlist.description)
       ~tracks:transfer_tracks ()
   in
-  let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
-  let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
-  let jwt_str = Sys.getenv "APPLE_JWT" in
-  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
-  let apple_client = Apple.Client.make ~jwt ~music_user_token in
+  let+ apple_client = make_apple_client () in
   let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
   Lwt.return_ok ()
 
 (* "p.PkxV8pzCPa467ad" *)
-let test_transfer_from_apple_to_spotify ~apple_client ~spotify_client
-    (playlist_id : string) =
+let test_transfer_from_apple_to_spotify ~spotify_user_id playlist_id =
+  let+ apple_client = make_apple_client () in
+  let+ spotify_client = make_spotify_client () in
   let request = Apple.Library_playlist.Get_by_id_input.make playlist_id in
   let+ { data; _ } =
     Apple.Library_playlist.get_by_id ~client:apple_client request
@@ -272,28 +253,61 @@ let test_transfer_from_apple_to_spotify ~apple_client ~spotify_client
   in
   let tracks_request =
     Apple.Library_playlist.Get_relationship_by_name_input.make ~playlist_id
-      ~relationship:`Tracks ~include_relationships:(Some [ `Catalog ]) ()
+      ~relationship:`Tracks ~relationships:[ `Catalog ] ()
   in
-  (* let+ { data = apple_tracks; _ } =
-       Apple.Library_playlist.get_relationship_by_name ~client:apple_client
-         tracks_request
-     in
-     let _ : Apple.Library_song.t list = apple_tracks.data in *)
-  (* let transfer_tracks, _skipped_tracks = *)
-  (*   List.partition_map *)
-  (*     (fun (playlist_track : Spotify.Playlist.playlist_track) -> *)
-  (*       Transfer.Track.of_apple playlist_track.track) *)
-  (*     apple_tracks.data *)
-  (* let transfer_playlist = *)
-  (*   Transfer.Playlist.make ~name:playlist.attributes.name *)
-  (*     ~description:playlist.attributes.name ~tracks:transfer_tracks () *)
-  (* let spotify_tracks = *)
-  (*   fetch_all_spotify_search_results ~client:spotify_client *)
-  (* in *)
-  failwith "Not implemented"
+  let+ { data = apple_tracks; _ } =
+    Apple.Library_playlist.get_relationship_by_name ~client:apple_client
+      tracks_request
+  in
+  failwith "TODO"
+(* let isrc_ids, _skipped_library_songs =
+     let open Infix.Option in
+     List.partition_map
+       (fun (library_song : Apple.Library_song.t) ->
+         library_song.relationships
+         >>= (fun relationships ->
+               relationships.catalog >>= function
+               | `Catalog_song song ->
+                   Extended.List.hd_opt song.data >>= fun catalog_song ->
+                   catalog_song.attributes.isrc
+               | _ -> None)
+         |> Option.fold ~none:(Either.right library_song) ~some:Either.left)
+       apple_tracks.data
+   in
+   let+ spotify_uris =
+     isrc_ids
+     |> List.map (fun id -> (id, `Isrc))
+     |> fetch_all_spotify_search_results ~client:spotify_client
+     |> Lwt_result.map (List.map (fun (track : Spotify.Track.t) -> track.uri))
+   in
+   let create_input =
+     Spotify.Playlist.Create_input.make
+       ~description:
+         (playlist.attributes.description
+         |> Option.map (fun (description : Apple.Description.t) ->
+                description.standard)
+         |> Option.value ~default:playlist.attributes.name)
+       ~name:playlist.attributes.name ~user_id:spotify_user_id ()
+   in
+   let+ spotify_playlist =
+     Spotify.Playlist.create ~client:spotify_client create_input
+   in
+   let add_tracks_input =
+     Spotify.Playlist.Add_tracks_input.make ~playlist_id:spotify_playlist.id
+       ~uris:spotify_uris ()
+   in
+   let+ _ =
+     Spotify.Playlist.add_tracks ~client:spotify_client add_tracks_input
+   in
+   Lwt.return_ok () *)
 
-(* let () = *)
-(*   let res = Lwt_main.run @@ test_search_spotify () in *)
-(*   match res with *)
-(*   | Ok _ -> print_endline "Success" *)
-(*   | Error err -> Error.to_string err |> print_endline *)
+(* "p.AWXopqofN0doG0q" *)
+let () =
+  let res =
+    Lwt_main.run
+    @@ test_transfer_from_apple_to_spotify ~spotify_user_id:"dmmulroy"
+         "p.O1kzPq4T8YQg3YZ"
+  in
+  match res with
+  | Ok _ -> print_endline "Success"
+  | Error err -> Error.to_string err |> print_endline

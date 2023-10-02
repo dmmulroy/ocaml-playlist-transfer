@@ -115,14 +115,15 @@ module Make (C : Config.S) = struct
     let open Infix.Lwt_result in
     let+ json =
       Http.Response.body response |> Http.Body.to_yojson >|?* fun msg ->
-      let* _json_str = Http.Body.to_string @@ Http.Response.body response in
-      let source = `Serialization (`Raw "") in
+      let* json_str = Http.Body.to_string @@ Http.Response.body response in
+      let source = `Serialization (`Raw (Yojson.Safe.prettify json_str)) in
       Lwt.return @@ C.Error.make ~source msg
     in
     match deserialize json with
     | Ok response -> Lwt.return_ok response
     | Error msg ->
-        Lwt.return_error @@ C.Error.make ~source:(`Serialization (`Raw "")) msg
+        Lwt.return_error
+        @@ C.Error.make ~source:(`Serialization (`Json json)) msg
 
   module Pagination = struct
     type cursor = C.cursor [@@deriving yojson]

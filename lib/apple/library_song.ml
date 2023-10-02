@@ -1,3 +1,6 @@
+open Shared
+open Syntax
+
 type content_rating = [ `Clean | `Explicit ] [@@deriving yojson]
 
 let content_rating_to_string = function
@@ -31,14 +34,82 @@ type attributes = {
   release_date : string option; [@key "releaseDate"] [@default None]
   track_number : int option; [@key "trackNumber"] [@default None]
 }
-[@@deriving yojson]
+[@@deriving yojson { strict = false }]
 
-(* TODO: Type relationships *)
 type t = {
   attributes : attributes;
-  (* relationships : unit; *)
+  relationships : relationships option; [@default None]
   id : string;
   resource_type : Resource.t; [@key "type"]
   href : string;
 }
 [@@deriving yojson { strict = false }]
+
+and relationships = {
+  catalog : Song.t Page.t option; [@default None]
+      (* [ `Catalog_playlist of Playlist.t Page.t | `Catalog_song of Song.t Page.t ]
+         option;
+           [@default None] *)
+  tracks :
+    [ `Library_song of t | `Library_music_video of Library_music_video.t ]
+    Page.t
+    option;
+      [@default None]
+}
+[@@deriving yojson { strict = false }]
+
+let relationships_to_yojson relationships =
+  let open Infix.Option in
+  (* let catalog = *)
+  (*   relationships.catalog >|= fun catalog -> *)
+  (*   match catalog with *)
+  (*   | `Catalog_playlist playlist -> Page.to_yojson Playlist.to_yojson playlist *)
+  (*   | `Catalog_song song -> Page.to_yojson Song.to_yojson song *)
+  (* in *)
+  let tracks =
+    relationships.tracks
+    >|= Page.to_yojson (function
+          | `Library_song song -> to_yojson song
+          | `Library_music_video video -> Library_music_video.to_yojson video)
+  in
+  `Assoc
+    (List.filter_map
+       (fun (key, value) -> value >|= fun value -> (key, value))
+       [ ("catalog", None); ("tracks", tracks) ])
+
+let relationships_of_yojson json =
+  let open Yojson.Safe.Util in
+  (* let catalog =
+       try
+         member "catalog" json
+         |> Page.of_yojson Playlist.of_yojson
+         |> Result.map (fun playlist -> `Catalog_playlist playlist)
+         |> Extended.Result.ok_or_else (fun _ ->
+                Page.of_yojson Song.of_yojson json
+                |> Result.map (fun song -> `Catalog_song song))
+         |> Result.to_option
+       with Type_error _ -> None
+     in *)
+  let catalog =
+    try
+      member "catalog" json |> Page.of_yojson Song.of_yojson |> Result.to_option
+    with Type_error _ -> None
+  in
+  let tracks =
+    try
+      member "tracks" json
+      |> Page.of_yojson (fun track_json ->
+             let open Infix.Result in
+             match
+               member "type" track_json |> to_string |> Resource.of_string
+             with
+             | Ok `Library_songs ->
+                 of_yojson track_json >|= fun song -> `Library_song song
+             | Ok `Library_music_videos ->
+                 Library_music_video.of_yojson track_json >|= fun video ->
+                 `Library_music_video video
+             | _ -> Error "Invalid track type")
+      |> Result.to_option
+    with Type_error _ -> None
+  in
+  Ok { catalog; tracks }
