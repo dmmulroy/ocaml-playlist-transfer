@@ -15,7 +15,7 @@ module Get_playlists_input = struct
 end
 
 module Get_playlists_output = struct
-  type t = Simple_playlist.t Page.t [@@deriving yojson]
+  type t = Types.Simple_playlist.t Page.t [@@deriving yojson]
 end
 
 module Get_playlists = Spotify_rest_client.Make (struct

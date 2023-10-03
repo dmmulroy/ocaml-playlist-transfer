@@ -71,12 +71,13 @@ let of_apple ~(client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
     ( { description; name; tracks = Some tracks },
       skipped_tracks' @ skipped_tracks )
 
-let of_spotify (_client : Spotify.Client.t) (playlist : Spotify.Playlist.t) =
+let of_spotify (_client : Spotify.Client.t)
+    (playlist : Spotify.Types.Playlist.t) =
   let name = playlist.name in
   let description = Option.value ~default:name playlist.description in
   let tracks, skipped_tracks =
     List.partition_map
-      (fun (item : Spotify.Playlist.playlist_track) ->
+      (fun (item : Spotify.Types.Playlist.playlist_track) ->
         match item.track.external_ids.isrc with
         | None -> Either.right @@ item.track
         | Some isrc ->

@@ -2,7 +2,8 @@ open Shared
 open Syntax
 open Let
 
-type t = { tracks : Track.t Page.t } [@@deriving yojson { strict = false }]
+type t = { tracks : Types.Track.t Page.t }
+[@@deriving yojson { strict = false }]
 
 type filter =
   [ `Album

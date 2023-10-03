@@ -79,7 +79,7 @@ let test_spotify_oauth () =
         let () =
           List.iteri
             (fun idx playlist_track ->
-              Spotify.Playlist.(
+              Spotify.Types.Playlist.(
                 print_endline @@ string_of_int idx ^ ": "
                 ^ playlist_track.track.name))
             playlist.tracks.items
@@ -164,7 +164,8 @@ let fetch_all_spotify_search_results ~client isrc_ids =
          | Ok response ->
              response.data.tracks.items |> Extended.List.hd_opt
              |> Option.fold ~none:(Either.right request.input.query)
-                  ~some:(fun (track : Spotify.Track.t) -> Either.left track.uri)
+                  ~some:(fun (track : Spotify.Types.Track.t) ->
+                    Either.left track.uri)
              |> Lwt.return)
   >|= List.partition_map Fun.id
 
@@ -174,7 +175,7 @@ let test_get_spotify_playlist_tracks playlist_id =
   print_endline "Playlist tracks:";
   List.iteri
     (fun idx playlist_track ->
-      let open Spotify.Playlist in
+      let open Spotify.Types.Playlist in
       print_endline @@ string_of_int idx ^ ": " ^ playlist_track.track.name)
     response;
   Lwt.return_ok ()
@@ -240,7 +241,7 @@ let test_transfer_from_spotify_to_apple playlist_id () =
   in
   let transfer_tracks, _skipped_tracks =
     List.partition_map
-      (fun (playlist_track : Spotify.Playlist.playlist_track) ->
+      (fun (playlist_track : Spotify.Types.Playlist.playlist_track) ->
         Transfer.Track.of_spotify playlist_track.track)
       spotify_tracks
   in

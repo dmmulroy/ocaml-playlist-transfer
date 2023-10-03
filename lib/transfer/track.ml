@@ -18,7 +18,7 @@ type apple_track =
    match track with `Library_music_video video -> Either.right video
    | `Library_song song -> *)
 
-let of_spotify (track : Spotify.Track.t) =
+let of_spotify (track : Spotify.Types.Track.t) =
   match track.external_ids.isrc with
   | None -> Either.right @@ track
   | Some isrc ->

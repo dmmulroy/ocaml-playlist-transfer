@@ -2,37 +2,6 @@ open Shared
 open Syntax
 open Let
 
-type playlist_track = {
-  (* added_at : string; *)
-  (* added_by : User.t; *)
-  (* is_local : bool; *)
-  (* primary_color : string option; [@default None] *)
-  track : Track.t;
-      (* video_thumbnail : video_thumbnail option; [@default None] *)
-}
-[@@deriving yojson { strict = false }]
-
-and video_thumbnail = { url : Http.Uri.t option } [@@deriving yojson]
-
-type t = {
-  collaborative : bool;
-  description : string option; [@default None]
-  external_urls : Common.external_urls;
-  (* followers : Resource.reference; *)
-  href : Http.Uri.t;
-  id : string;
-  (* images : Common.image list; *)
-  name : string;
-  (* owner : User.t; *)
-  primary_color : string option; [@default None]
-  public : bool option; [@default None]
-  resource_type : Resource.t; [@key "type"]
-  snapshot_id : string;
-  tracks : playlist_track Page.t;
-  uri : string;
-}
-[@@deriving yojson { strict = false }]
-
 module Add_tracks_input = struct
   type t = { playlist_id : string; uris : string list } [@@deriving make]
 
@@ -89,7 +58,7 @@ module Create_input = struct
 end
 
 module Create_output = struct
-  type nonrec t = t
+  type t = Types.Playlist.t
 end
 
 module CreatePlaylist = Spotify_rest_client.Make (struct
@@ -97,7 +66,7 @@ module CreatePlaylist = Spotify_rest_client.Make (struct
   type output = Create_output.t
 
   let name = "Create_playlist"
-  let output_of_yojson = of_yojson
+  let output_of_yojson = Types.Playlist.of_yojson
 
   let make_endpoint (user_id : string) =
     Http.Uri.of_string @@ "https://api.spotify.com/v1/users/" ^ user_id
@@ -144,7 +113,7 @@ module Get_featured_input = struct
 end
 
 module Get_featured_output = struct
-  type t = { message : string; playlists : Simple_playlist.t Page.t }
+  type t = { message : string; playlists : Types.Simple_playlist.t Page.t }
   [@@deriving yojson]
 end
 
@@ -196,8 +165,7 @@ module Get_by_id_input = struct
 end
 
 module Get_by_id_output = struct
-  type playlist = t [@@deriving yojson]
-  type t = playlist [@@deriving yojson]
+  type t = Types.Playlist.t [@@deriving yojson]
 end
 
 module Get_by_id = Spotify_rest_client.Make (struct
@@ -234,7 +202,8 @@ module Get_tracks_input = struct
 end
 
 module Get_tracks_output = struct
-  type t = playlist_track Page.t [@@deriving yojson { strict = false }]
+  type t = Types.Playlist.playlist_track Page.t
+  [@@deriving yojson { strict = false }]
 end
 
 module Get_tracks = Spotify_rest_client.Make (struct
