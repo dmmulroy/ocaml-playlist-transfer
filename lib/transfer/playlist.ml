@@ -65,6 +65,7 @@ let of_apple ~(client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
       library_songs
   in
   let* eithers = Lwt.all track_promises in
+  let _ = List.partition_map Fun.id eithers in
   let tracks, skipped_tracks' = List.partition_map Fun.id eithers in
   Lwt.return_ok
     ( { description; name; tracks = Some tracks },

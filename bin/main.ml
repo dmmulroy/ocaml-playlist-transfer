@@ -126,7 +126,7 @@ let fetch_all_spotify_playlist_tracks ~client id =
   in
   fetch_all_tracks ~client request response.data.items response.page
 
-let fetch_all_spotify_search_results ~client isrc_ids =
+let fetch_all_paginated_spotify_search_results ~client isrc_ids =
   let open Spotify.Spotify_rest_client.Pagination in
   let request =
     Spotify.Search.Search_input.make ~limit:50 ~query:isrc_ids
@@ -149,6 +149,24 @@ let fetch_all_spotify_search_results ~client isrc_ids =
   match response.data.tracks.items with
   | [] -> Lwt.return_ok []
   | items -> fetch_all_results ~client request items response.page
+
+let fetch_all_spotify_search_results ~client isrc_ids =
+  (* (spotify_tracks : Spotify.Track.t list), (skipped_tracks : isrc list ) *)
+  let open Infix.Lwt in
+  isrc_ids
+  |> List.map (fun query ->
+         Spotify.Search.Search_input.make ~query:[ query ]
+           ~search_types:[ `Track ] ())
+  |> Lwt_list.map_p (fun request ->
+         let* result = Spotify.Search.search ~client request in
+         match result with
+         | Error _ -> Lwt.return @@ Either.right request.input.query
+         | Ok response ->
+             response.data.tracks.items |> Extended.List.hd_opt
+             |> Option.fold ~none:(Either.right request.input.query)
+                  ~some:(fun (track : Spotify.Track.t) -> Either.left track.uri)
+             |> Lwt.return)
+  >|= List.partition_map Fun.id
 
 let test_get_spotify_playlist_tracks playlist_id =
   let+ client = make_spotify_client () in
@@ -270,11 +288,10 @@ let test_transfer_from_apple_to_spotify ~spotify_user_id playlist_id =
         |> Option.fold ~none:(Either.right library_song) ~some:Either.left)
       apple_tracks.data
   in
-  let+ spotify_uris =
+  let* spotify_uris, _ =
     isrc_ids
     |> List.map (fun id -> (id, `Isrc))
     |> fetch_all_spotify_search_results ~client:spotify_client
-    |> Lwt_result.map (List.map (fun (track : Spotify.Track.t) -> track.uri))
   in
   let create_input =
     Spotify.Playlist.Create_input.make
