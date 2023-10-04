@@ -2,101 +2,6 @@ open Shared
 open Syntax
 open Let
 
-type attributes = {
-  artwork : Artwork.t option; [@default None]
-  can_edit : bool; [@key "canEdit"]
-  date_added : string; [@key "dateAdded"]
-  description : Description.t option; [@default None]
-  has_catalog : bool; [@key "hasCatalog"]
-  is_public : bool; [@key "isPublic"]
-  last_modified_date : string; [@key "lastModifiedDate"]
-  name : string;
-  play_params : Play_params.t option; [@key "playParams"] [@default None]
-  track_types : Resource.t list option; [@key "trackTypes"] [@default None]
-}
-[@@deriving yojson]
-
-type relationships = {
-  catalog :
-    [ `Catalog_playlist of Playlist.t Page.t | `Catalog_song of Song.t Page.t ]
-    option;
-      [@default None]
-  tracks :
-    [ `Library_song of Library_song.t
-    | `Library_music_video of Library_music_video.t ]
-    Page.t
-    option;
-      [@default None]
-}
-[@@deriving yojson]
-
-let relationships_to_yojson relationships =
-  let open Infix.Option in
-  let catalog =
-    relationships.catalog >|= fun catalog ->
-    match catalog with
-    | `Catalog_playlist playlist -> Page.to_yojson Playlist.to_yojson playlist
-    | `Catalog_song song -> Page.to_yojson Song.to_yojson song
-  in
-  let tracks =
-    relationships.tracks
-    >|= Page.to_yojson (function
-          | `Library_song song -> Library_song.to_yojson song
-          | `Library_music_video video -> Library_music_video.to_yojson video)
-  in
-  `Assoc
-    (List.filter_map
-       (fun (key, value) -> value >|= fun value -> (key, value))
-       [ ("catalog", catalog); ("tracks", tracks) ])
-
-let relationships_of_yojson json =
-  let open Yojson.Safe.Util in
-  let catalog =
-    try
-      member "catalog" json
-      |> Page.of_yojson Playlist.of_yojson
-      |> Result.map (fun playlist -> `Catalog_playlist playlist)
-      |> Extended.Result.ok_or_else (fun _ ->
-             Page.of_yojson Song.of_yojson json
-             |> Result.map (fun song -> `Catalog_song song))
-      |> Result.to_option
-    with Type_error _ -> None
-  in
-  let tracks =
-    try
-      member "tracks" json
-      |> Page.of_yojson (fun track_json ->
-             let open Infix.Result in
-             match
-               member "type" track_json |> to_string |> Resource.of_string
-             with
-             | Ok `Library_songs ->
-                 Library_song.of_yojson track_json >|= fun song ->
-                 `Library_song song
-             | Ok `Library_music_videos ->
-                 Library_music_video.of_yojson track_json >|= fun video ->
-                 `Library_music_video video
-             | _ -> Error "Invalid track type")
-      |> Result.to_option
-    with Type_error _ -> None
-  in
-  Ok { catalog; tracks }
-
-type t = {
-  attributes : attributes;
-  href : string;
-  id : string;
-  relationships : relationships option; [@default None]
-  resource_type : Resource.t; [@key "type"]
-}
-[@@deriving yojson]
-
-let tracks playlist =
-  Infix.Option.(
-    playlist.relationships >|= fun relationships ->
-    relationships.tracks >|= fun response -> response.data)
-  |> Option.join
-
 module Create_input = struct
   type track = {
     id : string;
@@ -163,8 +68,7 @@ module Create_input = struct
 end
 
 module Create_output = struct
-  type playlist = t [@@deriving yojson]
-  type t = { data : playlist list } [@@deriving yojson]
+  type t = { data : Types.Playlist.t list } [@@deriving yojson]
 end
 
 module Create = Apple_rest_client.Make (struct
@@ -196,8 +100,7 @@ module Get_all_input = struct
 end
 
 module Get_all_output = struct
-  type playlist = t [@@deriving yojson]
-  type t = playlist Page.t [@@deriving yojson]
+  type t = Types.Playlist.t Page.t [@@deriving yojson]
 end
 
 module Get_all = Apple_rest_client.Make (struct
@@ -243,8 +146,7 @@ module Get_by_id_input = struct
 end
 
 module Get_by_id_output = struct
-  type playlist = t [@@deriving yojson]
-  type t = { data : playlist list } [@@deriving yojson]
+  type t = { data : Types.Playlist.t list } [@@deriving yojson]
 end
 
 module Get_by_id = Apple_rest_client.Make (struct
@@ -298,7 +200,7 @@ module Get_relationship_by_name_input = struct
 end
 
 module Get_relationship_by_name_output = struct
-  type t = Library_song.t Page.t [@@deriving yojson]
+  type t = Types.Library_song.t Page.t [@@deriving yojson]
 end
 
 module Get_relationship_by_name = Apple_rest_client.Make (struct

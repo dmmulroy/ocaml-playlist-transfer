@@ -2,59 +2,6 @@ open Shared
 open Syntax
 open Let
 
-type content_rating = [ `Clean | `Explicit ] [@@deriving yojson]
-
-let content_rating_to_string = function
-  | `Clean -> "clean"
-  | `Explicit -> "explicit"
-
-let content_rating_of_string = function
-  | "clean" -> Ok `Clean
-  | "explicit" -> Ok `Explicit
-  | _ -> Error "Invalid content rating"
-
-let content_rating_to_yojson content_rating =
-  `String (content_rating_to_string content_rating)
-
-let content_rating_of_yojson = function
-  | `String s -> content_rating_of_string s
-  | _ -> Error "Invalid content rating"
-
-type attributes = {
-  (* album_name : string option; [@key "albumName"] [@default None] *)
-  (* artist_name : string; [@key "artistName"] *)
-  (* artwork : Artwork.t; *)
-  (* content_rating : content_rating option; [@key "contentRating"] [@default None] *)
-  (* disc_number : int option; [@key "discNumber"] [@default None] *)
-  (* duration_in_millis : int; [@key "durationInMillis"] *)
-  (* genre_names : string list; [@key "genreNames"] *)
-  (* has_credits : bool; [@key "hasCredits"] *)
-  (* has_lyrics : bool; [@key "hasLyrics"] *)
-  isrc : string option;
-  name : string;
-      (* play_params : Play_params.t option; [@key "playParams"] [@default None] *)
-      (* release_date : string option; [@key "releaseDate"] [@default None] *)
-      (* track_number : int option; [@key "trackNumber"] [@default None] *)
-}
-[@@deriving yojson { strict = false }]
-
-let narrow_resource_type = function
-  | `Songs as resource -> Ok (resource :> [ `Songs ])
-  | _ -> Error "fail" (* TODO: Create Internal Error + Map to Apple Error *)
-
-(* TODO: Type relationships *)
-type t = {
-  attributes : attributes;
-  (* relationships : unit; *)
-  id : string;
-  resource_type : [ `Songs ];
-      [@key "type"]
-      [@to_yojson Resource.to_yojson]
-      [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type]
-  href : string;
-}
-[@@deriving yojson { strict = false }]
-
 (* TODO: this *)
 module Internal_error = struct
   type t
@@ -67,8 +14,7 @@ module Get_by_id_input = struct
 end
 
 module Get_by_id_output = struct
-  type song = t [@@deriving yojson { strict = false }]
-  type t = { data : song list } [@@deriving yojson { strict = false }]
+  type t = { data : Types.Song.t list } [@@deriving yojson { strict = false }]
 end
 
 module Get_by_id = Apple_rest_client.Make (struct
@@ -90,12 +36,6 @@ end)
 
 let get_by_id = Get_by_id.request
 
-(*
-    TODO Monday: Implement Get_many_by_ids so that we can convert from
-    Library song -> Catalog Song. Validate that a library song id is a valid
-    catalog song id.
-*)
-
 module Get_many_by_isrcs_input = struct
   type t = string list
 
@@ -108,7 +48,8 @@ module Get_many_by_isrcs_output = struct
     resource_type : [ `Songs ];
         [@key "type"]
         [@to_yojson Resource.to_yojson]
-        [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type]
+        [@of_yojson
+          Resource.of_yojson_narrowed ~narrow:Types.Song.narrow_resource_type]
     href : string;
   }
   [@@deriving yojson { exn = true }]
@@ -135,9 +76,7 @@ module Get_many_by_isrcs_output = struct
   type meta = { filters : filters [@of_yojson filters_of_yojson] }
   [@@deriving yojson]
 
-  type song = t [@@deriving yojson { strict = false }]
-
-  type t = { data : song list; meta : meta }
+  type t = { data : Types.Song.t list; meta : meta }
   [@@deriving yojson { strict = false }]
 end
 
