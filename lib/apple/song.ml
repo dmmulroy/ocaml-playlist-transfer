@@ -47,9 +47,10 @@ module Get_many_by_isrcs_output = struct
     id : string;
     resource_type : [ `Songs ];
         [@key "type"]
-        [@to_yojson Resource.to_yojson]
+        [@to_yojson Types.Resource.to_yojson]
         [@of_yojson
-          Resource.of_yojson_narrowed ~narrow:Types.Song.narrow_resource_type]
+          Types.Resource.of_yojson_narrowed
+            ~narrow:Types.Song.narrow_resource_type]
     href : string;
   }
   [@@deriving yojson { exn = true }]

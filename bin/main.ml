@@ -278,7 +278,8 @@ let test_transfer_from_apple_to_spotify ~spotify_user_id playlist_id =
   let isrc_ids, _skipped_library_songs =
     let open Infix.Option in
     List.partition_map
-      (fun (library_song : Apple.Library_song.t) ->
+      (fun (library_song : Apple.Types.Library_song.t) ->
+        let open Apple.Types.Relationship in
         library_song.relationships
         >>= (fun relationships ->
               relationships.catalog >>= function
@@ -298,7 +299,7 @@ let test_transfer_from_apple_to_spotify ~spotify_user_id playlist_id =
     Spotify.Playlist.Create_input.make
       ~description:
         (playlist.attributes.description
-        |> Option.map (fun (description : Apple.Description.t) ->
+        |> Option.map (fun (description : Apple.Types.Description.t) ->
                description.standard)
         |> Option.value ~default:playlist.attributes.name)
       ~name:playlist.attributes.name ~user_id:spotify_user_id ()

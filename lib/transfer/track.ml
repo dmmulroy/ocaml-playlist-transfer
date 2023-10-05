@@ -11,8 +11,8 @@ type t = {
 [@@deriving make]
 
 type apple_track =
-  [ `Library_song of Apple.Library_song.t
-  | `Library_music_video of Apple.Library_music_video.t ]
+  [ `Library_song of Apple.Types.Library_song.t
+  | `Library_music_video of Apple.Types.Library_music_video.t ]
 
 (* let of_apple (track : apple_track) =
    match track with `Library_music_video video -> Either.right video

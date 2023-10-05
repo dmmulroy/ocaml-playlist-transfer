@@ -7,14 +7,14 @@ module Create_input = struct
     id : string;
     resource_type :
       [ `Library_songs | `Library_music_videos | `Music_videos | `Songs ];
-        [@key "type"] [@to_yojson Resource.to_yojson]
+        [@key "type"] [@to_yojson Types.Resource.to_yojson]
   }
   [@@deriving to_yojson]
 
   type parent = {
     id : string;
     resource_type : [ `Library_playlist_folders ];
-        [@key "type"] [@to_yojson Resource.to_yojson]
+        [@key "type"] [@to_yojson Types.Resource.to_yojson]
   }
   [@@deriving to_yojson]
 

@@ -15,24 +15,26 @@ let add_tracks playlist tracks =
   let updated_tracks = List.append existing_tracks tracks in
   { playlist with tracks = Some updated_tracks }
 
-let of_apple ~(client : Apple.Client.t) (playlist : Apple.Library_playlist.t) =
+let of_apple ~(client : Apple.Client.t)
+    (playlist : Apple.Types.Library_playlist.t) =
   let name = playlist.attributes.name in
   let description =
     Option.fold ~none:playlist.attributes.name
-      ~some:(fun (description : Apple.Description.t) -> description.standard)
+      ~some:(fun (description : Apple.Types.Description.t) ->
+        description.standard)
       playlist.attributes.description
   in
   let tracks =
-    Option.value ~default:[] @@ Apple.Library_playlist.tracks playlist
+    Option.value ~default:[] @@ Apple.Types.Library_playlist.tracks playlist
   in
   let song_by_catalog_id = Hashtbl.create @@ List.length tracks in
   let skipped_tracks =
     List.filter_map
       (fun track ->
         match track with
-        | `Library_music_video (video : Apple.Library_music_video.t) ->
+        | `Library_music_video (video : Apple.Types.Library_music_video.t) ->
             Some (`Library_music_video video)
-        | `Library_song (song : Apple.Library_song.t) -> (
+        | `Library_song (song : Apple.Types.Library_song.t) -> (
             let catalog_id_opt =
               Infix.Option.(
                 song.attributes.play_params >>= fun play_params ->
