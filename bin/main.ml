@@ -180,18 +180,6 @@ let test_get_spotify_playlist_tracks playlist_id =
     response;
   Lwt.return_ok ()
 
-(* let test_search_spotify () = *)
-(*   let+ client = make_spotify_client () in *)
-(*   let request = *)
-(*     Spotify.Search.Search_input.make *)
-(*       ~query:[ ("USUM72307683", `Isrc) ] *)
-(*       ~search_types:[ `Track ] () *)
-(*   in *)
-(*   let+ { data; _ } = Spotify.Search.search ~client request in *)
-(*   let tracks = Option.get data.tracks in *)
-(*   print_endline @@ "Number of tracks found: " ^ Int.to_string tracks.total; *)
-(*   Lwt.return_ok () *)
-
 let test_apple_get_playlist_by_id () =
   let+ client = make_apple_client () in
   let input =

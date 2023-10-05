@@ -1,16 +1,15 @@
 open Syntax
 open Let
-module Shared_error = Error
 
 module Config = struct
   module type S = sig
     type api_client
     type cursor [@@deriving yojson]
 
-    type 'a interceptor =
-      (?client:api_client -> 'a -> ('a, Shared_error.t) Lwt_result.t) option
-
     module Error : Error.S
+
+    type 'a interceptor =
+      (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
 
     type rate_limit_unit = Miliseconds | Seconds
 
@@ -21,13 +20,85 @@ module Config = struct
 end
 
 module Api_request = struct
-  module type S = sig
-    type input
-    type output
+  module Config = struct
+    module type S = sig
+      type input
+      type output
 
-    val name : string
-    val to_http_request : input -> (Http.Request.t, Error.t) Lwt_result.t
-    val of_http_response : Http.Response.t -> (output, Error.t) Lwt_result.t
+      val make_input : 'a -> input
+      val name : string
+      val to_http_request : input -> (Http.Request.t, Error.t) Lwt_result.t
+      val of_http_response : Http.Response.t -> (output, Error.t) Lwt_result.t
+    end
+  end
+
+  module type S = sig
+    include Config.S
+
+    val execute : client:'api_client -> input -> (output, Error.t) Lwt_result.t
+    val execute_unauthenticated : input -> (output, Error.t) Lwt_result.t
+    val make_request : 'a -> input
+  end
+end
+
+module type S = sig
+  include Config.S
+
+  val handle_request :
+    ?client:api_client ->
+    input:'a ->
+    to_http_request:('a -> (Http.Request.t, Error.t) Lwt_result.t) ->
+    of_http_response:(Http.Response.t -> ('b, Error.t) Lwt_result.t) ->
+    unit ->
+    ('b, Error.t) Lwt_result.t
+
+  val handle_response :
+    deserialize:(Yojson.Safe.t -> ('a, string) result) ->
+    Http.Response.t ->
+    ('a, Error.t) Lwt_result.t
+
+  module Pagination : sig
+    type nonrec cursor = cursor
+
+    val cursor_to_yojson : cursor -> Yojson.Safe.t
+
+    val cursor_of_yojson :
+      Yojson.Safe.t -> cursor Ppx_deriving_yojson_runtime.error_or
+
+    type t = { next : cursor option; previous : cursor option }
+
+    val to_yojson : t -> Yojson.Safe.t
+    val of_yojson : Yojson.Safe.t -> t Ppx_deriving_yojson_runtime.error_or
+    val make : ?next:cursor -> ?previous:cursor -> unit -> t
+    val empty : t
+  end
+
+  module Request : sig
+    type 'a t = { input : 'a; page : cursor option }
+
+    val make : ?page:cursor -> 'a -> 'a t
+  end
+
+  module Response : sig
+    type 'a t = { data : 'a; page : Pagination.t }
+
+    val to_yojson : ('a -> Yojson.Safe.t) -> 'a t -> Yojson.Safe.t
+
+    val of_yojson :
+      (Yojson.Safe.t -> 'a Ppx_deriving_yojson_runtime.error_or) ->
+      Yojson.Safe.t ->
+      'a t Ppx_deriving_yojson_runtime.error_or
+
+    val make : ?page:Pagination.t -> 'a -> 'a t
+  end
+
+  module Make : functor (M : Api_request.S) -> sig
+    val request :
+      client:api_client -> M.input -> (M.output, Error.t) Lwt_result.t
+  end
+
+  module Make_unauthenticated : functor (M : Api_request.S) -> sig
+    val request : M.input -> (M.output, Error.t) Lwt_result.t
   end
 end
 
@@ -138,26 +209,6 @@ module Make (C : Config.S) = struct
   module Request = struct
     type 'a t = { input : 'a; page : Pagination.cursor option }
 
-    (* Spotify.Pagination.previous ~client cursor *)
-    (* Spotify.Pagination.next ~client cursor *)
-    (* Spotify.Pagination.all ~client ~direction:`Next cursor *)
-    (* val cb : Spotify.Spotify_request.t -> 'a Spotify.Spotify_request.t -> ('b Spotify.Spotify_response.t, 'e) Lwt_result.t *)
-    (* Spotify.Pagination.paginate ~client cb *)
-    (*
-   lib/spotify/pagination.ml
-  
-   let paginate ~initial_request request_cb =
-     let+ { data; page; } = request_cb initial_request in
-     let rec aux acc = function
-       | None -> Lwt.return_ok acc
-       | Some next ->
-           let+ { data; page = page' } =
-              request_cb { request with page = Some next }
-           in
-           aux (List.append data.items acc) page'.next
-     in
-     aux tracks page.next
-*)
     let make ?page input = { input; page }
   end
 
@@ -176,6 +227,26 @@ module Make (C : Config.S) = struct
       >|? fun err ->
       C.Error.make ~cause:err ~source:(`Source M.name)
       @@ "Error executing request: " ^ M.name
+  end
+
+  module Make_v2 (M : Api_request.Config.S) = struct
+    open Infix.Lwt_result
+
+    let execute ~client input =
+      handle_request ~client ~input ~to_http_request:M.to_http_request
+        ~of_http_response:M.of_http_response ()
+      >|? fun err ->
+      C.Error.make ~cause:err ~source:(`Source M.name)
+      @@ "Error executing request: " ^ M.name
+
+    let execute_unauthenticated input =
+      handle_request ~input ~to_http_request:M.to_http_request
+        ~of_http_response:M.of_http_response ()
+      >|? fun err ->
+      C.Error.make ~cause:err ~source:(`Source M.name)
+      @@ "Error executing request: " ^ M.name
+
+    let make_request = M.make_input
   end
 
   module Make_unauthenticated (M : Api_request.S) = struct

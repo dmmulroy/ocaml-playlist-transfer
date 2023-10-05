@@ -1,3 +1,5 @@
+[@@@ocaml.warning "-32-34"]
+
 type t = {
   cause : t option;
   domain : [ `Apple | `Spotify | `Transfer | `Domain of string ];
@@ -46,6 +48,8 @@ end
 include Fns_impl
 
 module type S = sig
+  type nonrec t = t
+
   include Fns.S
 
   val make :
@@ -65,6 +69,8 @@ module type Error_domain = sig
 end
 
 module Make (M : Error_domain) = struct
+  type nonrec t = t
+
   include Fns_impl
 
   let make = make ~domain:M.domain

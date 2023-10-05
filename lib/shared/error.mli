@@ -22,6 +22,8 @@ end
 include Fns.S
 
 module type S = sig
+  type nonrec t = t
+
   include Fns.S
 
   val make :
