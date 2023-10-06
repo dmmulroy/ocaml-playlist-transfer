@@ -7,11 +7,9 @@ module Config : Rest_client.Config.S = struct
   type 'a interceptor =
     (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
 
-  type rate_limit_unit = Miliseconds | Seconds
-
   module Error = Apple_error
 
-  let rate_limit_unit = Miliseconds
+  let rate_limit_unit = Rest_client.Miliseconds
 
   let set_headers ?(client : api_client option) (request : Http.Request.t) =
     match client with

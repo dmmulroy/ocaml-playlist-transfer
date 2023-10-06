@@ -1,6 +1,8 @@
 open Syntax
 open Let
 
+type rate_limit_unit = Miliseconds | Seconds
+
 module Config = struct
   module type S = sig
     type api_client
@@ -10,8 +12,6 @@ module Config = struct
 
     type 'a interceptor =
       (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
-
-    type rate_limit_unit = Miliseconds | Seconds
 
     val rate_limit_unit : rate_limit_unit
     val intercept_request : Http.Request.t interceptor
@@ -170,4 +170,3 @@ module Make (C : Config.S) = struct
       @@ "Error executing request: " ^ M.name
   end
 end
-
