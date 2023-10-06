@@ -205,10 +205,7 @@ let test_apple_create_playlist () =
 
 let test_apple_get_song_by_id () =
   let+ client = make_apple_client () in
-  let input = Apple.Song.Get_by_id_input.make "1696596473" in
-  let+ result = Apple.Song.get_by_id ~client input in
-  print_endline @@ "Song: " ^ Yojson.Safe.pretty_to_string
-  @@ Apple.Song.Get_by_id_output.to_yojson result;
+  let+ result = Apple.Song.get_by_id ~client "1696596473" in
   Lwt.return_ok ()
 
 let test_apple_get_song_by_isrcs () =
