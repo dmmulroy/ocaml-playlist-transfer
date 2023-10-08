@@ -1,3 +1,4 @@
+(* TODO: Move to types.ml*)
 type request = [ `Catalog | `Tracks ]
 
 let request_to_string = function

@@ -1,17 +1,15 @@
 open Shared
 
-module Config : Rest_client.Config.S = struct
+module Config : Rest_client.Config.S with type api_client = Client.t = struct
   type api_client = Client.t
   type cursor = string [@@deriving yojson]
 
   type 'a interceptor =
     (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
 
-  type rate_limit_unit = Miliseconds | Seconds
-
   module Error = Apple_error
 
-  let rate_limit_unit = Miliseconds
+  let rate_limit_unit = Rest_client.Miliseconds
 
   let set_headers ?(client : api_client option) (request : Http.Request.t) =
     match client with

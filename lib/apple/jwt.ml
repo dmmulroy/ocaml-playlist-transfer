@@ -33,13 +33,15 @@ module Internal_error = struct
     | #t -> .
     | _ -> "An unhandled error occurred"
 
-  let to_error ?(map_msg = fun str -> `Unhandled_error str)
+  let private_key_error str = `Private_key_error str
+  let token_signing_error str = `Token_signing_error str
+  let validation_error str = `Validation_error str
+
+  let to_apple_error ?(map_msg = fun str -> `Unhandled_error str)
       (err : [< t | `Msg of string ]) =
-    let message =
-      (match err with `Msg str -> map_msg str | _ as err' -> err')
-      |> to_string
-    in
-    Apple_error.make ~source:`Auth message
+    (match err with `Msg str -> map_msg str | _ as err' -> err')
+    |> to_string
+    |> Apple_error.make ~source:`Auth
 end
 
 type t = { key : Jwk.priv Jwk.t; jwt : Jwt.t }
@@ -47,16 +49,16 @@ type t = { key : Jwk.priv Jwk.t; jwt : Jwt.t }
 let six_months_sec = 15777000
 
 let is_expired t =
-  let expiration_result =
-    Jwt.check_expiration ~now:(Ptime_clock.now ()) t.jwt
-  in
-  match expiration_result with Ok _ -> false | Error _ -> true
+  t.jwt
+  |> Jwt.check_expiration ~now:(Ptime_clock.now ())
+  |> Result.map @@ Fun.const false
+  |> Result.value ~default:true
 
 let make ?expiration ~private_pem ~key_id ~team_id () =
   let open Infix.Result in
   let@ key =
     Jwk.of_priv_pem private_pem
-    >|? Internal_error.to_error ~map_msg:(fun msg -> `Private_key_error msg)
+    >|? Internal_error.to_apple_error ~map_msg:Internal_error.private_key_error
   in
   let kid = ("kid", `String key_id) in
   let header = Header.make_header ~typ:"JWT" ~alg:`ES256 ~extra:[ kid ] key in
@@ -70,7 +72,8 @@ let make ?expiration ~private_pem ~key_id ~team_id () =
   in
   let@ jwt =
     Jwt.sign ~header ~payload key
-    >|? Internal_error.to_error ~map_msg:(fun msg -> `Token_signing_error msg)
+    >|? Internal_error.to_apple_error
+          ~map_msg:Internal_error.token_signing_error
   in
   Ok { key; jwt }
 
@@ -78,11 +81,11 @@ let of_string ~private_pem jwt_str =
   let open Infix.Result in
   let@ key =
     Jwk.of_priv_pem private_pem
-    >|? Internal_error.to_error ~map_msg:(fun msg -> `Private_key_error msg)
+    >|? Internal_error.to_apple_error ~map_msg:Internal_error.private_key_error
   in
   let@ jwt =
     Jwt.of_string ~jwk:key ~now:(Ptime_clock.now ()) jwt_str
-    >|? Internal_error.to_error
+    >|? Internal_error.to_apple_error
   in
   Ok { key; jwt }
 
@@ -92,6 +95,6 @@ let validate t =
   let open Infix.Result in
   let@ validated_jwt =
     Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt
-    >|? Internal_error.to_error ~map_msg:(fun msg -> `Validation_error msg)
+    >|? Internal_error.to_apple_error ~map_msg:Internal_error.validation_error
   in
   Ok { t with jwt = validated_jwt }

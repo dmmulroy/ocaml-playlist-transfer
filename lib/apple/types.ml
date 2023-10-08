@@ -43,9 +43,8 @@ module Resource = struct
   let to_yojson resource = `String (to_string resource)
 
   let of_string_list resources =
-    List.filter_map
-      (fun resource -> Result.to_option @@ of_string resource)
-      resources
+    resources
+    |> List.filter_map (fun resource -> Result.to_option @@ of_string resource)
 
   let to_string_list resources = List.map to_string resources
 end

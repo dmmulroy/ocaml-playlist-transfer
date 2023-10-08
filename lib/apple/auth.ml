@@ -8,7 +8,7 @@ module Test_auth_output = struct
   type t = unit [@@deriving yojson]
 end
 
-module Test_auth = Apple_rest_client.Make (struct
+module Test_auth = struct
   type input = Test_auth_input.t
   type output = Test_auth_output.t
 
@@ -23,6 +23,8 @@ module Test_auth = Apple_rest_client.Make (struct
 
   let of_http_response =
     Apple_rest_client.handle_response ~deserialize:(fun _ -> Ok ())
-end)
+end
 
-let test_auth = Test_auth.request
+let test_auth ~client () =
+  let module Request = Apple_rest_client.Make (Test_auth) in
+  Request.request ~client () |> Lwt_result.map Apple_rest_client.Response.make

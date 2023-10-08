@@ -10,5 +10,5 @@ end
 
 val test_auth :
   client:Client.t ->
-  Test_auth_input.t ->
-  (Test_auth_output.t, Error.t) result Lwt.t
+  unit ->
+  (unit Apple_rest_client.Response.t, Error.t) result Lwt.t
