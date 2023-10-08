@@ -1,6 +1,6 @@
 open Shared
 
-module Config : Rest_client.Config.S = struct
+module Config : Rest_client.Config.S with type api_client = Client.t = struct
   type api_client = Client.t
   type cursor = string [@@deriving yojson]
 

@@ -136,16 +136,15 @@ module Make (C : Config.S) = struct
     let empty = { next = None; previous = None }
   end
 
-  module Request = struct
-    type 'a t = { input : 'a; page : Pagination.cursor option }
-
-    let make ?page input = { input; page }
-  end
-
   module Response = struct
-    type 'a t = { data : 'a; page : Pagination.t } [@@deriving yojson]
+    type 'a t = { data : 'a } [@@deriving yojson]
 
-    let make ?(page = Pagination.empty) data = { data; page }
+    let make data = { data }
+
+    module Paginated = struct
+      type 'a t = { data : 'a list; pagination : Pagination.t }
+      [@@deriving yojson]
+    end
   end
 
   module Make (M : Api_request.Config.S) = struct
