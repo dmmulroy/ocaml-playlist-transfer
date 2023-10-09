@@ -6,7 +6,7 @@ type rate_limit_unit = Miliseconds | Seconds
 module Config = struct
   module type S = sig
     type api_client
-    type cursor [@@deriving yojson]
+    type 'a page [@@deriving yojson]
 
     module Error : Error.S
 
@@ -127,9 +127,9 @@ module Make (C : Config.S) = struct
         @@ C.Error.make ~source:(`Serialization (`Json json)) msg
 
   module Pagination = struct
-    type cursor = C.cursor [@@deriving yojson]
+    type 'a page = 'a C.page [@@deriving yojson]
 
-    type t = { next : cursor option; previous : cursor option }
+    type 'a t = { next : 'a page option; previous : 'a page option }
     [@@deriving yojson]
 
     let make ?next ?previous () = { next; previous }
@@ -142,8 +142,10 @@ module Make (C : Config.S) = struct
     let make data = { data }
 
     module Paginated = struct
-      type 'a t = { data : 'a list; pagination : Pagination.t }
+      type 'a t = { data : 'a list; pagination : 'a Pagination.t }
       [@@deriving yojson]
+
+      let make pagination data = { data; pagination }
     end
   end
 

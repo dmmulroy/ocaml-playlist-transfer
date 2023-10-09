@@ -1,28 +1,18 @@
 open Shared
 
-type spotify_cursor = {
-  href : Http.Uri.t;
-  limit : int;
-  offset : int;
-  total : int;
-}
-[@@deriving yojson]
-
 module Config :
   Rest_client.Config.S
     with type api_client = Client.t
-     and type cursor = spotify_cursor = struct
-  type cursor = spotify_cursor [@@deriving yojson]
+     and type 'a page = 'a Page.t = struct
+  type 'a page = 'a Page.t [@@deriving yojson]
   type api_client = Client.t
 
   type 'a interceptor =
     (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
 
-  type rate_limit_unit = Miliseconds | Seconds
-
   module Error = Spotify_error
 
-  let rate_limit_unit = Seconds
+  let rate_limit_unit = Rest_client.Seconds
 
   let set_headers ?(client : api_client option) (request : Http.Request.t) =
     match client with
@@ -45,3 +35,9 @@ module Config :
 end
 
 include Rest_client.Make (Config)
+
+let pagination_of_page (page : 'a Page.t) =
+  let open Page in
+  let next = if Option.is_some page.next then Some page else None in
+  let previous = if Option.is_some page.previous then Some page else None in
+  Pagination.make ?next ?previous ()

@@ -83,40 +83,41 @@ let search_type_of_yojson = function
 let search_type_to_yojson search_type =
   `String (search_type_to_string search_type)
 
-module Search_input = struct
-  type t = {
+module Search = struct
+  let name = "search"
+
+  type input = {
     query : (string * filter) list;
     search_types : search_type list;
     limit : int option;
     offset : int option;
   }
 
-  (* TODO Tuesday: Search does do bulk search, search for 1 item at a time*)
-  let to_query_params t =
+  let input_to_query_params input =
     let formatted_query =
       List.fold_left
         (fun acc (query, filter) ->
           acc ^ Fmt.str "%s:%s%a" (filter_to_string filter) query Fmt.sp ())
-        "" t.query
+        "" input.query
     in
     let formatted_search_types =
-      List.map search_type_to_string t.search_types |> String.concat ","
+      List.map search_type_to_string input.search_types |> String.concat ","
     in
-    [ ("q", formatted_query); ("type", formatted_search_types) ]
+    [
+      ("q", Some formatted_query);
+      ("type", Some formatted_search_types);
+      ("limit", Option.map string_of_int input.limit);
+      ("offset", Option.map string_of_int input.offset);
+    ]
+    |> List.filter_map (fun (key, value) ->
+           Option.map (fun value' -> (key, value')) value)
 
-  let make ?limit ?offset ~query ~search_types () =
-    Spotify_rest_client.Request.make { query; search_types; limit; offset }
-end
+  type output = t
 
-module Search = Spotify_rest_client.Make (struct
-  type input = Search_input.t Spotify_rest_client.Request.t
-  type output = t Spotify_rest_client.Response.t
-
-  let name = "search"
   let endpoint = Http.Uri.of_string "https://api.spotify.com/v1/search"
 
   let make_endpoint (request : input) =
-    Http.Uri.with_query' endpoint (Search_input.to_query_params request.input)
+    Http.Uri.with_query' endpoint (input_to_query_params request)
 
   let to_http_request request =
     let uri = make_endpoint request in
@@ -124,25 +125,23 @@ module Search = Spotify_rest_client.Make (struct
     Lwt.return_ok @@ Http.Request.make ~meth:`GET ~uri ()
 
   let of_http_response http_response =
-    let+ search_results =
-      Spotify_rest_client.handle_response ~deserialize:of_yojson http_response
-    in
-    let page =
-      if Option.is_some search_results.tracks.next then
-        let track_page = search_results.tracks in
-        Option.some
-        @@ Spotify_rest_client.Pagination.make
-             ~next:
-               {
-                 href = track_page.href;
-                 limit = track_page.limit;
-                 offset = track_page.offset;
-                 total = track_page.total;
-               }
-             ()
-      else None
-    in
-    Lwt.return_ok @@ Spotify_rest_client.Response.make ?page search_results
-end)
+    Spotify_rest_client.handle_response ~deserialize:of_yojson http_response
+end
 
-let search = Search.request
+let search ~client
+    ?(page : [ `Next of t Page.t | `Previous of t Page.t ] option) ~query
+    ~search_types () =
+  let open Search in
+  let open Page in
+  let module Request = Spotify_rest_client.Make (Search) in
+  let limit, offset =
+    match page with
+    | None -> (None, None)
+    | Some (`Next page) -> Page.limit_and_offset (`Next page)
+    | Some (`Previous page) -> Page.limit_and_offset (`Previous page)
+  in
+  let request = { query; search_types; limit; offset } in
+  let+ { tracks } = Request.request ~client request in
+  let pagination = Spotify_rest_client.pagination_of_page tracks in
+  Lwt.return_ok
+  @@ Spotify_rest_client.Response.Paginated.make pagination tracks.items
