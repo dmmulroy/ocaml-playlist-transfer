@@ -22,38 +22,27 @@ let empty =
     total = 0;
   }
 
-let next_offset page =
-  Option.bind page.next (fun next ->
-      Http.Uri.get_query_param next "offset" |> Option.map int_of_string)
+type 'a state = [ `Current of 'a t | `Next of 'a t | `Previous of 'a t ]
 
-let next_limit page =
-  Option.bind page.next (fun next ->
-      Http.Uri.get_query_param next "limit" |> Option.map int_of_string)
+let offset = function
+  | `Current page -> Some page.offset
+  | `Next page ->
+      Option.bind page.next (fun next ->
+          Http.Uri.get_query_param next "offset" |> Option.map int_of_string)
+  | `Previous page ->
+      Option.bind page.previous (fun previous ->
+          Http.Uri.get_query_param previous "offset" |> Option.map int_of_string)
 
-let next_limit_and_offset page =
-  Option.bind page.next (fun next ->
-      let offset =
-        Http.Uri.get_query_param next "offset" |> Option.map int_of_string
-      in
-      let limit =
-        Http.Uri.get_query_param next "limit" |> Option.map int_of_string
-      in
-      Some (limit, offset))
+let limit = function
+  | `Current page -> Some page.limit
+  | `Next page ->
+      Option.bind page.next (fun next ->
+          Http.Uri.get_query_param next "limit" |> Option.map int_of_string)
+  | `Previous page ->
+      Option.bind page.previous (fun previous ->
+          Http.Uri.get_query_param previous "limit" |> Option.map int_of_string)
 
-let previous_offset page =
-  Option.bind page.previous (fun previous ->
-      Http.Uri.get_query_param previous "offset" |> Option.map int_of_string)
-
-let previous_limit page =
-  Option.bind page.previous (fun previous ->
-      Http.Uri.get_query_param previous "limit" |> Option.map int_of_string)
-
-let previous_limit_and_offset page =
-  Option.bind page.previous (fun previous ->
-      let offset =
-        Http.Uri.get_query_param previous "offset" |> Option.map int_of_string
-      in
-      let limit =
-        Http.Uri.get_query_param previous "limit" |> Option.map int_of_string
-      in
-      Some (limit, offset))
+let limit_and_offset = function
+  | `Current page -> (Some page.limit, Some page.offset)
+  | `Next page -> (limit (`Next page), offset (`Next page))
+  | `Previous page -> (limit (`Previous page), offset (`Previous page))

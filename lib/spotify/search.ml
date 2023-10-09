@@ -137,14 +137,8 @@ let search ~client
   let limit, offset =
     match page with
     | None -> (None, None)
-    | Some (`Next page) ->
-        Page.next_limit_and_offset page
-        |> Option.fold ~none:(None, None) ~some:(fun (limit, offset) ->
-               (limit, offset))
-    | Some (`Previous page) ->
-        Page.previous_limit_and_offset page
-        |> Option.fold ~none:(None, None) ~some:(fun (limit, offset) ->
-               (limit, offset))
+    | Some (`Next page) -> Page.limit_and_offset (`Next page)
+    | Some (`Previous page) -> Page.limit_and_offset (`Previous page)
   in
   let request = { query; search_types; limit; offset } in
   let+ { tracks } = Request.request ~client request in

@@ -195,10 +195,10 @@ module Get_tracks_by_id = struct
     Spotify_rest_client.handle_response ~deserialize:output_of_yojson
 end
 
-let get_tracks_by_id ~client
+let get_tracks_by_id ~(client : Client.t)
     ?(page :
-       [ `Next of Types.Playlist.playlist_track Page.t
-       | `Previous of Types.Playlist.playlist_track Page.t ]
+       [ `Next of Get_tracks_by_id.output
+       | `Previous of Get_tracks_by_id.output ]
        option) playlist_id =
   let module Request = Spotify_rest_client.Make (Get_tracks_by_id) in
   let open Get_tracks_by_id in
@@ -207,14 +207,8 @@ let get_tracks_by_id ~client
   let limit, offset =
     match page with
     | None -> (None, None)
-    | Some (`Next page) ->
-        Page.next_limit_and_offset page
-        |> Option.fold ~none:(None, None) ~some:(fun (limit, offset) ->
-               (limit, offset))
-    | Some (`Previous page) ->
-        Page.previous_limit_and_offset page
-        |> Option.fold ~none:(None, None) ~some:(fun (limit, offset) ->
-               (limit, offset))
+    | Some (`Next page) -> Page.limit_and_offset (`Next page)
+    | Some (`Previous page) -> Page.limit_and_offset (`Previous page)
   in
   let request = { playlist_id; limit; offset } in
   let+ playlist_track_page = Request.request ~client request in
