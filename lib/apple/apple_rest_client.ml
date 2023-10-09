@@ -1,8 +1,11 @@
 open Shared
 
-module Config : Rest_client.Config.S with type api_client = Client.t = struct
+module Config :
+  Rest_client.Config.S
+    with type api_client = Client.t
+    with type 'a page = 'a Page.t = struct
   type api_client = Client.t
-  type cursor = string [@@deriving yojson]
+  type 'a page = 'a Page.t [@@deriving yojson]
 
   type 'a interceptor =
     (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
@@ -33,3 +36,12 @@ module Config : Rest_client.Config.S with type api_client = Client.t = struct
 end
 
 include Rest_client.Make (Config)
+
+let pagination_of_page (page : 'a Page.t) =
+  let open Page in
+  let next = if Option.is_some page.next then Some page else None in
+  let limit = page.data |> List.length in
+  let previous =
+    Page.previous ~limit page.next |> fun previous -> { page with previous }
+  in
+  Pagination.make ?next ~previous ()
