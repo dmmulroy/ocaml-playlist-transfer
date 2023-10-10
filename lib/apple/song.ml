@@ -85,7 +85,7 @@ module Get_many_by_isrcs = struct
     Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end
 
-let get_many_by_isrcs ~(client : Client.t) (input : Get_many_by_isrcs.input) =
+let get_many_by_isrcs ~(client : Client.t) (isrcs : string list) =
   let open Get_many_by_isrcs in
   let module Request = Apple_rest_client.Make (Get_many_by_isrcs) in
   let merge_results acc chunked_result =
@@ -96,7 +96,7 @@ let get_many_by_isrcs ~(client : Client.t) (input : Get_many_by_isrcs.input) =
     Lwt_result.return
       { data = merged_data; meta = { filters = { isrc = merged_isrcs } } }
   in
-  input |> Extended.List.chunk 25
+  isrcs |> Extended.List.chunk 25
   |> List.map @@ Request.request ~client
   |> List.fold_left merge_results
      @@ Lwt_result.return { data = []; meta = { filters = { isrc = [] } } }

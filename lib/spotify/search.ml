@@ -129,7 +129,7 @@ module Search = struct
 end
 
 let search ~client
-    ?(page : [ `Next of t Page.t | `Previous of t Page.t ] option) ~query
+    ?(page : [ `Next of 'a Page.t | `Previous of 'a Page.t ] option) ~query
     ~search_types () =
   let open Search in
   let open Page in

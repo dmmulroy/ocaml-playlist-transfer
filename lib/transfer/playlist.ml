@@ -56,7 +56,7 @@ let of_apple ~(client : Apple.Client.t)
         | Error _ -> Lwt.return @@ Either.right @@ song
         | Ok { data } -> (
             try
-              let catalog_song = List.hd data in
+              let catalog_song = List.hd data.data in
               match catalog_song.attributes.isrc with
               | None -> Lwt.return @@ Either.right song
               | Some isrc ->
@@ -98,10 +98,9 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
       playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
     |> Option.value ~default:[]
   in
-  let+ { meta; _ } = Apple.Song.get_many_by_isrcs ~client isrcs in
+  let+ { data = { meta; _ }; _ } = Apple.Song.get_many_by_isrcs ~client isrcs in
   let tracks =
-    let open Apple.Library_playlist.Create_input in
-    let open Apple.Song.Get_many_by_isrcs_output in
+    let open Apple.Song.Get_many_by_isrcs in
     List.fold_left
       (fun acc (isrc, list) ->
         List.fold_left
@@ -111,9 +110,11 @@ let to_apple (client : Apple.Client.t) (playlist : t) =
             | false -> (isrc, track.id) :: acc')
           acc list)
       [] meta.filters.isrc
-    |> List.map (fun (_, catalog_id) : track ->
+    |> List.map
+         (fun (_, catalog_id) : Apple.Library_playlist.Create_input.track ->
            { id = catalog_id; resource_type = `Songs })
   in
+  (* { Types.Manifest.id; Types.Manifest.name } *)
   print_endline @@ "tracks: " ^ string_of_int (List.length tracks);
   let create_input =
     Apple.Library_playlist.Create_input.make ~name:playlist.name

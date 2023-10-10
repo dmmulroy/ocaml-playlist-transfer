@@ -27,7 +27,7 @@ let make_spotify_client () =
   in
   let _ = Unix.system cmd in
   let* code = Redirect_server.get_code redirect_server in
-  let+ access_token =
+  let+ { data = access_token } =
     Spotify.Auth.request_access_token
       (`Authorization_code { client_secret; client_id; code; redirect_uri })
   in
@@ -62,15 +62,14 @@ let test_spotify_oauth () =
   in
   let _ = Unix.system cmd in
   let* code = Redirect_server.get_code redirect_server in
-  let+ access_token =
+  let+ { data = access_token } =
     Spotify.Auth.request_access_token
       (`Authorization_code { client_secret; client_id; code; redirect_uri })
   in
   let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
-  let request =
-    Spotify.Playlist.Get_by_id_input.make ~id:"37i9dQZF1F0sijgNaJdgit" ()
+  let* playlist_result =
+    Spotify.Playlist.get_by_id ~client "37i9dQZF1F0sijgNaJdgit"
   in
-  let* playlist_result = Spotify.Playlist.get_by_id ~client request in
   let _ =
     match playlist_result with
     | Error err -> print_endline @@ Error.to_string err
@@ -104,51 +103,51 @@ let test_get_spotify_playlist_by_id id () =
       ~grant_type:`Authorization_code ~token:access_token_str ()
   in
   let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
-  let request = Spotify.Playlist.Get_by_id_input.make ~id () in
-  let+ response = Spotify.Playlist.get_by_id ~client request in
+  let+ response = Spotify.Playlist.get_by_id ~client id in
   Lwt.return_ok response.data
 
 let fetch_all_spotify_playlist_tracks ~client id =
   let open Spotify.Spotify_rest_client.Pagination in
-  let request = Spotify.Playlist.Get_tracks_input.make id in
-  let+ response = Spotify.Playlist.get_tracks ~client request in
-  let fetch_all_tracks ~client request tracks page =
+  let+ response = Spotify.Playlist.get_tracks_by_id ~client id in
+  let fetch_all_tracks ~client tracks pagination =
     let rec aux acc = function
       | None -> Lwt.return_ok acc
       | Some next ->
-          let+ { data; page = page' } =
-            Spotify.Playlist.get_tracks ~client
-              { request with page = Some next }
+          let+ { data; pagination } =
+            Spotify.Playlist.get_tracks_by_id ~client id
           in
-          aux (List.append data.items acc) page'.next
+          aux (List.append data acc) pagination.next
     in
-    aux tracks page.next
+    aux tracks pagination.next
   in
-  fetch_all_tracks ~client request response.data.items response.page
+  fetch_all_tracks ~client response.data response.pagination
 
 let fetch_all_paginated_spotify_search_results ~client isrc_ids =
   let open Spotify.Spotify_rest_client.Pagination in
-  let request =
-    Spotify.Search.Search_input.make ~limit:50 ~query:isrc_ids
-      ~search_types:[ `Track ] ()
+  let search_types = [ `Track ] in
+  let query = isrc_ids in
+  let+ { data; pagination } =
+    Spotify.Search.search ~client ~search_types ~query ()
   in
-  let+ response = Spotify.Search.search ~client request in
-  let fetch_all_results ~client request results page =
+  let fetch_all_results ~client results
+      (page : 'a Spotify.Spotify_rest_client.Pagination.t) =
     let rec aux acc = function
       | None -> Lwt.return_ok acc
       | Some next -> (
-          let+ { data; page = page' } =
-            Spotify.Search.search ~client { request with page = Some next }
+          (* Start here Wednesday: Spotify.Search.t + .search are typed wrong - should be an aggregated obj *)
+          let+ { data; pagination } =
+            Spotify.Search.search ~client ~page:(`Next next) ~query
+              ~search_types ()
           in
-          match data.tracks.next with
+          match pagination.next with
           | None -> aux acc None
-          | Some _ -> aux (List.append data.tracks.items acc) page'.next)
+          | Some next_page -> aux (List.append data acc) (Some next_page))
     in
     aux results page.next
   in
-  match response.data.tracks.items with
+  match data with
   | [] -> Lwt.return_ok []
-  | items -> fetch_all_results ~client request items response.page
+  | items -> fetch_all_results ~client items pagination.next
 
 let fetch_all_spotify_search_results ~client isrc_ids =
   (* (spotify_tracks : Spotify.Track.t list), (skipped_tracks : isrc list ) *)
