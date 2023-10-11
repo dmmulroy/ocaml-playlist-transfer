@@ -19,6 +19,18 @@ module Fns : sig
   end
 end
 
+val make :
+  ?cause:t ->
+  domain:[ `Apple | `Spotify | `Transfer | `Domain of string ] ->
+  source:
+    [ `Auth
+    | `Http of
+      Http.Code.status_code * [ `GET | `POST | `PUT | `DELETE ] * Http.Uri.t
+    | `Serialization of [ `Json of Yojson.Safe.t | `Raw of string ]
+    | `Source of string ] ->
+  string ->
+  t
+
 include Fns.S
 
 module type S = sig

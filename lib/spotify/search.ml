@@ -1,8 +1,15 @@
 open Shared
-open Syntax
-open Let
 
-type t = { tracks : Types.Track.t Page.t }
+type t = {
+  artists : Types.Artist.t Page.t option;
+  albums : Types.Simple_album.t Page.t option;
+  playlists : Types.Simple_playlist.t Page.t option;
+  tracks : Types.Track.t Page.t option;
+  shows : Types.Simple_show.t Page.t option;
+  episodes : Types.Simple_episode.t Page.t option;
+      (* Add audiobook types *)
+      (* audiobooks: Types.Simple_audiobook.t Page.t option; *)
+}
 [@@deriving yojson { strict = false }]
 
 type filter =
@@ -132,7 +139,6 @@ let search ~client
     ?(page : [ `Next of 'a Page.t | `Previous of 'a Page.t ] option) ~query
     ~search_types () =
   let open Search in
-  let open Page in
   let module Request = Spotify_rest_client.Make (Search) in
   let limit, offset =
     match page with
@@ -140,8 +146,5 @@ let search ~client
     | Some (`Next page) -> Page.limit_and_offset (`Next page)
     | Some (`Previous page) -> Page.limit_and_offset (`Previous page)
   in
-  let request = { query; search_types; limit; offset } in
-  let+ { tracks } = Request.request ~client request in
-  let pagination = Spotify_rest_client.pagination_of_page tracks in
-  Lwt.return_ok
-  @@ Spotify_rest_client.Response.Paginated.make pagination tracks.items
+  Request.request ~client { query; search_types; limit; offset }
+  |> Lwt_result.map Spotify_rest_client.Response.make
