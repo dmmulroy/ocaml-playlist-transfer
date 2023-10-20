@@ -124,7 +124,7 @@ module Get_by_id = struct
   }
   [@@deriving make]
 
-  type output = { data : Types.Playlist.t list } [@@deriving yojson]
+  type output = { data : Types.Library_playlist.t list } [@@deriving yojson]
 
   let input_to_query_params input =
     [

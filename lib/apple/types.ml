@@ -75,10 +75,10 @@ module Content_rating = struct
     | "explicit" -> Ok `Explicit
     | _ -> Error "Invalid content rating"
 
-  let content_rating_to_yojson content_rating =
+  let to_yojson content_rating =
     `String (content_rating_to_string content_rating)
 
-  let content_rating_of_yojson = function
+  let of_yojson = function
     | `String s -> content_rating_of_string s
     | _ -> Error "Invalid content rating"
 end
@@ -140,7 +140,7 @@ end = struct
     | Error _ -> (
         match Page.of_yojson Playlist.of_yojson json with
         | Ok page -> Ok (Option.some (`Catalog_playlist page))
-        | Error _ -> Error "Invalid catalog")
+        | Error err -> Error (Fmt.str "Invalid catalog: %s" err))
 
   type tracks =
     [ `Library_song of Library_song.t Page.t
@@ -153,7 +153,7 @@ end = struct
     | Error _ -> (
         match Page.of_yojson Library_music_video.of_yojson json with
         | Ok page -> Ok (Option.some (`Library_music_video page))
-        | Error _ -> Error "Invalid catalog")
+        | Error _ -> Error "Invalid tracks")
 
   type t = {
     catalog : catalog option; [@default None] [@of_yojson catalog_of_yojson_opt]
@@ -271,6 +271,9 @@ end = struct
     [ `Editoral | `External | `Personal_mix | `Replay | `User_shared ]
   [@@deriving yojson]
 
+  let _ = playlist_type_of_yojson
+
+  (* editorial, external, personal-mix, replay, user-shared *)
   let playlist_type_to_string = function
     | `Editoral -> "editorial"
     | `External -> "external"
@@ -285,16 +288,10 @@ end = struct
     | "personal-mix" -> Ok `Personal_mix
     | "replay" -> Ok `Replay
     | "user-shared" -> Ok `User_shared
-    | _ -> Error "Invalid playlist type"
+    | _ -> Ok `Personal_mix
+  (* | _ -> Error "Invalid playlist type" *)
 
-  let playlist_type_of_string = function
-    | "editorial" -> Ok `Editoral
-    | "external" -> Ok `External
-    | "personal-mix" -> Ok `Personal_mix
-    | "replay" -> Ok `Replay
-    | "user-shared" -> Ok `User_shared
-    | _ -> Error "Invalid playlist type"
-
+  (* TODO: Next - of_yojson is borked *)
   let playlist_type_to_yojson playlist_type =
     `String (playlist_type_to_string playlist_type)
 
@@ -315,7 +312,7 @@ end = struct
     track_types : Resource.t list option; [@key "trackTypes"] [@default None]
     url : Http.Uri.t;
   }
-  [@@deriving yojson]
+  [@@deriving yojson { strict = false }]
 
   (* TODO: relationships & views *)
   type t = {
