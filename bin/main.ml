@@ -161,16 +161,17 @@ let fetch_all_spotify_search_results ~client
              ~search_types:[ `Track ] ()
          in
          match result with
-         | Error _ -> Lwt.return @@ Either.right query
+         | Error _ -> Lwt.return @@ Either.right @@ snd query
          | Ok response ->
              if Option.is_some response.data.tracks then
                let tracks = Option.get response.data.tracks in
                tracks.items |> Extended.List.hd_opt
-               |> Option.fold ~none:(Either.right query)
+               |> Option.fold
+                    ~none:(Either.right @@ snd query)
                     ~some:(fun (track : Spotify.Types.Track.t) ->
                       Either.left track.uri)
                |> Lwt.return
-             else Lwt.return @@ Either.right query)
+             else Lwt.return @@ Either.right @@ snd query)
   >|= List.partition_map Fun.id
 
 (* let test_get_spotify_playlist_tracks playlist_id =
@@ -219,28 +220,28 @@ let test_apple_get_song_by_isrcs () =
   (* @@ Apple.Song.Get_many_by_isrcs_output.to_yojson result; *)
   Lwt.return_ok ()
 
-(* let test_transfer_from_spotify_to_apple playlist_id () =
-   let+ spotify_client = make_spotify_client () in
-   let+ { data = playlist; _ } =
-     Spotify.Playlist.get_by_id ~client:spotify_client playlist_id
-   in
-   let+ spotify_tracks =
-     fetch_all_spotify_playlist_tracks ~client:spotify_client playlist_id
-   in
-   let transfer_tracks, _skipped_tracks =
-     List.partition_map
-       (fun (playlist_track : Spotify.Types.Playlist.playlist_track) ->
-         Transfer.Track.of_spotify playlist_track.track)
-       spotify_tracks
-   in
-   let transfer_playlist =
-     Transfer.Playlist.make ~name:playlist.name
-       ~description:(Option.value ~default:playlist.name playlist.description)
-       ~tracks:transfer_tracks ()
-   in
-   let+ apple_client = make_apple_client () in
-   let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
-   Lwt.return_ok () *)
+let test_transfer_from_spotify_to_apple playlist_id () =
+  let+ spotify_client = make_spotify_client () in
+  let+ { data = playlist; _ } =
+    Spotify.Playlist.get_by_id ~client:spotify_client playlist_id
+  in
+  let+ spotify_tracks =
+    fetch_all_spotify_playlist_tracks ~client:spotify_client playlist_id
+  in
+  let transfer_tracks, _skipped_tracks =
+    List.partition_map
+      (fun (playlist_track : Spotify.Types.Playlist.playlist_track) ->
+        Transfer.Track.of_spotify playlist_track.track)
+      spotify_tracks
+  in
+  let transfer_playlist =
+    Transfer.Playlist.make ~name:playlist.name
+      ~description:(Option.value ~default:playlist.name playlist.description)
+      ~tracks:transfer_tracks ()
+  in
+  let+ apple_client = make_apple_client () in
+  let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
+  Lwt.return_ok ()
 
 let test_transfer_from_apple_to_spotify ~spotify_user_id playlist_id =
   let+ apple_client = make_apple_client () in
@@ -260,47 +261,49 @@ let test_transfer_from_apple_to_spotify ~spotify_user_id playlist_id =
       ~relationship:`Tracks ~relationships:[ `Catalog ] ~playlist_id ()
   in
   Fmt.pr "Apple tracks: %d\n" @@ List.length apple_tracks;
-  (* let isrc_ids, _skipped_library_songs = *)
-  (*   let open Infix.Option in *)
-  (*   List.partition_map *)
-  (*     (fun (library_song : Apple.Types.Library_song.t) -> *)
-  (*       let open Apple.Types.Relationship in *)
-  (*       library_song.relationships *)
-  (*       >>= (fun relationships -> *)
-  (*             relationships.catalog >>= function *)
-  (*             | `Catalog_song song -> *)
-  (*                 Extended.List.hd_opt song.data >>= fun catalog_song -> *)
-  (*                 catalog_song.attributes.isrc *)
-  (*             | _ -> None) *)
-  (*       |> Option.fold ~none:(Either.right library_song) ~some:Either.left) *)
-  (*     apple_tracks *)
-  (* in *)
-  (* let* spotify_uris, _ = *)
-  (*   isrc_ids *)
-  (*   |> List.map (fun id -> (id, `Isrc)) *)
-  (*   |> fetch_all_spotify_search_results ~client:spotify_client *)
-  (* in *)
-  (* let+ spotify_playlist = *)
-  (*   Spotify.Playlist.create ~client:spotify_client *)
-  (*     ~description: *)
-  (*       (playlist.attributes.description *)
-  (*       |> Option.map (fun (description : Apple.Types.Description.t) -> *)
-  (*              description.standard) *)
-  (*       |> Option.value ~default:playlist.attributes.name) *)
-  (*     ~name:playlist.attributes.name ~user_id:spotify_user_id () *)
-  (* in *)
-  (* let+ _ = *)
-  (*   Spotify.Playlist.add_tracks ~client:spotify_client ~track_uris:spotify_uris *)
-  (*     playlist_id *)
-  (* in *)
+  let isrc_ids, skipped_library_songs =
+    let open Infix.Option in
+    List.partition_map
+      (fun (library_song : Apple.Types.Library_song.t) ->
+        let open Apple.Types.Relationship in
+        library_song.relationships
+        >>= (fun relationships ->
+              relationships.catalog >>= function
+              | `Catalog_song song ->
+                  Extended.List.hd_opt song.data >>= fun catalog_song ->
+                  catalog_song.attributes.isrc
+              | _ -> None)
+        |> Option.fold ~none:(Either.right library_song) ~some:Either.left)
+      apple_tracks
+  in
+  Fmt.pr "ISRCs: %d\n" @@ List.length isrc_ids;
+  Fmt.pr "Skipped library songs: %d\n" @@ List.length skipped_library_songs;
+  let* spotify_uris, skipped_isrcs =
+    isrc_ids
+    |> List.map (fun id -> (id, `Isrc))
+    |> fetch_all_spotify_search_results ~client:spotify_client
+  in
+  Fmt.pr "Spotify URIs: %d\n" @@ List.length spotify_uris;
+  Fmt.pr "Skipped ISRCs: %d\n" @@ List.length skipped_isrcs;
+  let+ spotify_playlist =
+    Spotify.Playlist.create ~client:spotify_client
+      ~description:
+        (playlist.attributes.description
+        |> Option.map (fun (description : Apple.Types.Description.t) ->
+               description.standard)
+        |> Option.value ~default:playlist.attributes.name)
+      ~name:playlist.attributes.name ~user_id:spotify_user_id ()
+  in
+  let+ _ =
+    Spotify.Playlist.add_tracks ~client:spotify_client ~track_uris:spotify_uris
+      spotify_playlist.data.id
+  in
   Lwt.return_ok ()
 
-(* "p.AWXopqofN0doG0q" *)
 let () =
   let res =
     Lwt_main.run
-    @@ test_transfer_from_apple_to_spotify ~spotify_user_id:"dmmulroy"
-         "p.PkxVB2eHPa467ad"
+    @@ test_transfer_from_spotify_to_apple "37i9dQZF1DWXJyjYpHunCf" ()
   in
   match res with
   | Ok _ -> print_endline "Success"

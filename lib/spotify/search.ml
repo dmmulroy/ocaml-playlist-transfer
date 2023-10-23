@@ -1,13 +1,13 @@
 open Shared
 
 type t = {
-  artists : Types.Artist.t Page.t option;
-  albums : Types.Simple_album.t Page.t option;
-  playlists : Types.Simple_playlist.t Page.t option;
-  tracks : Types.Track.t Page.t option;
-  shows : Types.Simple_show.t Page.t option;
-  episodes : Types.Simple_episode.t Page.t option;
-      (* Add audiobook types *)
+  artists : Types.Artist.t Page.t option; [@default None]
+  albums : Types.Simple_album.t Page.t option; [@default None]
+  playlists : Types.Simple_playlist.t Page.t option; [@default None]
+  tracks : Types.Track.t Page.t option; [@default None]
+  shows : Types.Simple_show.t Page.t option; [@default None]
+  episodes : Types.Simple_episode.t Page.t option; [@default None]
+      (* TODO: Add audiobook types *)
       (* audiobooks: Types.Simple_audiobook.t Page.t option; *)
 }
 [@@deriving yojson { strict = false }]

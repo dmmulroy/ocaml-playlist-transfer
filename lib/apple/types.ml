@@ -225,9 +225,10 @@ end = struct
     attributes : attributes;
     (* relationships : unit; *)
     id : string;
-    resource_type : [ `Songs ]; [@key "type"]
-        (* [@to_yojson Resource.to_yojson]
-           [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type] *)
+    resource_type : [ `Songs ];
+        [@key "type"]
+        [@to_yojson Resource.to_yojson]
+        [@of_yojson Resource.of_yojson_narrowed ~narrow:narrow_resource_type]
     href : string;
   }
   [@@deriving yojson { strict = false }]
@@ -271,9 +272,6 @@ end = struct
     [ `Editoral | `External | `Personal_mix | `Replay | `User_shared ]
   [@@deriving yojson]
 
-  let _ = playlist_type_of_yojson
-
-  (* editorial, external, personal-mix, replay, user-shared *)
   let playlist_type_to_string = function
     | `Editoral -> "editorial"
     | `External -> "external"
@@ -289,9 +287,7 @@ end = struct
     | "replay" -> Ok `Replay
     | "user-shared" -> Ok `User_shared
     | _ -> Ok `Personal_mix
-  (* | _ -> Error "Invalid playlist type" *)
 
-  (* TODO: Next - of_yojson is borked *)
   let playlist_type_to_yojson playlist_type =
     `String (playlist_type_to_string playlist_type)
 

@@ -71,7 +71,7 @@ module Create = struct
   let name = "Create"
 
   type input = Create_input.t
-  type response = { data : Types.Playlist.t list } [@@deriving yojson]
+  type response = { data : Types.Library_playlist.t list } [@@deriving yojson]
   type output = response [@@deriving yojson]
 
   let endpoint =
