@@ -189,7 +189,7 @@ let refresh_access_token ~client ~client_id ~client_secret =
   let module Request =
     Spotify_rest_client.Make_unauthenticated (Refresh_access_token) in
   let access_token = Client.get_access_token client in
-  if Access_token.get_grant_type access_token <> `Authorization_code then
+  if Access_token.get_grant_type access_token <> Some `Authorization_code then
     Lwt.return_error @@ Internal_error.to_error `Invalid_grant_type
   else
     let refresh_token = Access_token.get_refresh_token access_token in

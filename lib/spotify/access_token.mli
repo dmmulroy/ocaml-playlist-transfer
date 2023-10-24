@@ -1,11 +1,12 @@
 type t [@@deriving yojson]
 
-val get_expiration_time : t -> int
-val get_grant_type : t -> [ `Authorization_code | `Client_credentials ]
+val get_expiration_time : t -> int option
+val get_grant_type : t -> [ `Authorization_code | `Client_credentials ] option
 val get_refresh_token : t -> string option
 val get_scopes : t -> Scope.t list option
-val get_token : t -> string
-val is_expired : t -> bool
+val of_string : string -> t
+val to_string : t -> string
+val is_expired : t -> bool option
 
 val make :
   ?scopes:Scope.t list ->
