@@ -1,0 +1,3 @@
+(library
+ (name songstorm)
+ (libraries apple spotify shared transfer ptime ptime.clock.os))

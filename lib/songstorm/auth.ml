@@ -1,14 +1,3 @@
-type transfer_report = {
-  id : string;
-  name : string;
-  url : Uri.t;
-  source : [ `Spotify | `Apple ];
-  target : [ `Spotify | `Apple ];
-  transferred_track_count : int;
-  skipped_track_ids : string list;
-  timestamp : Ptime.t;
-}
-
 type spotify_auth =
   | OAuth of {
       client_id : string;
@@ -23,19 +12,8 @@ type spotify_auth =
       refresh_token : string;
     }
 
-type music_kit_auth =
-  | Details of { private_key : string; key_id : string; team_id : string }
-  (* | Full of { private_key : string; key_id : string; team_id : string } *)
-  | Developer_token of { private_key : string; developer_token : string }
-
-type apple_auth =
-  | Music_kit of music_kit_auth
-  | Tokens of { developer_token : string; music_user_token : string }
-  | Refreshable_tokens of {
-      private_key : string;
-      developer_token : string;
-      music_user_token : string;
-    }
+let make_apple_client = Apple.Client.make
+let make_spotify_client = Spotify.Client.make
 
 (* let main () =
    let apple_client = SongStorm.make_apple_client (Tokens { developer_token = "foo"; music_user_token = "bar" }) in

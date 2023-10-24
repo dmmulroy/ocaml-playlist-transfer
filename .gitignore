@@ -39,3 +39,6 @@ _opam/
 
 # Ignore direnv
 .envrc
+
+# Ignore .sl
+.sl

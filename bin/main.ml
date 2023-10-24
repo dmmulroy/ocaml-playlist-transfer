@@ -30,14 +30,14 @@ let make_spotify_client () =
     Spotify.Auth.request_access_token
       (`Authorization_code { client_secret; client_id; code; redirect_uri })
   in
-  Lwt.return_ok @@ Spotify.Client.make ~access_token ~client_id ~client_secret
+  Lwt.return_ok @@ Spotify.Client.make ~access_token
 
 let make_apple_client () =
   let private_pem = Sys.getenv "APPLE_PRIVATE_KEY" in
   let music_user_token = Sys.getenv "APPLE_MUSIC_USER_TOKEN" in
-  let jwt_str = Sys.getenv "APPLE_JWT" in
-  let| jwt = Apple.Jwt.of_string ~private_pem jwt_str in
-  Lwt.return_ok @@ Apple.Client.make ~jwt ~music_user_token
+  let jwt_str = Sys.getenv "APPLE_DEVELOPER_TOKEN" in
+  let| developer_token = Apple.Jwt.of_string ~private_pem jwt_str in
+  Lwt.return_ok @@ Apple.Client.make ~developer_token ~music_user_token
 
 let test_spotify_oauth () =
   let client_id = Sys.getenv "SPOTIFY_CLIENT_ID" in
@@ -65,7 +65,7 @@ let test_spotify_oauth () =
     Spotify.Auth.request_access_token
       (`Authorization_code { client_secret; client_id; code; redirect_uri })
   in
-  let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
+  let client = Spotify.Client.make ~access_token in
   let* playlist_result =
     Spotify.Playlist.get_by_id ~client "37i9dQZF1F0sijgNaJdgit"
   in
@@ -101,7 +101,7 @@ let test_get_spotify_playlist_by_id id () =
       ~expiration_time:((Int.of_float @@ Unix.time ()) + 3600)
       ~grant_type:`Authorization_code ~token:access_token_str ()
   in
-  let client = Spotify.Client.make ~access_token ~client_id ~client_secret in
+  let client = Spotify.Client.make ~access_token in
   let+ response = Spotify.Playlist.get_by_id ~client id in
   Lwt.return_ok response.data
 

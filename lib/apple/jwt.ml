@@ -1,3 +1,5 @@
+[@@@ocaml.warning "-32"]
+
 open Shared
 open Syntax
 open Let
@@ -11,6 +13,7 @@ module Internal_error = struct
     | `Invalid_signature
     | `Not_json
     | `Not_supported
+    | `No_private_key
     | `Private_key_error of string
     | `Token_signing_error of string
     | `Unhandled_error of string
@@ -22,6 +25,7 @@ module Internal_error = struct
     | `Invalid_signature -> "The token signature is invalid"
     | `Not_json -> "The token is not valid JSON"
     | `Not_supported -> "The token is not supported"
+    | `No_private_key -> "Private key was not found or provided"
     | `Private_key_error str ->
         "An error occured while parsing private key PEM: " ^ str
     | `Token_signing_error str ->
@@ -44,7 +48,7 @@ module Internal_error = struct
     |> Apple_error.make ~source:`Auth
 end
 
-type t = { key : Jwk.priv Jwk.t; jwt : Jwt.t }
+type t = { key : Jwk.priv Jwk.t option; jwt : Jwt.t }
 
 let six_months_sec = 15777000
 
@@ -53,6 +57,8 @@ let is_expired t =
   |> Jwt.check_expiration ~now:(Ptime_clock.now ())
   |> Result.map @@ Fun.const false
   |> Result.value ~default:true
+
+let key t = t.key
 
 let make ?expiration ~private_pem ~key_id ~team_id () =
   let open Infix.Result in
@@ -75,7 +81,7 @@ let make ?expiration ~private_pem ~key_id ~team_id () =
     >|? Internal_error.to_apple_error
           ~map_msg:Internal_error.token_signing_error
   in
-  Ok { key; jwt }
+  Ok { key = Some key; jwt }
 
 let of_string ~private_pem jwt_str =
   let open Infix.Result in
@@ -87,14 +93,24 @@ let of_string ~private_pem jwt_str =
     Jwt.of_string ~jwk:key ~now:(Ptime_clock.now ()) jwt_str
     >|? Internal_error.to_apple_error
   in
-  Ok { key; jwt }
+  Ok { key = Some key; jwt }
+
+let unsafe_of_string jwt_str =
+  let open Infix.Result in
+  let@ jwt = Jwt.unsafe_of_string jwt_str >|? Internal_error.to_apple_error in
+  Ok { key = None; jwt }
 
 let to_string t = Jwt.to_string t.jwt
 
 let validate t =
   let open Infix.Result in
+  let@ jwk =
+    key t
+    |> Option.to_result ~none:`No_private_key
+    >|? Internal_error.to_apple_error
+  in
   let@ validated_jwt =
-    Jwt.validate ~jwk:t.key ~now:(Ptime_clock.now ()) t.jwt
+    Jwt.validate ~jwk ~now:(Ptime_clock.now ()) t.jwt
     >|? Internal_error.to_apple_error ~map_msg:Internal_error.validation_error
   in
   Ok { t with jwt = validated_jwt }

@@ -185,10 +185,9 @@ module Refresh_access_token = struct
     Spotify_rest_client.handle_response ~deserialize:output_of_yojson
 end
 
-let refresh_access_token ~client =
+let refresh_access_token ~client ~client_id ~client_secret =
   let module Request =
     Spotify_rest_client.Make_unauthenticated (Refresh_access_token) in
-  let client_id, client_secret = Client.get_client_credentials client in
   let access_token = Client.get_access_token client in
   if Access_token.get_grant_type access_token <> `Authorization_code then
     Lwt.return_error @@ Internal_error.to_error `Invalid_grant_type
