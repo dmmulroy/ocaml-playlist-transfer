@@ -1,4 +1,4 @@
-[@@@ocaml.warning "-26-32-33-27"]
+[@@@ocaml.warning "-26-27-32-33"]
 
 open Shared
 open Syntax
@@ -198,13 +198,12 @@ let test_apple_get_playlist_by_id () =
 
 let test_apple_create_playlist () =
   let+ client = make_apple_client () in
-  let input =
-    Apple.Library_playlist.Create_input.make ~name:"Test"
+  let+ playlist =
+    Apple.Library_playlist.create ~client ~name:"Test"
       ~description:"Test description"
       ~tracks:[ { id = "i.kGO5DkBTdX1lWXa"; resource_type = `Library_songs } ]
       ()
   in
-  let+ playlist = Apple.Library_playlist.create ~client input in
   let json = Apple.Library_playlist.Create.output_to_yojson playlist in
   print_endline @@ "Playlist: " ^ Yojson.Safe.pretty_to_string json;
   Lwt.return_ok ()
@@ -241,7 +240,7 @@ let test_transfer_from_spotify_to_apple playlist_id () =
       ~tracks:transfer_tracks ()
   in
   let+ apple_client = make_apple_client () in
-  let+ _ = Transfer.Playlist.to_apple apple_client transfer_playlist in
+  let+ _ = Transfer.to_apple ~client:apple_client transfer_playlist in
   Lwt.return_ok ()
 
 let test_transfer_from_apple_to_spotify ~spotify_user_id playlist_id =

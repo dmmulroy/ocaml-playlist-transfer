@@ -1,22 +1,51 @@
-module Track = Track
-module Playlist = Playlist
+open Shared
+open Syntax
+open Let
 
-module Internal_error = struct
-  type t = [ `Empty_apple_response | `Unhandled_error of string ]
+(* TODO: Only expose of_apple and of_spotify via .mli *)
+module Playlist = struct
+  include Playlist
 
-  let to_string = function
-    | `Empty_apple_response ->
-        "The `data` list returned from `Apple.Library_playlist.create` was \
-         empty"
-    | `Unhandled_error str -> "An unhandled error occurred: " ^ str
-    | #t -> .
-    | _ -> "An unhandled error occurred"
+  type t = Playlist.t
 
-  let to_error ?(map_msg = fun str -> `Unhandled_error str)
-      ?(source = `Source "Transfer") err =
-    let message =
-      (match err with `Msg str -> map_msg str | _ as err' -> err')
-      |> to_string
-    in
-    Transfer_error.make ~source message
+  let of_apple = Playlist.of_apple
+  let of_spotify = Playlist.of_spotify
 end
+
+module Track = Track
+
+(* TODO: Do a comparison of input isrcs vs meta.filters.isrc to track skipped tracks *)
+let to_apple ~(client : Apple.Client.t) (playlist : Playlist.t) =
+  let isrcs =
+    playlist.tracks
+    |> Option.map @@ List.map (fun (track : Track.t) -> track.isrc)
+    |> Option.value ~default:[]
+  in
+  let+ { data = { meta; _ }; _ } = Apple.Song.get_many_by_isrcs ~client isrcs in
+  let tracks =
+    let open Apple.Song.Get_many_by_isrcs in
+    List.fold_left
+      (fun acc (isrc, list) ->
+        List.fold_left
+          (fun acc' track ->
+            match List.mem_assq isrc acc' with
+            | true -> acc'
+            | false -> (isrc, track.id) :: acc')
+          acc list)
+      [] meta.filters.isrc
+    |> List.map
+         (fun (_, catalog_id) : Apple.Library_playlist.Create_input.track ->
+           { id = catalog_id; resource_type = `Songs })
+  in
+  let+ { data } =
+    Apple.Library_playlist.create ~client ~name:playlist.name
+      ~description:playlist.description ~tracks ()
+  in
+  let| playlist =
+    Extended.List.hd_opt data
+    |> Option.to_result
+         ~none:
+           (Error.make ~domain:`Transfer ~source:(`Source "Transfer.to_apple")
+              "Apple Music did not return a playlist")
+  in
+  Lwt.return_ok playlist

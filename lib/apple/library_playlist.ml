@@ -90,8 +90,12 @@ module Create = struct
     Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end
 
-let create ~(client : Client.t) (input : Create.input) =
+let create ~(client : Client.t) ?description ?parent_playlist_folder ?tracks
+    ~name () =
   let module Request = Apple_rest_client.Make (Create) in
+  let input =
+    Create_input.make ?description ?parent_playlist_folder ?tracks ~name ()
+  in
   Request.request ~client input
 
 module Get_all = struct

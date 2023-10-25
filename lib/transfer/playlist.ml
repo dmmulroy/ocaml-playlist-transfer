@@ -73,59 +73,14 @@ let of_apple ~(client : Apple.Client.t)
     ( { description; name; tracks = Some tracks },
       skipped_tracks' @ skipped_tracks )
 
-let of_spotify (_client : Spotify.Client.t)
+let of_spotify ~client:(_client : Spotify.Client.t)
     (playlist : Spotify.Types.Playlist.t) =
+  let open Spotify.Types.Playlist in
   let name = playlist.name in
   let description = Option.value ~default:name playlist.description in
   let tracks, skipped_tracks =
     List.partition_map
-      (fun (item : Spotify.Types.Playlist.playlist_track) ->
-        match item.track.external_ids.isrc with
-        | None -> Either.right @@ item.track
-        | Some isrc ->
-            Either.left
-            @@ Track.make ~id:(`Spotify_uri item.track.uri) ~isrc
-                 ~name:item.track.name)
+      (fun item -> Track.of_spotify item.track)
       playlist.tracks.items
   in
   Lwt.return_ok ({ description; name; tracks = Some tracks }, skipped_tracks)
-
-let to_apple (client : Apple.Client.t) (playlist : t) =
-  print_endline @@ "playlist track count: "
-  ^ string_of_int (Option.value ~default:[] playlist.tracks |> List.length);
-  let isrcs =
-    Infix.Option.(
-      playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc))
-    |> Option.value ~default:[]
-  in
-  let+ { data = { meta; _ }; _ } = Apple.Song.get_many_by_isrcs ~client isrcs in
-  let tracks =
-    let open Apple.Song.Get_many_by_isrcs in
-    List.fold_left
-      (fun acc (isrc, list) ->
-        List.fold_left
-          (fun acc' track ->
-            match List.mem_assq isrc acc' with
-            | true -> acc'
-            | false -> (isrc, track.id) :: acc')
-          acc list)
-      [] meta.filters.isrc
-    |> List.map
-         (fun (_, catalog_id) : Apple.Library_playlist.Create_input.track ->
-           { id = catalog_id; resource_type = `Songs })
-  in
-  (* { Types.Manifest.id; Types.Manifest.name } *)
-  print_endline @@ "tracks: " ^ string_of_int (List.length tracks);
-  let create_input =
-    Apple.Library_playlist.Create_input.make ~name:playlist.name
-      ~description:playlist.description ~tracks ()
-  in
-  Apple.Library_playlist.create ~client create_input
-
-let to_spotify ?_options (_client : Spotify.Client.t) (_playlist : t) =
-  (* let isrcs = *)
-  (*   Infix.Option.( *)
-  (*     playlist.tracks >|= List.map (fun (track : Track.t) -> track.isrc)) *)
-  (*   |> Option.value ~default:[] *)
-  (* in *)
-  ()
