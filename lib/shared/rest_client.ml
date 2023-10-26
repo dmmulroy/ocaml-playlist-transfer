@@ -15,7 +15,6 @@ module Config = struct
 
     val rate_limit_unit : rate_limit_unit
     val intercept_request : Http.Request.t interceptor
-    val intercept_response : Http.Response.t interceptor
   end
 end
 
@@ -136,6 +135,59 @@ module Make (C : Config.S) = struct
     let empty = { next = None; previous = None }
   end
 
+  module Pagination_v2 = struct
+    module Page = struct
+      type meta = { total : int; limit : int; offset : int }
+
+      type 'a t = {
+        href : Http.Uri.t;
+        items : 'a list;
+        meta : meta;
+        next : meta option;
+        previous : meta option;
+      }
+
+      type 'a cursor = Current of 'a t | Next of 'a t | Previous of 'a t
+
+      let empty =
+        {
+          href = Http.Uri.of_string "";
+          items = [];
+          meta = { total = 0; limit = 0; offset = 0 };
+          next = None;
+          previous = None;
+        }
+
+      (* TODO: Consider if we want have every field be optional *)
+      let make ?(href = Http.Uri.of_string "") ?(items = []) ?(limit = 0)
+          ?(next = None) ?(offset = 0) ?(previous = None) ?(total = 0) () =
+        { href; items; meta = { total; limit; offset }; next; previous }
+
+      let offset = function
+        | Current page -> Some page.meta.offset
+        | Next page -> Option.map (fun next -> next.offset) page.next
+        | Previous page ->
+            Option.map (fun previous -> previous.offset) page.previous
+
+      let limit = function
+        | Current page -> Some page.meta.limit
+        | Next page -> Option.map (fun next -> next.limit) page.next
+        | Previous page ->
+            Option.map (fun previous -> previous.limit) page.previous
+
+      let limit_and_offset = function
+        | Current page -> (Some page.meta.limit, Some page.meta.offset)
+        | Next page -> (limit (Next page), offset (Next page))
+        | Previous page -> (limit (Previous page), offset (Previous page))
+    end
+
+    type 'a page = 'a Page.t
+    type 'a t = { next : 'a page option; previous : 'a page option }
+
+    let make ?next ?previous () = { next; previous }
+    let empty = { next = None; previous = None }
+  end
+
   module Response = struct
     type 'a t = { data : 'a } [@@deriving yojson]
 
@@ -144,6 +196,12 @@ module Make (C : Config.S) = struct
     module Paginated = struct
       type 'a t = { data : 'a list; pagination : 'a Pagination.t }
       [@@deriving yojson]
+
+      let make pagination data = { data; pagination }
+    end
+
+    module Paginated_v2 = struct
+      type 'a t = { data : 'a list; pagination : 'a Pagination_v2.t }
 
       let make pagination data = { data; pagination }
     end

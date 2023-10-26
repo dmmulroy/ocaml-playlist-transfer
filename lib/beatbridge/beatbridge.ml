@@ -51,24 +51,26 @@ let transfer_from_spotify_to_apple ~(client : Client.t) playlist_id =
     Transfer.to_apple ~client:client.apple_client songstorm_playlist
   in
   (* TODO: Start here on Thursday w/ fetching + paginating over all tracks for a count*)
-  let transferred_track_count =
-    match apple_playlist.relationships with 
-    | Some { tracks = Some { data = tracks } } -> List.length tracks
-  Lwt.return_ok
-    {
-      id = apple_playlist.id;
-      name = apple_playlist.attributes.name;
-      url =
-        Uri.(
-          of_string "https://api.music.apple.com"
-          |> Fun.flip Uri.with_path apple_playlist.href);
-      source = Spotify;
-      destination = Apple;
-      transferred_track_count =
-        List.length songstorm_playlist.Transfer.Playlist.tracks;
+  failwith "not implemented"
 
-    }
+(* let transferred_track_count =
+   match apple_playlist.relationships with
+   | Some { tracks = Some { data = tracks } } -> List.length tracks *)
+(* Lwt.return_ok
+   {
+     id = apple_playlist.id;
+     name = apple_playlist.attributes.name;
+     url =
+       Uri.(
+         of_string "https://api.music.apple.com"
+         |> Fun.flip Uri.with_path apple_playlist.href);
+     source = Spotify;
+     destination = Apple;
+     transferred_track_count =
+       List.length songstorm_playlist.Transfer.Playlist.tracks;
 
+   }
+*)
 let transfer ~client ~source ~destination playlist_id =
   match (source, destination) with
   | Spotify, Apple -> transfer_from_spotify_to_apple ~client playlist_id

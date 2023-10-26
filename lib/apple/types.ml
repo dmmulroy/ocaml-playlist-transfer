@@ -1,7 +1,32 @@
-[@@@ocaml.warning "-32"]
-
 open Shared
 open Syntax
+open Let
+
+module Page = struct
+  type meta = { total : int } [@@deriving yojson]
+
+  type 'a t = {
+    data : 'a list;
+    href : string option; [@default None]
+    meta : meta option; [@default None]
+    next : string option; [@default None]
+  }
+  [@@deriving yojson]
+
+  let offset_of_path path_with_query =
+    let open Infix.Option in
+    path_with_query |> Uri.of_string |> Uri.query |> List.assoc_opt "offset"
+    >>= Extended.List.hd_opt |> Option.map int_of_string
+
+  let path path_with_query = Uri.of_string path_with_query |> Uri.path
+
+  let previous_of_path ~limit next_path =
+    let- path = Option.map path next_path in
+    Option.bind next_path offset_of_path
+    |> Option.map (fun next_offset -> next_offset - (limit * 2))
+    |> Option.map string_of_int
+    |> Option.map (fun previous_offset -> path ^ "?offset=" ^ previous_offset)
+end
 
 module Resource = struct
   type t =

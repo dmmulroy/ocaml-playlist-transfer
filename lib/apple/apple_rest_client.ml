@@ -1,11 +1,13 @@
+[@@@ocaml.warning "-26-27-32"]
+
 open Shared
 
 module Config :
   Rest_client.Config.S
     with type api_client = Client.t
-    with type 'a page = 'a Page.t = struct
+    with type 'a page = 'a Types.Page.t = struct
   type api_client = Client.t
-  type 'a page = 'a Page.t [@@deriving yojson]
+  type 'a page = 'a Types.Page.t [@@deriving yojson]
 
   type 'a interceptor =
     (?client:api_client -> 'a -> ('a, Error.t) Lwt_result.t) option
@@ -37,11 +39,17 @@ end
 
 include Rest_client.Make (Config)
 
-let pagination_of_page (page : 'a Page.t) =
-  let open Page in
-  let next = if Option.is_some page.next then Some page else None in
-  let limit = page.data |> List.length in
-  let previous =
-    Page.previous ~limit page.next |> fun previous -> { page with previous }
-  in
-  Pagination.make ?next ~previous ()
+(* let pagination_of_page (page : 'a Page.t) =
+   let open Page in
+   let _next = if Option.is_some page.next then page.next else None in
+   let limit = page.data |> List.length in
+   let _previous = Page.previous_of_path ~limit page.next in
+   failwith "" *)
+(* Pagination.make ?next ~previous () *)
+
+(* type 'a t = { next : 'a page option; previous : 'a page option } *)
+(* Start here Friday or Monday: map apple page to generic page *)
+let pagination_of_page_v2 (page : 'a Types.Page.t) =
+  (* let next =  *)
+  failwith ""
+(* Pagination.make ?next ~previous () *)

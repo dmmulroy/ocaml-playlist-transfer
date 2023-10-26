@@ -1,4 +1,4 @@
 (library
- (name songstorm)
- (modules_without_implementation songstorm_tmp)
+ (name beatbridge)
+ (modules_without_implementation beatbridge_tmp)
  (libraries apple spotify shared transfer ptime ptime.clock.os))

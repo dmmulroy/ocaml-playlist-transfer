@@ -5,7 +5,7 @@
   spotify
   apple
   transfer
-  songstorm
+  beatbridge
   redirect_server
   ppx_deriving_yojson.runtime)
  (preprocess

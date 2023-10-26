@@ -205,11 +205,26 @@ module Get_relationship_by_name = struct
     |> Apple_rest_client.handle_response ~deserialize:output_of_yojson
 end
 
-let get_relationship_by_name ~client ~playlist_id ~relationship ?relationships
-    () =
+let get_relationship_by_name ~client
+    ?(page :
+       [ `Next of Get_relationship_by_name.output
+       | `Previous of Get_relationship_by_name.output ]
+       option) ?relationships ~relationship playlist_id =
   let module Request = Apple_rest_client.Make (Get_relationship_by_name) in
+  let limit, offset =
+    match page with
+    | None -> (None, None)
+    | Some (`Next page) -> Page.limit_and_offset (`Next page)
+    | Some (`Previous page) -> Page.limit_and_offset (`Previous page)
+  in
   let input =
     Get_relationship_by_name.make_input ~playlist_id ~relationship
       ?relationships ()
   in
-  Request.request ~client input
+  let+ playlist_relationship_page = Request.request ~client input in
+  let pagination =
+    Apple_rest_client.pagination_of_page playlist_relationship_page
+  in
+  Lwt.return_ok
+  @@ Apple_rest_client.Response.Paginated.make pagination
+       playlist_relationship_page.data

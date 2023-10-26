@@ -16,7 +16,7 @@ let make_client () =
 let main () =
   let@ client = make_client () in
   let _ =
-    Songstorm.transfer ~client ~source:Apple ~destination:Spotify "playlist_id"
+    Beatbridge.transfer ~client ~source:Apple ~destination:Spotify "playlist_id"
   in
 
   Ok ()
