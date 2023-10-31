@@ -2,17 +2,17 @@ open Shared
 open Syntax
 open Let
 
-type 'a t = {
-  href : Http.Uri.t;
-  items : 'a list;
-  limit : int;
-  next : Http.Uri.t option; [@default None]
-  offset : int;
-  previous : Http.Uri.t option; [@default None]
-  total : int;
-}
+type meta = { total : int } [@@deriving yojson]
 
-(* type 'a state = [ `Current of 'a t | `Next of 'a t | `Previous of 'a t ] *)
+type 'a t = {
+  data : 'a list;
+  href : string option; [@default None]
+  meta : meta option; [@default None]
+  next : string option; [@default None]
+}
+[@@deriving yojson]
+
+type 'a state = [ `Current of 'a t | `Next of 'a t | `Previous of 'a t ]
 
 (* let offset = function
      | `Current page when Option.is_some page.href ->
