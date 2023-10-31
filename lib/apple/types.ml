@@ -1,31 +1,51 @@
 open Shared
 open Syntax
-open Let
 
 module Page = struct
   type meta = { total : int } [@@deriving yojson]
 
   type 'a t = {
     data : 'a list;
-    href : string option; [@default None]
+    href : Http.Uri.t option; [@default None]
     meta : meta option; [@default None]
-    next : string option; [@default None]
+    next : Http.Uri.t option; [@default None]
   }
   [@@deriving yojson]
 
   let offset_of_path path_with_query =
     let open Infix.Option in
-    path_with_query |> Uri.of_string |> Uri.query |> List.assoc_opt "offset"
+    path_with_query |> Http.Uri.query |> List.assoc_opt "offset"
     >>= Extended.List.hd_opt |> Option.map int_of_string
 
-  let path path_with_query = Uri.of_string path_with_query |> Uri.path
+  let offset page =
+    match (page.href, page.next) with
+    | Some href, None | Some href, Some _ ->
+        href |> offset_of_path |> Option.value ~default:0
+    | None, Some href ->
+        href |> offset_of_path
+        |> Option.fold ~none:0 ~some:(fun offset ->
+               offset - List.length page.data)
+    | None, None -> 0
 
-  let previous_of_path ~limit next_path =
-    let- path = Option.map path next_path in
-    Option.bind next_path offset_of_path
-    |> Option.map (fun next_offset -> next_offset - (limit * 2))
-    |> Option.map string_of_int
-    |> Option.map (fun previous_offset -> path ^ "?offset=" ^ previous_offset)
+  let default_limit = 25
+
+  let limit page =
+    if Option.is_some page.next then List.length page.data else default_limit
+
+  let x = Fun.flip Http.Uri.with_query' [ ("offset", "0") ]
+
+  let previous page =
+    match page.next with
+    | None -> None
+    | Some uri ->
+        let previous_offset =
+          uri |> offset_of_path |> Option.value ~default:0 |> fun next_offset ->
+          next_offset - (limit page * 2)
+        in
+        uri |> Http.Uri.path |> Http.Uri.of_string
+        |> Fun.flip Http.Uri.with_query'
+             [ ("offset", string_of_int previous_offset) ]
+        |> Option.some
 end
 
 module Resource = struct

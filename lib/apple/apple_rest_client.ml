@@ -1,6 +1,8 @@
 [@@@ocaml.warning "-26-27-32"]
 
 open Shared
+open Syntax
+open Let
 
 module Config :
   Rest_client.Config.S
@@ -47,9 +49,31 @@ include Rest_client.Make (Config)
    failwith "" *)
 (* Pagination.make ?next ~previous () *)
 
+let base_endpoint = Uri.of_string "https://api.music.apple.com/v1"
+
 (* type 'a t = { next : 'a page option; previous : 'a page option } *)
-(* Start here Friday or Monday: map apple page to generic page *)
 let pagination_of_page_v2 (page : 'a Types.Page.t) =
-  (* let next =  *)
+  let@ href =
+    page.href
+    |> Option.to_result
+         ~none:
+           (Apple_error.make
+              ~source:(`Source "Apple_rest_client.pagination_of_page")
+              "page.href is required")
+  in
+  let items = page.data in
+  let@ { total } =
+    page.meta
+    |> Option.to_result
+         ~none:
+           (Apple_error.make
+              ~source:(`Source "Apple_rest_client.pagination_of_page")
+              "page.meta is required")
+  in
+  let limit = List.length items in
+
+  (* let@ offset =  *)
+  let meta : Pagination_v2.Page.meta = { total; limit; offset = 0 } in
+
   failwith ""
 (* Pagination.make ?next ~previous () *)
