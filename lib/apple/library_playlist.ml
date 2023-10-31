@@ -102,7 +102,7 @@ module Get_all = struct
   let name = "Get_all"
 
   type input = unit
-  type output = Types.Playlist.t Page.t [@@deriving yojson]
+  type output = Types.Playlist.t Types.Page.t [@@deriving yojson]
 
   let endpoint =
     Http.Uri.of_string "https://api.music.apple.com/v1/me/library/playlists"
@@ -177,7 +177,7 @@ module Get_relationship_by_name = struct
   let make_input ?(relationships = []) ~playlist_id ~relationship () =
     { playlist_id; relationship; relationships = Some relationships }
 
-  type output = Types.Library_song.t Page.t [@@deriving yojson]
+  type output = Types.Library_song.t Types.Page.t [@@deriving yojson]
 
   let input_to_query_params input =
     let include_query_param =
@@ -207,16 +207,19 @@ end
 
 let get_relationship_by_name ~client
     ?(page :
-       [ `Next of Get_relationship_by_name.output
-       | `Previous of Get_relationship_by_name.output ]
+       [ `Next of Types.Library_song.t Apple_rest_client.Pagination_v2.Page.t
+       | `Previous of
+         Types.Library_song.t Apple_rest_client.Pagination_v2.Page.t ]
        option) ?relationships ~relationship playlist_id =
   let module Request = Apple_rest_client.Make (Get_relationship_by_name) in
+  let module Page = Apple_rest_client.Pagination_v2.Page in
   let limit, offset =
     match page with
     | None -> (None, None)
-    | Some (`Next page) -> Page.limit_and_offset (`Next page)
-    | Some (`Previous page) -> Page.limit_and_offset (`Previous page)
+    | Some (`Next page) -> Page.limit_and_offset (Next page)
+    | Some (`Previous page) -> Page.limit_and_offset (Previous page)
   in
+  (* Up Next: Add offset + limit to Get_relationship_by_name input*)
   let input =
     Get_relationship_by_name.make_input ~playlist_id ~relationship
       ?relationships ()
@@ -226,5 +229,5 @@ let get_relationship_by_name ~client
     Apple_rest_client.pagination_of_page playlist_relationship_page
   in
   Lwt.return_ok
-  @@ Apple_rest_client.Response.Paginated.make pagination
+  @@ Apple_rest_client.Response.Paginated_v2.make pagination
        playlist_relationship_page.data
