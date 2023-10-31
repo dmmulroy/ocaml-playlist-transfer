@@ -2,6 +2,7 @@ open Shared
 open Syntax
 
 module Page = struct
+  (* TODO: Hide helper fns with .mli *)
   type meta = { total : int } [@@deriving yojson]
 
   type 'a t = {
@@ -32,8 +33,6 @@ module Page = struct
   let limit page =
     if Option.is_some page.next then List.length page.data else default_limit
 
-  let x = Fun.flip Http.Uri.with_query' [ ("offset", "0") ]
-
   let previous page =
     match page.next with
     | None -> None
@@ -46,6 +45,30 @@ module Page = struct
         |> Fun.flip Http.Uri.with_query'
              [ ("offset", string_of_int previous_offset) ]
         |> Option.some
+
+  let href page =
+    match (page.href, page.next) with
+    | None, None -> None
+    | Some href, None | Some href, Some _ -> Some href
+    | None, Some next_href ->
+        let current_offset =
+          offset page |> fun next_offset ->
+          next_offset - limit page |> string_of_int
+        in
+        next_href |> Http.Uri.path |> Http.Uri.of_string
+        |> Fun.flip Http.Uri.with_query' [ ("offset", current_offset) ]
+        |> Option.some
+
+  let total page =
+    Option.fold page.meta ~none:(List.length page.data) ~some:(fun meta ->
+        meta.total)
+
+  let next_offset page =
+    match page.next with None -> None | Some uri -> uri |> offset_of_path
+
+  let previous_offset page =
+    let offset' = offset page in
+    if offset' = 0 then None else Some (offset' - limit page)
 end
 
 module Resource = struct

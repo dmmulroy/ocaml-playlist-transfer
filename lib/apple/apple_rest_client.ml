@@ -41,25 +41,17 @@ end
 
 include Rest_client.Make (Config)
 
-(* let pagination_of_page (page : 'a Page.t) =
-   let open Page in
-   let _next = if Option.is_some page.next then page.next else None in
-   let limit = page.data |> List.length in
-   let _previous = Page.previous_of_path ~limit page.next in
-   failwith "" *)
-(* Pagination.make ?next ~previous () *)
-
 let base_endpoint = Uri.of_string "https://api.music.apple.com/v1"
 
-(* type 'a t = { next : 'a page option; previous : 'a page option } *)
-let pagination_of_page_v2 (page : 'a Types.Page.t) =
+let pagination_of_page page =
+  let open Types in
   let@ href =
-    page.href
+    Page.href page
     |> Option.to_result
          ~none:
            (Apple_error.make
               ~source:(`Source "Apple_rest_client.pagination_of_page")
-              "page.href is required")
+              "page.href or page.next is required")
   in
   let items = page.data in
   let@ { total } =
@@ -70,10 +62,16 @@ let pagination_of_page_v2 (page : 'a Types.Page.t) =
               ~source:(`Source "Apple_rest_client.pagination_of_page")
               "page.meta is required")
   in
-  let limit = List.length items in
-
-  (* let@ offset =  *)
-  let meta : Pagination_v2.Page.meta = { total; limit; offset = 0 } in
-
-  failwith ""
-(* Pagination.make ?next ~previous () *)
+  let limit = Page.limit page in
+  let offset = Page.offset page in
+  let next =
+    page.next
+    |> Option.map (fun next ->
+           Pagination_v2.Page.make ~href:next ~limit ~offset ~total ())
+  in
+  let previous =
+    Page.previous page
+    |> Option.map (fun previous ->
+           Pagination_v2.Page.make ~href:previous ~limit ~offset ~total ())
+  in
+  Ok (Pagination_v2.make ?next ?previous ())

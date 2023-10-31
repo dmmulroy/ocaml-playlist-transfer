@@ -138,10 +138,11 @@ module Make (C : Config.S) = struct
   module Pagination_v2 = struct
     module Page = struct
       type meta = { total : int; limit : int; offset : int }
+      type 'a items = Fulfilled of 'a list | Unfulfilled
 
       type 'a t = {
         href : Http.Uri.t;
-        items : 'a list;
+        items : 'a items;
         meta : meta;
         next : meta option;
         previous : meta option;
@@ -152,15 +153,16 @@ module Make (C : Config.S) = struct
       let empty =
         {
           href = Http.Uri.of_string "";
-          items = [];
+          items = Unfulfilled;
           meta = { total = 0; limit = 0; offset = 0 };
           next = None;
           previous = None;
         }
 
       (* TODO: Consider if we want have every field be optional *)
-      let make ?(href = Http.Uri.of_string "") ?(items = []) ?(limit = 0)
-          ?(next = None) ?(offset = 0) ?(previous = None) ?(total = 0) () =
+      let make ?(href = Http.Uri.of_string "") ?(items = Unfulfilled)
+          ?(limit = 0) ?(next = None) ?(offset = 0) ?(previous = None)
+          ?(total = 0) () =
         { href; items; meta = { total; limit; offset }; next; previous }
 
       let offset = function
