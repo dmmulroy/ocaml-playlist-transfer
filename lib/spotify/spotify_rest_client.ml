@@ -1,3 +1,5 @@
+[@@@ocaml.warning "-32"]
+
 open Shared
 
 module Config :
